@@ -1,0 +1,9 @@
+{
+  "name": "delta-os",
+  "version": "1.0.0",
+  "description": "DELTA OS - ERP/CRM & Venue/Catering Management System para Delta Espaço e Eventos (Bacabal - MA)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  }
+}
