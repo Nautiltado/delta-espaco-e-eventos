@@ -59,8 +59,10 @@ export type ItemMenu = {
 
 export const MENU: ItemMenu[] = [
   { href: "/", rotulo: "Início" },
-  { href: "/clientes", rotulo: "Clientes", permissao: "cliente.ver", fase: 3 },
-  { href: "/orcamentos", rotulo: "Orçamentos", permissao: "orcamento.ver", fase: 3 },
+  { href: "/tarefas", rotulo: "Tarefas" },
+  { href: "/orcamentos", rotulo: "Orçamentos", permissao: "orcamento.ver" },
+  { href: "/clientes", rotulo: "Clientes", permissao: "cliente.ver" },
+  { href: "/catalogo", rotulo: "Catálogo", permissao: "orcamento.ver" },
   { href: "/agenda", rotulo: "Agenda", permissao: "orcamento.ver", fase: 4 },
   { href: "/financeiro", rotulo: "Financeiro", permissao: "pagamento.confirmar", fase: 4 },
   { href: "/salgados", rotulo: "Salgados", permissao: "producao.status", fase: 5 },

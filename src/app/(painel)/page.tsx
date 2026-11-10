@@ -2,14 +2,17 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { exigirAcesso } from "@/lib/acesso";
 import { pode } from "@/lib/permissoes";
+import { criarClienteServidor } from "@/lib/supabase/server";
+import { instanteAtual } from "@/lib/datas";
+import { ListaTarefas, SELECT_TAREFA, type Tarefa } from "./tarefas/lista";
 
 export const metadata: Metadata = { title: "Início" };
 
 const FASES = [
   { n: 1, nome: "Planejamento", situacao: "concluida" },
-  { n: 2, nome: "Fundação: login, perfis, auditoria, configurações", situacao: "atual" },
-  { n: 3, nome: "Comercial: clientes, catálogo, orçamentos", situacao: "proxima" },
-  { n: 4, nome: "Reservas, contratos e pagamentos (primeiro uso real)", situacao: "futura" },
+  { n: 2, nome: "Fundação: login, perfis, auditoria, configurações", situacao: "concluida" },
+  { n: 3, nome: "Comercial: clientes, catálogo, orçamentos, tarefas", situacao: "atual" },
+  { n: 4, nome: "Reservas, contratos e pagamentos (primeiro uso real)", situacao: "proxima" },
   { n: 5, nome: "Salgados e cozinha", situacao: "futura" },
   { n: 6, nome: "WhatsApp", situacao: "futura" },
   { n: 7, nome: "Financeiro e operação dos eventos", situacao: "futura" },
@@ -35,19 +38,46 @@ function saudacao(): string {
 export default async function Inicio() {
   const acesso = await exigirAcesso();
   const primeiroNome = acesso.nome.split(" ")[0];
+  const supabase = await criarClienteServidor();
+  const fimDoDia = new Date(instanteAtual() + 86400000).toISOString();
+  const [{ data: tarefas }, abertos] = await Promise.all([
+    supabase.from("tarefas").select(SELECT_TAREFA).is("concluida_em", null).eq("responsavel", acesso.id)
+      .lte("vence_em", fimDoDia).order("vence_em").limit(10),
+    pode(acesso, "orcamento.ver")
+      ? supabase.from("orcamentos").select("status", { count: "exact", head: true }).eq("status", "enviado")
+      : Promise.resolve({ count: null }),
+  ]);
   return (
     <>
       <div className="cabecalho">
         <div>
           <h1>{saudacao()}, {primeiroNome}</h1>
-          <p>O sistema está na Fase 2: a base de acesso e configuração já funciona.</p>
+          <p>Fase 3 em uso: clientes, catálogo, orçamentos com PDF e tarefas.</p>
         </div>
       </div>
+
+      <section className="cartao" style={{ marginBottom: 18 }}>
+        <h2>Para hoje</h2>
+        <ListaTarefas tarefas={(tarefas ?? []) as unknown as Tarefa[]} agora={instanteAtual()} />
+        <p style={{ marginBottom: 0 }}>
+          <Link href="/tarefas">Todas as tarefas</Link>
+          {abertos.count ? <> · <Link href="/orcamentos">{abertos.count} orçamento(s) aguardando resposta do cliente</Link></> : null}
+        </p>
+      </section>
 
       <div className="grade">
         <section className="cartao">
           <h2>O que já dá para fazer</h2>
           <ul style={{ margin: 0, paddingLeft: 18 }}>
+            {pode(acesso, "orcamento.criar") && (
+              <li><Link href="/orcamentos/novo">Fazer um orçamento</Link> com itens do catálogo ou livres, gerar o PDF e registrar o aceite.</li>
+            )}
+            {pode(acesso, "cliente.ver") && (
+              <li><Link href="/clientes">Consultar clientes</Link>, com aviso de cadastro repetido.</li>
+            )}
+            {pode(acesso, "catalogo.alterar") && (
+              <li><Link href="/catalogo">Manter o catálogo</Link> com preço, faixa e custo interno.</li>
+            )}
             {pode(acesso, "config.critica") && (
               <li><Link href="/usuarios">Cadastrar pessoas da equipe</Link> e escolher o perfil de cada uma.</li>
             )}
@@ -62,11 +92,9 @@ export default async function Inicio() {
         </section>
         <section className="cartao">
           <h2>Para ir ao ar na Fase 4</h2>
-          <p className="mudo" style={{ marginTop: 0 }}>Itens que só a Delta pode fornecer:</p>
+          <p className="mudo" style={{ marginTop: 0 }}>Política, signatários e horários já recebidos. Falta:</p>
           <ul style={{ margin: 0, paddingLeft: 18 }}>
-            <li>Faixas de cancelamento e revisão do contrato por advogado</li>
-            <li>Nome e CPF de quem assina pela Delta</li>
-            <li>Horários típicos dos eventos e da limpeza</li>
+            <li>Leitura final da política e do contrato por advogado inscrito na OAB</li>
           </ul>
         </section>
       </div>

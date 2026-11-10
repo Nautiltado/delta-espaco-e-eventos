@@ -4,7 +4,20 @@ Sistema de gestão da Delta Espaço e Eventos (Bacabal-MA): reservas dos dois es
 
 Plano completo e decisões: documento "Delta Gestão – Análise crítica, arquitetura e plano de execução".
 
-## Situação: Fase 2 (Fundação)
+## Situação: Fase 3 (Comercial)
+
+| Pronto | Onde |
+| --- | --- |
+| Clientes PF e PJ com CPF/CNPJ validado, busca sem acento, aviso de cadastro repetido e mesclagem | `/clientes` |
+| Catálogo com preço fixo ou faixa, histórico de preço e custo interno restrito | `/catalogo` |
+| Orçamentos versionados: itens do catálogo ou livres, desconto com aprovação acima do limite, envio que congela a versão, PDF com impressão digital, nova versão, aceite e perda com motivo | `/orcamentos` |
+| Funil por situação e tarefas (retorno automático ao enviar) | `/orcamentos`, `/tarefas` |
+
+Critério de aceite da fase, garantido no banco: orçamento enviado não muda (nem pelo dono do banco), e custo interno só
+aparece para quem tem `custo.ver`. Testes: `supabase/tests/fase3_comercial.sql` (27 cenários) e
+`testes-de-tela/fase3.py` (32 verificações com navegador).
+
+## Fase 2 (Fundação)
 
 | Pronto | Onde |
 | --- | --- |
@@ -40,7 +53,7 @@ O comando mostra uma senha provisória. No primeiro login o sistema pede uma sen
 npm test          # regras de dinheiro, configurações e menu por permissão
 ```
 
-Testes do banco (43 cenários, em dois blocos: cada perfil tentando o que não pode, auditoria, conflito de agenda): abra `supabase/tests/fundacao.sql` no SQL Editor do Supabase e execute cada bloco `do $$ … $$;` separadamente (selecione o bloco e rode). Cada um termina sempre com a mensagem `RESULTADO x de y testes passaram` e desfaz tudo, sem deixar dados.
+Testes do banco (Fase 2: 43 cenários em blocos; Fase 3: 27 cenários em `fase3_comercial.sql`: cada perfil tentando o que não pode, auditoria, conflito de agenda): abra `supabase/tests/fundacao.sql` no SQL Editor do Supabase e execute cada bloco `do $$ … $$;` separadamente (selecione o bloco e rode). Cada um termina sempre com a mensagem `RESULTADO x de y testes passaram` e desfaz tudo, sem deixar dados.
 
 ## Estrutura
 

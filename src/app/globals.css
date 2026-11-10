@@ -136,3 +136,39 @@ input:focus, select:focus { outline: 2px solid var(--dourado); outline-offset: 1
   .entrada-arte img { width: 120px; height: auto; }
   table { font-size: .9rem; }
 }
+
+/* ---------- Fase 3 ---------- */
+textarea, input[type="search"], input[type="date"], input[type="number"], input[type="datetime-local"] {
+  width: 100%; padding: 9px 11px; border: 1px solid var(--borda); border-radius: 8px; background: #fff;
+  font: inherit; color: var(--grafite);
+}
+textarea { resize: vertical; }
+.numero { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.total-linha td { font-weight: 700; border-top: 2px solid var(--borda); }
+.funil { display: grid; grid-template-columns: repeat(4, minmax(220px, 1fr)); gap: 14px; overflow-x: auto; }
+.funil-coluna { background: var(--marfim-alt); border-radius: var(--raio); padding: 12px; min-height: 140px; }
+.funil-coluna h2 { font-size: 1rem; display: flex; justify-content: space-between; margin-bottom: 10px; }
+.funil-cartao { display: block; background: var(--branco-quente); border: 1px solid var(--borda); border-radius: 8px;
+  padding: 10px 12px; margin-bottom: 8px; color: var(--grafite); text-decoration: none; }
+.funil-cartao:hover { border-color: var(--dourado); }
+.funil-cartao strong { display: block; }
+.atrasada { color: var(--erro); font-weight: 600; }
+.painel-lateral { display: grid; grid-template-columns: minmax(0, 1fr) 290px; gap: 18px; align-items: start; }
+.tabela-itens td:first-child { min-width: 180px; }
+.painel-lateral aside td { padding: 8px 4px; font-size: .88rem; }
+.painel-lateral aside .selo { font-size: .7rem; padding: 1px 7px; }
+.tabela-itens td input { padding: 7px 9px; }
+.tabela-itens .acoes { white-space: nowrap; width: 1%; }
+@media (max-width: 1180px) { .painel-lateral { grid-template-columns: minmax(0, 1fr); } .funil { grid-template-columns: repeat(4, 240px); } }
+
+/* ---------- telas estreitas: a tabela rola dentro do quadro, a página não estoura ---------- */
+.painel > * { min-width: 0; }
+.cartao { overflow-x: auto; }
+h1 { overflow-wrap: anywhere; }
+@media (max-width: 860px) {
+  .painel { grid-template-columns: minmax(0, 1fr); }
+  .menu { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cabecalho { flex-direction: column; align-items: flex-start; }
+  .linha .campo { min-width: 100%; }
+}
+.painel-lateral > * { min-width: 0; }
