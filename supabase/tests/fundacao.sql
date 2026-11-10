@@ -310,3 +310,24 @@ begin
   if array_length(falhas, 1) > 0 then t := t || E'\nFALHAS:\n- ' || array_to_string(falhas, E'\n- '); end if;
   raise exception '%', t;
 end $$;
+
+-- Configurações restritas (CPF dos signatários): só ADM e quem gera contrato leem.
+do $$
+declare inst uuid := '00000000-0000-0000-0000-000000000000'; u uuid; a uuid; p text; n int; falhas text[] := '{}';
+begin
+  foreach p in array array['COZ','FIN','ATD','ADM'] loop
+    a := gen_random_uuid();
+    insert into usuarios (nome, email) values ('T '||p, lower('t.'||p||'@delta.test')) returning id into u;
+    insert into usuarios_perfis values (u, p);
+    insert into auth.users (instance_id, id, aud, role, email) values (inst, a, 'authenticated', 'authenticated', lower('t.'||p||'@delta.test'));
+    perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
+    perform set_config('role', 'authenticated', true);
+    select count(*) into n from configuracoes where restrita;
+    if (p in ('COZ','FIN') and n > 0) or (p in ('ATD','ADM') and n = 0) then
+      falhas := falhas || (p || ' vê ' || n || ' configurações restritas');
+    end if;
+    perform set_config('role', 'none', true);
+  end loop;
+  raise exception 'RESULTADO % de 4 testes passaram%', 4 - coalesce(array_length(falhas, 1), 0),
+    case when array_length(falhas, 1) > 0 then E'\nFALHAS:\n- ' || array_to_string(falhas, E'\n- ') else '' end;
+end $$;

@@ -17,6 +17,7 @@ export type Configuracao = {
   tipo: TipoConfig;
   valor: unknown;
   ordem: number;
+  restrita: boolean;
   atualizado_em: string;
   atualizado_por: string | null;
 };

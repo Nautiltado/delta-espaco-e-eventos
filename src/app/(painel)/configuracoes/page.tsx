@@ -12,7 +12,7 @@ import { CampoConfiguracao } from "./campo";
 
 export const metadata: Metadata = { title: "Configurações" };
 
-const ORDEM_GRUPOS = ["Empresa", "Reservas", "Preços", "Financeiro", "Terceirizados"];
+const ORDEM_GRUPOS = ["Empresa", "Contrato", "Reservas", "Preços", "Financeiro", "Cancelamento", "Remarcação", "Terceirizados"];
 
 const dataHora = new Intl.DateTimeFormat("pt-BR", {
   dateStyle: "short",
@@ -53,7 +53,7 @@ export default async function PaginaConfiguracoes() {
                 .map((c) => (
                   <tr key={c.chave}>
                     <td style={{ width: "38%" }}>
-                      <strong>{c.descricao}</strong>
+                      <strong>{c.descricao}</strong>{c.restrita && <> <span className="selo dourado">restrita</span></>}
                       <div className="mudo">
                         Atual: {exibirValor(c.tipo, c.valor)} · alterado em {dataHora.format(new Date(c.atualizado_em))}
                       </div>
