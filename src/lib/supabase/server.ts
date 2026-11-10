@@ -1,6 +1,7 @@
 import "server-only";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { connection } from "next/server";
 import { env } from "@/lib/env";
 
 /**
@@ -8,6 +9,8 @@ import { env } from "@/lib/env";
  * políticas de acesso (RLS) do banco: a tela não decide permissão sozinha.
  */
 export async function criarClienteServidor() {
+  // Sempre por requisição: a biblioteca usa o relógio para validar o token.
+  await connection();
   const cookieStore = await cookies();
   return createServerClient(env.supabaseUrl, env.supabasePublishableKey, {
     cookies: {

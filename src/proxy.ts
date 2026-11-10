@@ -34,6 +34,16 @@ export async function proxy(request: NextRequest) {
   const logado = !!data?.claims?.sub;
   const publica = ROTAS_PUBLICAS.some((r) => request.nextUrl.pathname.startsWith(r));
 
+  // Senha provisória: só a tela de troca (e a saída) ficam liberadas.
+  const metadados = (data?.claims?.user_metadata ?? {}) as { trocar_senha?: boolean };
+  const caminho = request.nextUrl.pathname;
+  if (logado && metadados.trocar_senha === true && caminho !== "/trocar-senha" && !publica) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/trocar-senha";
+    url.search = "";
+    return NextResponse.redirect(url);
+  }
+
   if (!logado && !publica) {
     const url = request.nextUrl.clone();
     url.pathname = "/entrar";
