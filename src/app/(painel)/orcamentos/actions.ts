@@ -260,3 +260,70 @@ export async function marcarPerdido(_: Estado, form: FormData): Promise<Estado> 
   revalidatePath("/tarefas");
   return { ok: "Orçamento marcado como perdido." };
 }
+
+// ---------------------------------------------------------------- orçamento rápido
+
+const itemLote = z.object({
+  catalogo_item_id: z.uuid(),
+  descricao: z.string().trim().min(2).max(300),
+  unidade: z.enum(Object.keys(UNIDADES) as [string, ...string[]]),
+  quantidade: z.number().positive().max(1_000_000).refine((q) => Math.round(q * 100) === q * 100, "Quantidade com até 2 casas"),
+  preco_centavos: z.number().int().min(0).max(1_000_000_000),
+});
+
+/** Inclui vários itens de uma vez (do modelo ou da busca), num único comando: entram todos ou nenhum. */
+export async function adicionarItensEmLote(versaoId: string, itens: unknown): Promise<Estado> {
+  await exigirPermissao("orcamento.criar");
+  if (!uuid.safeParse(versaoId).success) return { erro: "Versão inválida." };
+  const lista = z.array(itemLote).min(1, "Marque ao menos um item.").max(200).safeParse(itens);
+  if (!lista.success) {
+    const p = lista.error.issues[0];
+    return { erro: p.path.includes("preco_centavos") ? "Falta o preço de algum item marcado." : p.message };
+  }
+  const supabase = await criarClienteServidor();
+  const { data: ultimo } = await supabase
+    .from("orcamento_itens").select("ordem").eq("versao_id", versaoId).order("ordem", { ascending: false }).limit(1);
+  const base = ultimo?.[0]?.ordem ?? 0;
+  const { error } = await supabase.from("orcamento_itens").insert(
+    lista.data.map((i, n) => ({
+      versao_id: versaoId,
+      ordem: base + n + 1,
+      catalogo_item_id: i.catalogo_item_id,
+      descricao: i.descricao,
+      unidade: i.unidade,
+      quantidade: i.quantidade,
+      preco_unitario_centavos: i.preco_centavos,
+    })),
+  );
+  if (error) return { erro: mensagemDoBanco(error) };
+  const orc = await orcamentoDaVersao(versaoId);
+  if (orc) recarregar(orc);
+  return { ok: lista.data.length === 1 ? "1 item incluído." : `${lista.data.length} itens incluídos.` };
+}
+
+// ---------------------------------------------------------------- modelos de orçamento
+
+const itemModelo = z.object({
+  catalogo_item_id: z.uuid(),
+  regra: z.enum(["fixa", "por_pessoa", "a_cada"]),
+  fator: z.number().positive("Informe a quantidade de cada item").max(100000),
+  minimo: z.number().min(0).max(100000),
+  opcional: z.boolean(),
+  preco_centavos: z.number().int().min(0).nullable(),
+});
+
+export async function salvarModelo(dados: { id: string | null; nome: string; descricao: string; ativo: boolean; itens: unknown }): Promise<Estado & { id?: string }> {
+  await exigirPermissao("catalogo.alterar");
+  const nome = dados.nome.trim();
+  if (nome.length < 2) return { erro: "Dê um nome ao modelo (ex.: Jantar, Coffee break)." };
+  const itens = z.array(itemModelo).min(1, "Inclua ao menos um item no modelo.").safeParse(dados.itens);
+  if (!itens.success) return { erro: itens.error.issues[0].message };
+  const supabase = await criarClienteServidor();
+  const { data, error } = await supabase.rpc("salvar_modelo_orcamento", {
+    p_id: dados.id && uuid.safeParse(dados.id).success ? dados.id : null,
+    p_nome: nome, p_descricao: dados.descricao.trim().slice(0, 300), p_ativo: dados.ativo, p_itens: itens.data,
+  });
+  if (error) return { erro: mensagemDoBanco(error) };
+  revalidatePath("/orcamentos/modelos");
+  return { ok: "Modelo salvo.", id: data as string };
+}

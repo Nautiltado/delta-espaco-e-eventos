@@ -9,6 +9,8 @@ import { formatarData, formatarDataComDia, formatarDataHora, hojeNaDelta } from 
 import { linkWhatsApp } from "@/lib/documentos";
 import { descreverPeriodo, STATUS_RESERVA, type StatusReserva } from "@/lib/reservas";
 import { FormularioReservarData } from "../../reservas/componentes";
+import { MontagemRapida } from "../montagem-rapida";
+import { dadosOrcamentoRapido } from "@/lib/orcamento-rapido-dados";
 import { ordenarCatalogo, precoDoItem, precoSugerido, type ItemCatalogo } from "@/lib/catalogo";
 import { CATEGORIAS, margem, ordemCategoria, STATUS_ORCAMENTO, STATUS_VERSAO, TIPOS_ORCAMENTO, totalItem } from "@/lib/orcamentos";
 import { SELECT_ORCAMENTO, versaoEmFoco, type ItemOrcamento, type Orcamento, type Versao } from "@/lib/orcamento-dados";
@@ -71,6 +73,7 @@ export default async function PaginaOrcamento({
       : { data: [] as { item_id: string; custo_unitario_centavos: number }[] };
   const custoPorItem = new Map((custos.data ?? []).map((c) => [c.item_id, c.custo_unitario_centavos]));
   const todosCatalogo = (catalogo.data ?? []) as ItemCatalogo[];
+  const rapido = editavel ? await dadosOrcamentoRapido(supabase) : null;
   const catalogoPorId = new Map(todosCatalogo.map((c) => [c.id, c]));
   const motivosLista = (motivos.data ?? []) as string[];
   const precisaAprovar = motivosLista.length > 0 && !v.aprovado_por;
@@ -183,9 +186,21 @@ export default async function PaginaOrcamento({
                 {itensSemCusto > 0 && <span className="mudo"> · {itensSemCusto} item(ns) sem custo cadastrado, margem superestimada</span>}
               </p>
             )}
+            {editavel && rapido && (
+              <MontagemRapida
+                versaoId={v.id}
+                opcoes={rapido.opcoes}
+                modelos={rapido.modelos}
+                convidados={o.convidados}
+                recursoId={o.recurso_id}
+                externo={o.tipo === "buffet_externo"}
+                aberto={itens.length === 0}
+              />
+            )}
             {editavel && (
-              <div style={{ marginTop: 18, paddingTop: 14, borderTop: "1px solid var(--borda)" }}>
-                <h2 style={{ fontSize: "1.05rem" }}>Incluir item</h2>
+              <details style={{ marginTop: 12, paddingTop: 10, borderTop: "1px solid var(--borda)" }}>
+                <summary style={{ cursor: "pointer", fontWeight: 600 }}>Incluir um item de cada vez (ou item livre, fora do catálogo)</summary>
+                <div style={{ marginTop: 10 }}>
                 <NovoItem
                   key={itens.length}
                   versaoId={v.id}
@@ -199,7 +214,8 @@ export default async function PaginaOrcamento({
                     faixa: precoDoItem(c),
                   }))}
                 />
-              </div>
+                </div>
+              </details>
             )}
           </section>
 

@@ -47,7 +47,10 @@ export default async function PaginaOrcamentos({ searchParams }: { searchParams:
             {janela < 365 && <Link href="/orcamentos?dias=365">Ver o último ano</Link>}
           </p>
         </div>
-        {pode(acesso, "orcamento.criar") && <Link className="botao" href="/orcamentos/novo">Novo orçamento</Link>}
+        <div className="linha">
+          <Link className="botao secundario" href="/orcamentos/modelos">Modelos</Link>
+          {pode(acesso, "orcamento.criar") && <Link className="botao" href="/orcamentos/novo">Novo orçamento</Link>}
+        </div>
       </div>
 
       <div className="funil">
