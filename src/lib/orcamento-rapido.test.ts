@@ -60,3 +60,22 @@ describe("linhas do modelo", () => {
     expect(buscarNoCatalogo([...cat.values()], "locacao mai").map((x) => x.nome)).toEqual(["Locação do espaço maior"]);
   });
 });
+
+import { aplicarBandejaRodada } from "./orcamento-rapido";
+
+describe("bandeja rodada", () => {
+  const l = (nome: string, marcado: boolean, quantidade: number) => ({ nome, marcado, quantidade });
+  it("sobe os garçons para 2 e nunca baixa", () => {
+    expect(aplicarBandejaRodada([l("Bandeja rodada", true, 1), l("Garçom", true, 1)], () => null).linhas[1].quantidade).toBe(2);
+    expect(aplicarBandejaRodada([l("Bandeja rodada", true, 1), l("Garçom", true, 5)], () => null)).toMatchObject({ aviso: null });
+  });
+  it("marca o garçom desmarcado e acrescenta quando falta", () => {
+    expect(aplicarBandejaRodada([l("Bandeja rodada", true, 1), l("Garçom", false, 1)], () => null).linhas[1]).toEqual(l("Garçom", true, 2));
+    const r = aplicarBandejaRodada([l("Bandeja rodada", true, 1)], () => l("Garçom", true, 1));
+    expect(r.linhas).toHaveLength(2);
+    expect(r.linhas[1]).toEqual(l("Garçom", true, 2));
+  });
+  it("sem bandeja marcada não mexe", () => {
+    expect(aplicarBandejaRodada([l("Bandeja rodada", false, 1), l("Garçom", true, 1)], () => null).linhas[1].quantidade).toBe(1);
+  });
+});

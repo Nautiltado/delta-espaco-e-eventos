@@ -129,3 +129,31 @@ export function buscarNoCatalogo(opcoes: OpcaoRapida[], termo: string, limite = 
   if (!partes.length) return [];
   return opcoes.filter((o) => partes.every((p) => n(`${o.nome} ${o.grupo}`).includes(p))).slice(0, limite);
 }
+
+/** Nomes no catálogo usados pela regra da bandeja rodada. */
+export const BANDEJA_RODADA = "Bandeja rodada";
+export const GARCOM = "Garçom";
+export const GARCONS_MINIMO_BANDEJA = 2;
+
+/**
+ * Com bandeja rodada marcada, são no mínimo 2 garçons: sobe a quantidade (nunca baixa)
+ * e, se o garçom não estiver na lista, acrescenta. Devolve a lista e um aviso quando mexeu.
+ */
+export function aplicarBandejaRodada<T extends Pick<Linha, "nome" | "marcado" | "quantidade">>(
+  linhas: T[],
+  criarGarcom: () => T | null,
+): { linhas: T[]; aviso: string | null } {
+  const bandeja = linhas.find((l) => l.nome === BANDEJA_RODADA && l.marcado);
+  if (!bandeja) return { linhas, aviso: null };
+  const garcom = linhas.find((l) => l.nome === GARCOM);
+  if (!garcom) {
+    const novo = criarGarcom();
+    if (!novo) return { linhas, aviso: null };
+    return { linhas: [...linhas, { ...novo, marcado: true, quantidade: Math.max(novo.quantidade, GARCONS_MINIMO_BANDEJA) }], aviso: "Bandeja rodada: incluí 2 garçons (mínimo)." };
+  }
+  if (garcom.marcado && garcom.quantidade >= GARCONS_MINIMO_BANDEJA) return { linhas, aviso: null };
+  return {
+    linhas: linhas.map((l) => (l === garcom ? { ...l, marcado: true, quantidade: Math.max(l.quantidade, GARCONS_MINIMO_BANDEJA) } : l)),
+    aviso: "Bandeja rodada: garçons ajustados para no mínimo 2.",
+  };
+}

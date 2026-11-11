@@ -5,12 +5,21 @@ import { useRouter } from "next/navigation";
 import { adicionarItensEmLote, type Estado } from "./actions";
 import { centavosParaCampo, formatarCentavos, lerReais } from "@/lib/dinheiro";
 import { formatarQuantidade, lerQuantidade, rotuloUnidade, totalItem } from "@/lib/orcamentos";
-import { buscarNoCatalogo, linhaAvulsa, linhasDoModelo, type ItemModelo, type Linha, type OpcaoRapida } from "@/lib/orcamento-rapido";
+import { aplicarBandejaRodada, buscarNoCatalogo, GARCOM, linhaAvulsa, linhasDoModelo, type ItemModelo, type Linha, type OpcaoRapida } from "@/lib/orcamento-rapido";
 
 type LinhaTela = Linha & { qtdTexto: string; precoTexto: string };
 type Modelo = { id: string; nome: string; descricao: string | null; itens: ItemModelo[] };
 
 const ORIGEM: Record<string, string> = { modelo: "preço do modelo", ultimo: "último preço usado", catalogo: "preço do catálogo" };
+
+/** A tela guarda a quantidade como texto; a regra da bandeja trabalha com número. */
+function comBandeja(linhas: LinhaTela[], opcoes: OpcaoRapida[], convidados: number | null): { linhas: LinhaTela[]; aviso: string | null } {
+  const comoNumero = linhas.map((l) => ({ ...l, quantidade: lerQuantidade(l.qtdTexto) ?? 0 }));
+  const garcom = opcoes.find((o) => o.nome === GARCOM);
+  const r = aplicarBandejaRodada(comoNumero, () => (garcom ? paraTela(linhaAvulsa(garcom, convidados)) : null));
+  if (!r.aviso) return { linhas, aviso: null };
+  return { linhas: r.linhas.map((l) => ({ ...l, qtdTexto: formatarQuantidade(l.quantidade) })), aviso: r.aviso };
+}
 
 function paraTela(l: Linha): LinhaTela {
   return { ...l, qtdTexto: formatarQuantidade(l.quantidade), precoTexto: l.preco_centavos == null ? "" : centavosParaCampo(l.preco_centavos) };
@@ -30,6 +39,16 @@ export function MontagemRapida({
   const [modeloAtual, setModeloAtual] = useState<string | null>(null);
   const [busca, setBusca] = useState("");
   const [estado, setEstado] = useState<Estado>({});
+  const [avisoRegra, setAvisoRegra] = useState<string | null>(null);
+
+  /** Toda mudança na lista passa pela regra da bandeja rodada (mínimo de 2 garçons). */
+  function atualizar(f: (atual: LinhaTela[]) => LinhaTela[]) {
+    setLinhas((atual) => {
+      const r = comBandeja(f(atual), opcoes, convidados);
+      setAvisoRegra(r.aviso);
+      return r.linhas;
+    });
+  }
   const [enviando, iniciar] = useTransition();
   const campoBusca = useRef<HTMLInputElement>(null);
   const catalogo = useMemo(() => new Map(opcoes.map((o) => [o.id, o])), [opcoes]);
@@ -38,11 +57,11 @@ export function MontagemRapida({
   function usarModelo(m: Modelo) {
     setModeloAtual(m.id);
     setEstado({});
-    setLinhas(linhasDoModelo(m.itens, catalogo, { convidados, recurso_id: recursoId, externo }).map(paraTela));
+    atualizar(() => linhasDoModelo(m.itens, catalogo, { convidados, recurso_id: recursoId, externo }).map(paraTela));
   }
 
   function acrescentar(o: OpcaoRapida) {
-    setLinhas((atual) => {
+    atualizar((atual) => {
       const ja = atual.find((l) => l.catalogo_item_id === o.id);
       if (ja) return atual.map((l) => (l === ja ? { ...l, marcado: true } : l));
       return [...atual, paraTela(linhaAvulsa(o, convidados))];
@@ -52,7 +71,12 @@ export function MontagemRapida({
   }
 
   function mudar(chave: string, campo: Partial<LinhaTela>) {
-    setLinhas((atual) => atual.map((l) => (l.chave === chave ? { ...l, ...campo } : l)));
+    // Só checkbox dispara a regra; ao digitar a quantidade, a pessoa manda (o aviso fica se baixar de 2).
+    if ("marcado" in campo && !("qtdTexto" in campo) && !("precoTexto" in campo)) {
+      atualizar((atual) => atual.map((l) => (l.chave === chave ? { ...l, ...campo } : l)));
+    } else {
+      setLinhas((atual) => atual.map((l) => (l.chave === chave ? { ...l, ...campo } : l)));
+    }
   }
 
   const marcadas = linhas.filter((l) => l.marcado);
@@ -64,6 +88,10 @@ export function MontagemRapida({
   function incluir() {
     if (!marcadas.length) return setEstado({ erro: "Marque ao menos um item." });
     if (qtdInvalida) return setEstado({ erro: "Confira as quantidades marcadas em vermelho." });
+    const garcons = calculadas.find((c) => c.l.nome === GARCOM)?.q ?? 0;
+    if (marcadas.some((l) => l.nome === "Bandeja rodada") && garcons < 2) {
+      return setEstado({ erro: "Bandeja rodada pede no mínimo 2 garçons." });
+    }
     if (semPreco) return setEstado({ erro: `Falta o preço de ${semPreco} ${semPreco === 1 ? "item" : "itens"} (em vermelho).` });
     iniciar(async () => {
       const r = await adicionarItensEmLote(versaoId, calculadas.map((c) => ({
@@ -158,6 +186,12 @@ export function MontagemRapida({
         </div>
       )}
 
+      {avisoRegra && <p className="aviso info">{avisoRegra}</p>}
+      {linhas.some((l) => l.nome === "Bandeja rodada" && l.marcado) && (() => {
+        const g = linhas.find((l) => l.nome === GARCOM);
+        const q = g && g.marcado ? lerQuantidade(g.qtdTexto) ?? 0 : 0;
+        return q < 2 ? <p className="aviso erro">Bandeja rodada pede no mínimo 2 garçons.</p> : null;
+      })()}
       {estado.erro && <p className="aviso erro" role="alert">{estado.erro}</p>}
       {estado.ok && <p className="aviso ok" role="status">{estado.ok}</p>}
 
