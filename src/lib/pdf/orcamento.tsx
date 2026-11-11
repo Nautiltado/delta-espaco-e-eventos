@@ -31,12 +31,22 @@ export type ConteudoOrcamento = {
     uf: string | null;
   };
   empresa: Record<string, string>;
-  itens: { descricao: string; unidade: string; quantidade: number; preco_unitario_centavos: number; total_centavos: number }[];
+  itens: {
+    descricao: string;
+    unidade: string;
+    quantidade: number;
+    preco_unitario_centavos: number;
+    total_centavos: number;
+    /** Desde a proposta comercial (11/11/2026); versões mais antigas não têm. */
+    catalogo_item_id?: string | null;
+    categoria?: string | null;
+  }[];
   subtotal_centavos: number;
   desconto_centavos: number;
   total_centavos: number;
   condicoes: string | null;
   observacoes: string | null;
+  apresentacao?: string | null;
   validade: string | null;
   enviada_em: string | null;
 };
@@ -69,7 +79,9 @@ const s = StyleSheet.create({
   totalFinal: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 6, marginTop: 4, borderTopWidth: 1.5, borderTopColor: ESMERALDA, fontFamily: "Helvetica-Bold", fontSize: 12, color: ESMERALDA },
   secao: { marginTop: 18 },
   secaoTitulo: { fontFamily: "Times-Bold", fontSize: 12, color: ESMERALDA, marginBottom: 4 },
-  rodape: { position: "absolute", bottom: 24, left: 40, right: 40, borderTopWidth: 0.5, borderTopColor: DOURADO, paddingTop: 6, fontSize: 7.5, color: SUAVE, flexDirection: "row", justifyContent: "space-between" },
+  rodapeLinha: { position: "absolute", bottom: 38, left: 40, right: 40, borderTopWidth: 0.5, borderTopColor: DOURADO },
+  rodapeEsq: { position: "absolute", bottom: 24, left: 40, right: 80, fontSize: 7.5, color: SUAVE },
+  rodapeDir: { position: "absolute", bottom: 24, right: 40, fontSize: 7.5, color: SUAVE },
   marca: { position: "absolute", top: 330, left: 60, fontSize: 64, color: "#E8E2D2", transform: "rotate(-30deg)", fontFamily: "Helvetica-Bold" },
 });
 
@@ -171,12 +183,12 @@ export function DocumentoOrcamento({ c, previa, hash }: { c: ConteudoOrcamento; 
           </Text>
         </View>
 
-        <View style={s.rodape} fixed>
-          <Text>
-            {[c.empresa.nome_fantasia, c.empresa.cnpj && `CNPJ ${c.empresa.cnpj}`, c.empresa.endereco].filter(Boolean).join(" · ")}
-          </Text>
-          <Text render={({ pageNumber, totalPages }) => `${pageNumber}/${totalPages}`} />
-        </View>
+        {/* Rodapé em peças soltas: o renderizador perde um <View fixed> com filhos dinâmicos. */}
+        <View style={s.rodapeLinha} fixed />
+        <Text style={s.rodapeEsq} fixed>
+          {[c.empresa.nome_fantasia, c.empresa.cnpj && `CNPJ ${c.empresa.cnpj}`, c.empresa.endereco].filter(Boolean).join(" · ")}
+        </Text>
+        <Text style={s.rodapeDir} fixed render={({ pageNumber, totalPages }) => `${pageNumber}/${totalPages}`} />
         {hash && (
           <Text style={{ position: "absolute", bottom: 12, left: 40, fontSize: 6, color: "#A8A493" }} fixed>
             Impressão digital do conteúdo: {hash.slice(0, 32)}

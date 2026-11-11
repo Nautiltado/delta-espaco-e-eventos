@@ -178,6 +178,7 @@ export async function salvarCondicoes(_: Estado, form: FormData): Promise<Estado
       desconto_centavos: desconto,
       condicoes: vazioNulo(form.get("condicoes")),
       observacoes: vazioNulo(form.get("observacoes")),
+      apresentacao: vazioNulo(form.get("apresentacao"))?.slice(0, 1500) ?? null,
     })
     .eq("id", versao.data)
     .select("id");

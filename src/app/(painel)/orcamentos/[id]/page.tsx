@@ -11,6 +11,8 @@ import { descreverPeriodo, STATUS_RESERVA, type StatusReserva } from "@/lib/rese
 import { FormularioReservarData } from "../../reservas/componentes";
 import { MontagemRapida } from "../montagem-rapida";
 import { dadosOrcamentoRapido } from "@/lib/orcamento-rapido-dados";
+import { apresentacaoPadrao } from "@/lib/proposta";
+import type { ConteudoOrcamento } from "@/lib/pdf/orcamento";
 import { ordenarCatalogo, precoDoItem, precoSugerido, type ItemCatalogo } from "@/lib/catalogo";
 import { CATEGORIAS, margem, ordemCategoria, STATUS_ORCAMENTO, STATUS_VERSAO, TIPOS_ORCAMENTO, totalItem } from "@/lib/orcamentos";
 import { SELECT_ORCAMENTO, versaoEmFoco, type ItemOrcamento, type Orcamento, type Versao } from "@/lib/orcamento-dados";
@@ -75,6 +77,12 @@ export default async function PaginaOrcamento({
   const todosCatalogo = (catalogo.data ?? []) as ItemCatalogo[];
   const rapido = editavel ? await dadosOrcamentoRapido(supabase) : null;
   const catalogoPorId = new Map(todosCatalogo.map((c) => [c.id, c]));
+  // Texto automático da apresentação, para mostrar no campo enquanto ninguém escreveu um próprio.
+  const conteudoParaTexto = {
+    orcamento: { numero: o.numero, titulo: o.titulo, tipo: o.tipo, data_evento: o.data_evento, horario: o.horario, convidados: o.convidados,
+                 local_externo: o.local_externo, espaco: o.recursos?.nome ?? null },
+    itens: itens.map((i) => ({ ...i, quantidade: Number(i.quantidade), categoria: i.catalogo_item_id ? catalogoPorId.get(i.catalogo_item_id)?.categoria ?? null : null })),
+  } as unknown as ConteudoOrcamento;
   const motivosLista = (motivos.data ?? []) as string[];
   const precisaAprovar = motivosLista.length > 0 && !v.aprovado_por;
   const custoTotal = itens.reduce((s, i) => s + (custoPorItem.has(i.id) ? totalItem(Number(i.quantidade), custoPorItem.get(i.id)!) : 0), 0);
@@ -103,9 +111,14 @@ export default async function PaginaOrcamento({
             {o.local_externo && ` · ${o.local_externo}`}
           </p>
         </div>
-        <a className="botao secundario" href={`/orcamentos/${o.id}/pdf?versao=${v.numero}`} target="_blank" rel="noreferrer">
-          {v.status === "rascunho" ? "Prévia do PDF" : "PDF"}
-        </a>
+        <div className="linha" style={{ alignItems: "center" }}>
+          <a className="botao secundario" href={`/orcamentos/${o.id}/pdf?versao=${v.numero}`} target="_blank" rel="noreferrer">
+            {v.status === "rascunho" ? "Prévia da proposta" : "Proposta (PDF)"}
+          </a>
+          <a href={`/orcamentos/${o.id}/pdf?versao=${v.numero}&formato=detalhado`} target="_blank" rel="noreferrer" style={{ fontSize: ".85rem" }}>
+            PDF detalhado (itens e preços)
+          </a>
+        </div>
       </div>
 
       {enviado && (
@@ -228,6 +241,8 @@ export default async function PaginaOrcamento({
                 desconto={v.desconto_centavos}
                 condicoes={v.condicoes}
                 observacoes={v.observacoes}
+                apresentacao={v.apresentacao}
+                apresentacaoPadrao={apresentacaoPadrao(conteudoParaTexto)}
                 podeDescontar={pode(acesso, "desconto.dar") || pode(acesso, "desconto.aprovar")}
               />
             ) : (

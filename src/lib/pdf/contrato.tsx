@@ -7,16 +7,19 @@ const GRAFITE = "#282923";
 const SUAVE = "#5f6057";
 
 const s = StyleSheet.create({
-  pagina: { paddingTop: 40, paddingBottom: 60, paddingHorizontal: 54, fontFamily: "Times-Roman", fontSize: 10.5, color: GRAFITE, lineHeight: 1.4 },
+  pagina: { paddingTop: 40, paddingBottom: 60, paddingHorizontal: 54, fontFamily: "Times-Roman", fontSize: 10.5, color: GRAFITE },
+  // Sem lineHeight: na página ele some com o número de página do rodapé, e no texto o renderizador exagera o espaço.
   topo: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", borderBottomWidth: 1.5, borderBottomColor: DOURADO, paddingBottom: 10, marginBottom: 18 },
   logo: { width: 140 },
   topoTexto: { fontFamily: "Helvetica", fontSize: 8, color: SUAVE, textAlign: "right" },
   titulo: { fontFamily: "Times-Bold", fontSize: 13, color: ESMERALDA, textAlign: "center", marginBottom: 8, marginTop: 4 },
   secao: { fontFamily: "Times-Bold", fontSize: 11, color: ESMERALDA, marginTop: 10, marginBottom: 3 },
-  paragrafo: { marginBottom: 5, textAlign: "justify" },
+  paragrafo: { marginBottom: 6, textAlign: "justify" },
   item: { marginBottom: 2, paddingLeft: 12 },
   assinatura: { marginTop: 4 },
-  rodape: { position: "absolute", bottom: 26, left: 54, right: 54, borderTopWidth: 0.5, borderTopColor: DOURADO, paddingTop: 5, fontFamily: "Helvetica", fontSize: 7, color: SUAVE, flexDirection: "row", justifyContent: "space-between" },
+  rodapeLinha: { position: "absolute", bottom: 38, left: 54, right: 54, borderTopWidth: 0.5, borderTopColor: DOURADO },
+  rodapeEsq: { position: "absolute", bottom: 26, left: 54, fontFamily: "Helvetica", fontSize: 7, color: SUAVE },
+  rodapeDir: { position: "absolute", bottom: 26, right: 54, fontFamily: "Helvetica", fontSize: 7, color: SUAVE },
   marca: { position: "absolute", top: 330, left: 70, fontSize: 60, color: "#E8E2D2", transform: "rotate(-30deg)", fontFamily: "Helvetica-Bold" },
 });
 
@@ -65,10 +68,10 @@ export function DocumentoContrato({
             </Text>
           );
         })}
-        <View style={s.rodape} fixed>
-          <Text>{hash ? `Impressão digital (SHA-256): ${hash.slice(0, 32)}…` : ""}</Text>
-          <Text render={({ pageNumber, totalPages }) => `Página ${pageNumber} de ${totalPages}`} />
-        </View>
+        {/* Rodapé em peças soltas: o renderizador perde um <View fixed> com filhos dinâmicos. */}
+        <View style={s.rodapeLinha} fixed />
+        {hash && <Text style={s.rodapeEsq} fixed>{`Impressão digital (SHA-256): ${hash.slice(0, 32)}…`}</Text>}
+        <Text style={s.rodapeDir} fixed render={({ pageNumber, totalPages }) => `Página ${pageNumber} de ${totalPages}`} />
       </Page>
     </Document>
   );

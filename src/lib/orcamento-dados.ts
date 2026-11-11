@@ -11,6 +11,7 @@ export type Versao = {
   validade: string | null;
   condicoes: string | null;
   observacoes: string | null;
+  apresentacao: string | null;
   subtotal_centavos: number;
   desconto_centavos: number;
   total_centavos: number;
@@ -84,7 +85,12 @@ export async function conteudoDaPrevia(
   v: Versao,
   itens: ItemOrcamento[],
 ): Promise<ConteudoOrcamento> {
-  const { data: empresa } = await supabase.from("configuracoes").select("chave, valor").like("chave", "empresa.%");
+  const ids = [...new Set(itens.map((i) => i.catalogo_item_id).filter((x): x is string => !!x))];
+  const [{ data: empresa }, { data: cats }] = await Promise.all([
+    supabase.from("configuracoes").select("chave, valor").like("chave", "empresa.%"),
+    ids.length ? supabase.from("catalogo_itens").select("id, categoria").in("id", ids) : Promise.resolve({ data: [] }),
+  ]);
+  const categoria = new Map(((cats ?? []) as { id: string; categoria: string }[]).map((c) => [c.id, c.categoria]));
   return {
     orcamento: {
       numero: o.numero,
@@ -116,12 +122,15 @@ export async function conteudoDaPrevia(
       quantidade: Number(i.quantidade),
       preco_unitario_centavos: i.preco_unitario_centavos,
       total_centavos: i.total_centavos,
+      catalogo_item_id: i.catalogo_item_id,
+      categoria: i.catalogo_item_id ? categoria.get(i.catalogo_item_id) ?? null : null,
     })),
     subtotal_centavos: v.subtotal_centavos,
     desconto_centavos: v.desconto_centavos,
     total_centavos: v.total_centavos,
     condicoes: v.condicoes,
     observacoes: v.observacoes,
+    apresentacao: v.apresentacao,
     validade: null,
     enviada_em: null,
   };

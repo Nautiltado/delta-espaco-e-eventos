@@ -263,12 +263,16 @@ export function FormularioCondicoes({
   condicoes,
   observacoes,
   podeDescontar,
+  apresentacao,
+  apresentacaoPadrao,
 }: {
   versaoId: string;
   desconto: number;
   condicoes: string | null;
   observacoes: string | null;
   podeDescontar: boolean;
+  apresentacao: string | null;
+  apresentacaoPadrao: string;
 }) {
   const [estado, enviar, enviando] = useActionState<Estado, FormData>(salvarCondicoes, {});
   return (
@@ -284,6 +288,11 @@ export function FormularioCondicoes({
       <div className="campo">
         <label htmlFor="condicoes">Condições de pagamento</label>
         <textarea id="condicoes" name="condicoes" rows={2} defaultValue={condicoes ?? ""} />
+      </div>
+      <div className="campo">
+        <label htmlFor="apresentacao">Apresentação da proposta (opcional)</label>
+        <textarea id="apresentacao" name="apresentacao" rows={3} defaultValue={apresentacao ?? ""} placeholder={apresentacaoPadrao} maxLength={1500} />
+        <small className="mudo">Em branco, a proposta usa o texto automático que aparece aqui em cinza.</small>
       </div>
       <div className="campo">
         <label htmlFor="observacoes">Observações para o cliente</label>

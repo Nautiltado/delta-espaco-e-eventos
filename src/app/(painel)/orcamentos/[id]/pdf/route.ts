@@ -3,6 +3,9 @@ import { obterSessao } from "@/lib/acesso";
 import { pode } from "@/lib/permissoes";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { DocumentoOrcamento } from "@/lib/pdf/orcamento";
+import { DocumentoProposta } from "@/lib/pdf/proposta";
+import { hojeNaDelta } from "@/lib/datas";
+import { somarDias } from "@/lib/reservas";
 import {
   conteudoDaPrevia,
   SELECT_ORCAMENTO,
@@ -22,7 +25,10 @@ export async function GET(request: Request, ctx: { params: Promise<{ id: string 
   if (!pode(sessao.acesso, "orcamento.ver")) return new Response("Sem permissão.", { status: 403 });
 
   const { id } = await ctx.params;
-  const pedida = Number(new URL(request.url).searchParams.get("versao")) || undefined;
+  const url = new URL(request.url);
+  const pedida = Number(url.searchParams.get("versao")) || undefined;
+  // Padrão: proposta comercial (cardápio por categoria e valor total). "detalhado": itens com quantidade e preço.
+  const detalhado = url.searchParams.get("formato") === "detalhado";
   const supabase = await criarClienteServidor();
   const [{ data: orcamento }, { data: versoes }] = await Promise.all([
     supabase.from("orcamentos").select(SELECT_ORCAMENTO).eq("id", id).maybeSingle(),
@@ -40,9 +46,26 @@ export async function GET(request: Request, ctx: { params: Promise<{ id: string 
     conteudo = await conteudoDaPrevia(supabase, orcamento as Orcamento, v, (itens ?? []) as ItemOrcamento[]);
   }
 
-  // Chamada direta: o componente devolve o <Document> que o renderizador espera.
-  const pdf = await renderToBuffer(DocumentoOrcamento({ c: conteudo, previa, hash: previa ? null : v.conteudo_hash }));
-  const nome = `${conteudo.orcamento.numero}-v${v.numero}${previa ? "-previa" : ""}.pdf`;
+  let pdf: Buffer;
+  if (detalhado) {
+    // Chamada direta: o componente devolve o <Document> que o renderizador espera.
+    pdf = await renderToBuffer(DocumentoOrcamento({ c: conteudo, previa, hash: previa ? null : v.conteudo_hash }));
+  } else {
+    const { data: cfg } = await supabase
+      .from("configuracoes").select("chave, valor").in("chave", ["evento.confirmacao_convidados_dias", "orcamento.validade_dias"]);
+    const valor = (k: string) => Number((cfg ?? []).find((x) => x.chave === k)?.valor);
+    if (previa && !conteudo.validade) conteudo = { ...conteudo, validade: somarDias(hojeNaDelta(), valor("orcamento.validade_dias") || 7) };
+    // Versões enviadas antes da proposta comercial não guardaram a categoria: procura pelo nome no catálogo.
+    let categoriaPorNome: Map<string, string> | undefined;
+    if (conteudo.itens.some((i) => !i.categoria)) {
+      const { data: cat } = await supabase.from("catalogo_itens").select("nome, categoria");
+      categoriaPorNome = new Map((cat ?? []).map((x) => [String(x.nome).trim().toLowerCase(), String(x.categoria)]));
+    }
+    pdf = await renderToBuffer(DocumentoProposta({
+      c: conteudo, previa, confirmacaoDias: valor("evento.confirmacao_convidados_dias") || 10, categoriaPorNome,
+    }));
+  }
+  const nome = `${conteudo.orcamento.numero}-v${v.numero}${detalhado ? "-detalhado" : ""}${previa ? "-previa" : ""}.pdf`;
   return new Response(new Uint8Array(pdf), {
     headers: {
       "Content-Type": "application/pdf",
