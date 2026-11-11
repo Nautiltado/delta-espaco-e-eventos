@@ -27,3 +27,12 @@ describe("menu por permissão", () => {
     expect(pode(null, "config.critica")).toBe(false);
   });
 });
+
+describe("menu Eventos", () => {
+  it("cozinha e financeiro veem Eventos", () => {
+    const coz = { id: "c", nome: "C", email: "c@x", perfis: ["COZ"], permissoes: ["producao.status"] };
+    const fin = { id: "f", nome: "F", email: "f@x", perfis: ["FIN"], permissoes: ["evento.fechar"] };
+    expect(menuDoUsuario(coz).map((i) => i.href)).toContain("/eventos");
+    expect(menuDoUsuario(fin).map((i) => i.href)).toContain("/eventos");
+  });
+});

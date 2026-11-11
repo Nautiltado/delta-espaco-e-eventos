@@ -355,3 +355,22 @@ input.invalido { border-color: #b3261e !important; background: #fdf1f0; }
 .estoque-item.repor { border-color: #b3261e; background: #fdf1f0; }
 .estoque-item .num { font-size: 1.4rem; font-weight: 700; font-variant-numeric: tabular-nums; }
 @media (max-width: 860px) { .rodape-pedido { bottom: calc(64px + env(safe-area-inset-bottom)); } }
+
+/* ---------- eventos (ficha, checklist, fechamento) ---------- */
+.item-check button { display: flex; gap: 10px; align-items: flex-start; width: 100%; text-align: left; background: none; border: 0;
+  padding: 7px 0; font: inherit; color: inherit; cursor: pointer; border-bottom: 1px solid var(--borda); }
+.item-check .caixa { flex: 0 0 22px; height: 22px; border: 2px solid var(--esmeralda); border-radius: 6px; display: grid; place-items: center;
+  font-weight: 700; color: var(--marfim); font-size: .85rem; }
+.item-check button.feito .caixa { background: var(--esmeralda); }
+.item-check button.feito > span:last-child { color: var(--grafite-suave); text-decoration: line-through; }
+.item-check button:disabled { opacity: .6; }
+.checklist { grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+.fechamento td { padding: 7px 4px; }
+.fechamento td.numero { text-align: right; white-space: nowrap; }
+.fechamento tr.total td { border-top: 2px solid var(--grafite); border-bottom: 0; font-size: 1.1rem; }
+@media print {
+  .lateral, .barra-celular, .barra-inferior, .nao-imprimir, .botao, details { display: none !important; }
+  .painel { display: block; }
+  .cartao { break-inside: avoid; box-shadow: none; }
+  body { background: #fff; }
+}

@@ -65,7 +65,7 @@ export function BotaoMenu() {
 }
 
 const ICONES: Record<string, string> = {
-  "/": "⌂", "/agenda": "▦", "/orcamentos": "✎", "/clientes": "☺", "/financeiro": "R$", "/tarefas": "✓", "/salgados": "◉", "/salgados/cozinha": "♨",
+  "/": "⌂", "/agenda": "▦", "/orcamentos": "✎", "/clientes": "☺", "/financeiro": "R$", "/tarefas": "✓", "/salgados": "◉", "/salgados/cozinha": "♨", "/eventos": "★",
 };
 
 /** Barra de baixo no celular: os atalhos do dia a dia, ao alcance do polegar. */

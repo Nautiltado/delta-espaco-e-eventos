@@ -187,6 +187,9 @@ export default async function PaginaReserva({
             {total > 0 && ` · ${formatarCentavos(total)}`}
           </p>
         </div>
+        {reserva.tipo === "evento" && ["bloqueio_temporario", "confirmada", "em_preparacao", "realizada"].includes(reserva.status) && (
+          <div className="linha"><Link className="botao secundario" href={`/eventos/${reserva.id}`}>Ficha, equipe e gastos</Link></div>
+        )}
       </div>
 
       {textoAviso && <p className="aviso ok" role="status">{textoAviso}</p>}

@@ -24,6 +24,11 @@ estoque, sortido sem sabor recusado, divisão do sortido, pedido só vai para a 
 recusado, pronto, retirada baixando o estoque, cancelamento antes de pronto com devolução e depois de pronto sem devolução (vira perda), mínimo, perda com
 motivo, histórico ligado ao pedido, preço e telas no celular. Precisa de `teste.e2e.adm`, `teste.e2e.atd` e `teste.e2e.coz`.
 
+`fase7.py` percorre a ficha do evento (27 verificações) com cozinha, atendimento, administração e financeiro: cardápio na
+ficha, checklist marcado com nome e hora, ficha com chegada/traje/observações, equipe do Kaká com diária de R$ 180,
+mensagem de WhatsApp, pagamento da equipe, gasto com nota fiscal (foto), gasto a pagar, fechamento e celular.
+Precisa de `teste.e2e.fin` além das outras.
+
 `concorrencia.mjs` dispara 30 pedidos simultâneos para o mesmo espaço e horário e exige exatamente um aceito.
 
 Ao final, rode `limpar-dados-de-teste.sql` no SQL do Supabase: apaga só o que as contas de teste criaram (e as contas).

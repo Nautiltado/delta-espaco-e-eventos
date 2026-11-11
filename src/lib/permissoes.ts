@@ -51,8 +51,8 @@ export function pode(acesso: Acesso | null, permissao: Permissao): boolean {
 export type ItemMenu = {
   href: string;
   rotulo: string;
-  /** Sem permissão: qualquer usuário logado vê. */
-  permissao?: Permissao;
+  /** Sem permissão: qualquer usuário logado vê. Lista: basta ter uma. */
+  permissao?: Permissao | Permissao[];
   /** Ainda não construído: aparece desabilitado com a fase prevista. */
   fase?: number;
 };
@@ -64,6 +64,7 @@ export const MENU: ItemMenu[] = [
   { href: "/clientes", rotulo: "Clientes", permissao: "cliente.ver" },
   { href: "/catalogo", rotulo: "Catálogo", permissao: "orcamento.ver" },
   { href: "/agenda", rotulo: "Agenda", permissao: "orcamento.ver" },
+  { href: "/eventos", rotulo: "Eventos", permissao: ["orcamento.ver", "escala.gerir", "evento.fechar", "producao.status", "custo.ver"] },
   { href: "/financeiro", rotulo: "Financeiro", permissao: "pagamento.confirmar" },
   { href: "/salgados", rotulo: "Encomendas", permissao: "salgados.criar" },
   { href: "/salgados/cozinha", rotulo: "Cozinha", permissao: "producao.status" },
@@ -75,5 +76,9 @@ export const MENU: ItemMenu[] = [
 
 export function menuDoUsuario(acesso: Acesso | null): ItemMenu[] {
   if (!acesso) return [];
-  return MENU.filter((item) => !item.permissao || pode(acesso, item.permissao));
+  return MENU.filter((item) => {
+    if (!item.permissao) return true;
+    const lista = Array.isArray(item.permissao) ? item.permissao : [item.permissao];
+    return lista.some((p) => pode(acesso, p));
+  });
 }

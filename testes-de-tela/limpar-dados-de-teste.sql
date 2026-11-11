@@ -24,6 +24,17 @@ begin
   alter table pedido_pagamentos disable trigger pedido_pagamentos_imutavel;
   alter table estoque_movimentos disable trigger estoque_movimentos_imutavel;
 
+  -- eventos (Fase 7): equipe, checklist, ficha, gastos e notas mexidos pelas contas de teste
+  alter table evento_custos disable trigger evento_custos_sem_delete;
+  alter table evento_notas disable trigger evento_notas_sem_delete;
+  delete from evento_notas where enviado_por = any(testes);
+  delete from evento_custos where criado_por = any(testes);
+  delete from evento_equipe where criado_por = any(testes);
+  update evento_checklist set feito_por = null, feito_em = null where feito_por = any(testes);
+  delete from evento_fichas where atualizado_por = any(testes);
+  alter table evento_custos enable trigger evento_custos_sem_delete;
+  alter table evento_notas enable trigger evento_notas_sem_delete;
+
   -- encomendas (Fase 5)
   delete from estoque_movimentos where criado_por = any(testes)
     or pedido_id in (select id from pedidos where criado_por = any(testes));
