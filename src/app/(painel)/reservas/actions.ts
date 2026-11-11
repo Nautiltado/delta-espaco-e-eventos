@@ -10,6 +10,7 @@ import { lerReais } from "@/lib/dinheiro";
 import { marcadoresDesconhecidos, MARCADORES_CONHECIDOS } from "@/lib/contrato";
 import { montarContrato } from "@/lib/reserva-dados";
 import { FORMAS_ASSINATURA, FORMAS_PAGAMENTO, INICIATIVAS, periodoDoEvento } from "@/lib/reservas";
+import { caminhoDoComprovante, TAMANHO_MAXIMO, TIPOS_COMPROVANTE } from "@/lib/comprovantes";
 
 export type Estado = { erro?: string; ok?: string };
 
@@ -238,4 +239,50 @@ export async function salvarModeloContrato(_: Estado, form: FormData): Promise<E
   if (error) return { erro: mensagemDoBanco(error) };
   revalidatePath("/contratos");
   return { ok: `Versão ${data} do modelo salva. Os próximos contratos usam esta versão; os já gerados não mudam.` };
+}
+
+// ---------------------------------------------------------------- comprovantes
+
+/** 1º passo: o servidor confere a permissão e devolve um endereço de envio de uso único. */
+export async function prepararComprovante(reservaId: string, tipo: string, tamanho: number): Promise<{ erro: string } | { caminho: string; token: string }> {
+  await exigirPermissao("pagamento.confirmar");
+  if (!uuid.safeParse(reservaId).success) return { erro: "Reserva inválida." };
+  if (!(tipo in TIPOS_COMPROVANTE)) return { erro: "Envie foto (JPG, PNG, WEBP, HEIC) ou PDF." };
+  if (!Number.isInteger(tamanho) || tamanho <= 0 || tamanho > TAMANHO_MAXIMO) return { erro: "Arquivo maior que 10 MB." };
+  const caminho = caminhoDoComprovante(reservaId, tipo, crypto.randomUUID())!;
+  const supabase = await criarClienteServidor();
+  const { data, error } = await supabase.storage.from("comprovantes").createSignedUploadUrl(caminho);
+  if (error || !data) return { erro: "Não consegui preparar o envio. Tente de novo." };
+  return { caminho, token: data.token };
+}
+
+/** 2º passo: depois do arquivo enviado, registra o comprovante na reserva. */
+export async function registrarComprovante(dados: {
+  reservaId: string; caminho: string; nome: string; tipo: string; tamanho: number; pagamentoId: string | null; descricao: string;
+}): Promise<Estado> {
+  await exigirPermissao("pagamento.confirmar");
+  if (!uuid.safeParse(dados.reservaId).success) return { erro: "Reserva inválida." };
+  const pagamento = dados.pagamentoId && uuid.safeParse(dados.pagamentoId).success ? dados.pagamentoId : null;
+  const supabase = await criarClienteServidor();
+  const { error } = await supabase.rpc("registrar_comprovante", {
+    p_reserva: dados.reservaId, p_caminho: dados.caminho, p_nome: dados.nome.slice(0, 200) || "comprovante",
+    p_tipo: dados.tipo, p_tamanho: dados.tamanho, p_pagamento: pagamento, p_descricao: dados.descricao.slice(0, 300),
+  });
+  if (error) return { erro: mensagemDoBanco(error) };
+  revalidatePath(`/reservas/${dados.reservaId}`);
+  revalidatePath("/financeiro");
+  return { ok: "Comprovante anexado." };
+}
+
+export async function removerComprovante(_: Estado, form: FormData): Promise<Estado> {
+  await exigirPermissao("pagamento.estornar");
+  const id = uuid.safeParse(form.get("comprovante_id"));
+  if (!id.success) return { erro: "Comprovante inválido." };
+  const supabase = await criarClienteServidor();
+  const { data: c } = await supabase.from("comprovantes").select("reserva_id").eq("id", id.data).maybeSingle();
+  const { error } = await supabase.rpc("remover_comprovante", { p_comprovante: id.data, p_motivo: texto(form, "motivo") });
+  if (error) return { erro: mensagemDoBanco(error) };
+  if (c) revalidatePath(`/reservas/${c.reserva_id}`);
+  revalidatePath("/financeiro");
+  return { ok: "Comprovante tirado da lista. O arquivo continua guardado no histórico." };
 }

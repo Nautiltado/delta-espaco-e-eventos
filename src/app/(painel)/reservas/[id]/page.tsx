@@ -12,6 +12,8 @@ import { payloadPix } from "@/lib/pix";
 import { descreverPeriodo, FORMAS_ASSINATURA, FORMAS_PAGAMENTO, INICIATIVAS, STATUS_CONTRATO, STATUS_RESERVA } from "@/lib/reservas";
 import { lerConfiguracoes, type Contrato, type Pagamento, type ParcelaSituacao, type Reserva } from "@/lib/reserva-dados";
 import { confirmarReserva, liberarBloqueio, prorrogarBloqueio, removerBloqueio } from "../actions";
+import { EnviarComprovantes, RemoverComprovante } from "../comprovantes";
+import { tamanhoLegivel } from "@/lib/comprovantes";
 import {
   BotaoAcao,
   CopiarPix,
@@ -88,6 +90,7 @@ export default async function PaginaReserva({
 
   const hoje = hojeNaDelta();
   const ativa = ["bloqueio_temporario", "expirada", "confirmada", "em_preparacao"].includes(reserva.status);
+  const aceitaPagamento = ativa || reserva.status === "realizada";
   const vigente = contratos.find((c) => ["enviado", "assinado"].includes(c.status));
   const assinado = contratos.find((c) => c.status === "assinado");
   const entradaPaga = parcelas[0] ? parcelas[0].saldo_centavos <= 0 : false;
@@ -99,7 +102,7 @@ export default async function PaginaReserva({
   // Pix copia e cola por parcela em aberto (só com a chave cadastrada).
   const chavePix = String(cfg["empresa.pix_chave"] ?? "").trim();
   const pix = new Map<string, { codigo: string; svg: string }>();
-  if (chavePix && ativa && o) {
+  if (chavePix && aceitaPagamento && o) {
     for (const p of parcelas.filter((x) => x.saldo_centavos > 0)) {
       const codigo = payloadPix({
         chave: chavePix,
@@ -124,6 +127,26 @@ export default async function PaginaReserva({
     });
   }
   const whatsapp = linkWhatsApp(o?.clientes.telefone);
+
+  // Comprovantes (só para quem cuida do financeiro): endereços temporários de 1 hora para abrir.
+  type Comprovante = { id: string; caminho: string; nome_arquivo: string; tipo: string; tamanho: number; descricao: string | null;
+    pagamento_id: string | null; enviado_em: string; removido_em: string | null; removido_motivo: string | null; usuarios: { nome: string } | null };
+  const verComprovantes = pode(acesso, "pagamento.confirmar") && reserva.tipo === "evento";
+  let comprovantes: (Comprovante & { url: string | null })[] = [];
+  if (verComprovantes) {
+    const { data: cs2 } = await supabase.from("comprovantes")
+      .select("id, caminho, nome_arquivo, tipo, tamanho, descricao, pagamento_id, enviado_em, removido_em, removido_motivo, usuarios:enviado_por(nome)")
+      .eq("reserva_id", id).order("enviado_em");
+    const lista = (cs2 ?? []) as unknown as Comprovante[];
+    const ativos = lista.filter((c) => !c.removido_em);
+    const { data: urls } = ativos.length
+      ? await supabase.storage.from("comprovantes").createSignedUrls(ativos.map((c) => c.caminho), 3600)
+      : { data: [] };
+    const porCaminho = new Map((urls ?? []).map((u) => [u.path, u.signedUrl]));
+    comprovantes = lista.map((c) => ({ ...c, url: c.removido_em ? null : porCaminho.get(c.caminho) ?? null }));
+  }
+  const rotuloPagamento = (g: Pagamento) =>
+    `${formatarData(g.recebido_em)} · ${FORMAS_PAGAMENTO[g.forma] ?? g.forma} · ${formatarCentavos(g.valor_centavos)}`;
 
   if (reserva.tipo === "bloqueio_administrativo") {
     return (
@@ -283,7 +306,7 @@ export default async function PaginaReserva({
                           )}
                         </div>
                       </div>
-                      {p.saldo_centavos > 0 && ativa && (
+                      {p.saldo_centavos > 0 && aceitaPagamento && (
                         <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginTop: 10 }}>
                           {pg && (
                             <div style={{ flex: "0 0 auto" }}>
@@ -346,6 +369,55 @@ export default async function PaginaReserva({
               </table>
             </section>
           )}
+          {verComprovantes && (
+            <section className="cartao" id="comprovantes">
+              <h2>Comprovantes {comprovantes.filter((c) => !c.removido_em).length > 0 && <span className="mudo" style={{ fontFamily: "var(--sans)", fontSize: ".85rem" }}>{comprovantes.filter((c) => !c.removido_em).length}</span>}</h2>
+              {comprovantes.filter((c) => !c.removido_em).length === 0 && <p className="mudo" style={{ marginTop: 0 }}>Nenhum comprovante anexado ainda.</p>}
+              <div className="comprovantes">
+                {comprovantes.filter((c) => !c.removido_em).map((c) => {
+                  const pg = pagamentos.find((g) => g.id === c.pagamento_id);
+                  return (
+                    <div key={c.id} className="comprovante">
+                      <a href={c.url ?? "#"} target="_blank" rel="noreferrer" className="miniatura">
+                        {c.tipo.startsWith("image/") && c.tipo !== "image/heic" && c.tipo !== "image/heif" && c.url
+                          ? (
+                            // Endereço assinado e temporário do armazenamento privado: não passa pelo otimizador de imagens.
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={c.url} alt={`Comprovante ${c.nome_arquivo}`} loading="lazy" />
+                          )
+                          : <span>{c.tipo === "application/pdf" ? "PDF" : "Arquivo"}</span>}
+                      </a>
+                      <div style={{ minWidth: 0 }}>
+                        <a href={c.url ?? "#"} target="_blank" rel="noreferrer" style={{ wordBreak: "break-word" }}>{c.nome_arquivo}</a>
+                        <div className="mudo" style={{ fontSize: ".8rem" }}>
+                          {formatarDataHora(c.enviado_em)}{c.usuarios ? ` · ${c.usuarios.nome}` : ""} · {tamanhoLegivel(c.tamanho)}
+                        </div>
+                        {pg && <div style={{ fontSize: ".85rem" }}>Pagamento: {rotuloPagamento(pg)}</div>}
+                        {c.descricao && <div style={{ fontSize: ".85rem" }}>{c.descricao}</div>}
+                        {pode(acesso, "pagamento.estornar") && <RemoverComprovante comprovanteId={c.id} />}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <details style={{ marginTop: 12 }} open={comprovantes.filter((c) => !c.removido_em).length === 0 && reserva.status === "realizada"}>
+                <summary style={{ cursor: "pointer", fontWeight: 600 }}>Anexar comprovantes</summary>
+                <div style={{ marginTop: 10 }}>
+                  <EnviarComprovantes reservaId={id} pagamentos={pagamentos.filter((g) => g.tipo === "recebimento").map((g) => ({ id: g.id, rotulo: rotuloPagamento(g) }))} />
+                </div>
+              </details>
+              {comprovantes.some((c) => c.removido_em) && (
+                <details style={{ marginTop: 10 }}>
+                  <summary className="mudo" style={{ cursor: "pointer", fontSize: ".85rem" }}>Tirados da lista ({comprovantes.filter((c) => c.removido_em).length})</summary>
+                  <ul className="mudo" style={{ fontSize: ".85rem" }}>
+                    {comprovantes.filter((c) => c.removido_em).map((c) => (
+                      <li key={c.id}>{c.nome_arquivo} · tirado em {formatarDataHora(c.removido_em)}: {c.removido_motivo}</li>
+                    ))}
+                  </ul>
+                </details>
+              )}
+            </section>
+          )}
         </div>
 
         <aside>
@@ -373,6 +445,14 @@ export default async function PaginaReserva({
             )}
             {reserva.status === "confirmada" && (
               <p style={{ marginTop: 0 }}>Confirmada em {formatarDataHora(reserva.confirmada_em)}.</p>
+            )}
+            {reserva.status === "realizada" && (
+              <p style={{ marginTop: 0 }}>
+                Evento realizado.{" "}
+                {verComprovantes && (comprovantes.some((c) => !c.removido_em)
+                  ? <a href="#comprovantes">Ver comprovantes</a>
+                  : <a href="#comprovantes">Anexe os comprovantes de pagamento</a>)}
+              </p>
             )}
             {["bloqueio_temporario", "expirada"].includes(reserva.status) && (
               <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--borda)" }}>

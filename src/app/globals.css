@@ -211,3 +211,9 @@ h1 { overflow-wrap: anywhere; }
 @keyframes esqueleto { from { background-position: 200% 0; } to { background-position: -200% 0; } }
 @media (prefers-reduced-motion: reduce) { .esqueleto { animation: none; } }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---------- comprovantes ---------- */
+.comprovantes { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.comprovante { display: flex; gap: 10px; padding: 10px; border: 1px solid var(--borda); border-radius: 10px; background: var(--marfim); }
+.comprovante .miniatura { flex: 0 0 72px; height: 72px; border-radius: 8px; overflow: hidden; background: var(--marfim-alt); display: flex; align-items: center; justify-content: center; text-decoration: none; font-weight: 700; color: var(--esmeralda); }
+.comprovante .miniatura img { width: 100%; height: 100%; object-fit: cover; }
