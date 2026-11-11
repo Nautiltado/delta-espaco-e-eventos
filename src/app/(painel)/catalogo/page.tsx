@@ -56,7 +56,7 @@ export default async function PaginaCatalogo({ searchParams }: { searchParams: P
       {categorias.map((cat) => (
         <section className="cartao" key={cat} id={`cat-${cat}`}>
           <h2>{CATEGORIAS[cat] ?? cat} <span className="mudo" style={{ fontFamily: "var(--sans)", fontSize: ".85rem" }}>{lista.filter((i) => i.categoria === cat).length}</span></h2>
-          <table>
+          <table className="empilhar">
             <thead>
               <tr>
                 <th>Item</th>
@@ -82,9 +82,9 @@ export default async function PaginaCatalogo({ searchParams }: { searchParams: P
                       {!i.ativo && <> <span className="selo cinza">Inativo</span></>}
                       {i.descricao && <div className="mudo">{i.descricao}</div>}
                     </td>
-                    <td>{UNIDADES[i.unidade] ?? i.unidade}</td>
-                    <td style={{ whiteSpace: "nowrap" }}>{precoDoItem(i)}</td>
-                    {verCusto && <td>{custo !== undefined ? formatarCentavos(custo) : <span className="mudo">—</span>}</td>}
+                    <td data-rotulo="Por">{UNIDADES[i.unidade] ?? i.unidade}</td>
+                    <td data-rotulo="Preço" style={{ whiteSpace: "nowrap" }}>{precoDoItem(i)}</td>
+                    {verCusto && <td data-rotulo="Custo">{custo !== undefined ? formatarCentavos(custo) : <span className="mudo">—</span>}</td>}
                     {verCusto && (
                       <td className="mudo">
                         {custo !== undefined && precoRef

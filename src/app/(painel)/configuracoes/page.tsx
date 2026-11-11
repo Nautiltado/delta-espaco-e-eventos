@@ -46,7 +46,7 @@ export default async function PaginaConfiguracoes() {
       {grupos.map((grupo) => (
         <section className="cartao" key={grupo}>
           <h2>{grupo}</h2>
-          <table>
+          <table className="tabela-config">
             <tbody>
               {configs
                 .filter((c) => c.grupo === grupo)

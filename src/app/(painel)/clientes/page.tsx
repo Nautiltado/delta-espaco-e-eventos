@@ -59,7 +59,7 @@ export default async function PaginaClientes({
         {clientes.length === 0 ? (
           <p className="mudo">{q ? "Nenhum cliente encontrado." : "Nenhum cliente cadastrado ainda."}</p>
         ) : (
-          <table>
+          <table className="empilhar">
             <thead>
               <tr>
                 <th>Cliente</th>
@@ -77,8 +77,8 @@ export default async function PaginaClientes({
                     {" "}<span className="selo cinza">{c.tipo === "PJ" ? "Empresa" : "Pessoa"}</span>
                     {!c.ativo && <> <span className="selo erro">Inativo</span></>}
                   </td>
-                  <td>{formatarTelefone(c.telefone)}</td>
-                  <td>{formatarDocumento(c.documento)}</td>
+                  <td data-rotulo="Telefone">{formatarTelefone(c.telefone)}</td>
+                  <td data-rotulo="CPF/CNPJ">{formatarDocumento(c.documento)}</td>
                   <td>{c.cidade}</td>
                 </tr>
               ))}
