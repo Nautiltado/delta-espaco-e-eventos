@@ -46,7 +46,7 @@ export function CampoConfiguracao({
               id={chave}
               name="valor"
               type="text"
-              inputMode={tipo === "texto" ? "text" : "decimal"}
+              inputMode={tipo === "texto" || tipo === "texto_opcional" ? "text" : "decimal"}
               defaultValue={valorCampo}
             />
           </div>

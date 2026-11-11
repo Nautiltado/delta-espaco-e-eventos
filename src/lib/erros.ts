@@ -9,6 +9,9 @@ const MENSAGENS: Record<string, string> = {
   ACESSO_NAO_AUTORIZADO: "Este e-mail não está cadastrado no Delta Gestão.",
   ORCAMENTO_IMUTAVEL: "Este orçamento já foi enviado e não pode mais ser alterado. Crie uma nova versão.",
   ORCAMENTO_VAZIO: "Inclua ao menos um item com valor antes de enviar.",
+  CONTRATO_IMUTAVEL: "Contrato gerado não muda. Gere uma nova versão se algo mudou.",
+  CONTRATO_ASSINADO_IMUTAVEL: "Já existe contrato assinado: ele não muda. Para alterar, cancele ou faça um aditivo.",
+  RESERVA_INEXISTENTE: "Reserva não encontrada.",
 };
 
 /** Códigos cujo texto depois dos dois-pontos já é a explicação certa para a pessoa. */
@@ -20,11 +23,20 @@ const COM_DETALHE = new Set([
   "JUSTIFICATIVA_OBRIGATORIA",
   "MESCLAGEM_INVALIDA",
   "SEM_PERMISSAO",
+  "DATA_INDISPONIVEL",
+  "HORARIO_INVALIDO",
+  "CONTRATO_DADOS_CLIENTE",
+  "CONTRATO_NAO_ASSINADO",
+  "ENTRADA_NAO_CONFIRMADA",
+  "PAGAMENTO_DUPLICADO",
+  "VALOR_INVALIDO",
+  "PARCELAS_COM_PAGAMENTO",
 ]);
 
 const PREFIXO: Record<string, string> = {
   APROVACAO_NECESSARIA: "Precisa de aprovação de um administrador: ",
   STATUS_INVALIDO: "Não é possível nesta situação: ",
+  DATA_INDISPONIVEL: "Data indisponível: ",
 };
 
 const RESTRICOES: Record<string, string> = {

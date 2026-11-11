@@ -22,3 +22,16 @@ describe("mensagemDoBanco", () => {
     expect(mensagemDoBanco({ message: "relation x does not exist" })).toBe("Não foi possível concluir. Tente de novo.");
   });
 });
+
+describe("erros da fase 4", () => {
+  it("data ocupada diz qual espaço e quando", () => {
+    expect(mensagemDoBanco({ message: "DATA_INDISPONIVEL: Espaço maior já está ocupado de 15/03 15:00 a 16/03 03:00 (reserva confirmada)" }))
+      .toBe("Data indisponível: Espaço maior já está ocupado de 15/03 15:00 a 16/03 03:00 (reserva confirmada).");
+  });
+  it("pagamento duplicado e entrada", () => {
+    expect(mensagemDoBanco({ message: "PAGAMENTO_DUPLICADO: este identificador de pagamento já foi registrado" }))
+      .toBe("Este identificador de pagamento já foi registrado.");
+    expect(mensagemDoBanco({ message: "ENTRADA_NAO_CONFIRMADA: dê baixa na primeira parcela antes de confirmar" }))
+      .toBe("Dê baixa na primeira parcela antes de confirmar.");
+  });
+});

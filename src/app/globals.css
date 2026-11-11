@@ -172,3 +172,26 @@ h1 { overflow-wrap: anywhere; }
   .linha .campo { min-width: 100%; }
 }
 .painel-lateral > * { min-width: 0; }
+
+/* ---------- agenda ---------- */
+.calendario { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); border-top: 1px solid var(--borda); border-left: 1px solid var(--borda); }
+.calendario .dia-semana { font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; color: var(--grafite-suave); padding: 6px; border-right: 1px solid var(--borda); border-bottom: 1px solid var(--borda); background: var(--marfim-alt); }
+.calendario .dia { min-height: 92px; padding: 4px; border-right: 1px solid var(--borda); border-bottom: 1px solid var(--borda); display: flex; flex-direction: column; gap: 3px; }
+.calendario .dia.fora { background: var(--marfim-alt); opacity: .55; }
+.calendario .dia.hoje .numero-dia { background: var(--esmeralda); color: var(--marfim); border-radius: 99px; padding: 0 7px; }
+.calendario .numero-dia { font-size: .78rem; font-weight: 600; align-self: flex-start; }
+.ocupacao { display: block; font-size: .72rem; line-height: 1.25; padding: 3px 5px; border-radius: 5px; text-decoration: none; color: var(--grafite); background: var(--esmeralda-claro); border-left: 3px solid var(--esmeralda); overflow: hidden; }
+.ocupacao.temporario { background: var(--dourado-suave); border-left-color: var(--dourado); }
+.ocupacao.bloqueio { background: var(--marfim-alt); border-left-color: var(--grafite-suave); }
+.ocupacao strong { font-weight: 600; }
+.legenda { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: .8rem; margin: 8px 0 0; }
+.legenda span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; background: var(--esmeralda-claro); border-left: 3px solid var(--esmeralda); }
+.legenda .temporario::before { background: var(--dourado-suave); border-left-color: var(--dourado); }
+.legenda .bloqueio::before { background: var(--marfim-alt); border-left-color: var(--grafite-suave); }
+@media (max-width: 760px) {
+  .calendario { grid-template-columns: minmax(0, 1fr); }
+  .calendario .dia-semana, .calendario .dia.fora, .calendario .dia.vazio { display: none; }
+  .calendario .dia { min-height: 0; flex-direction: row; flex-wrap: wrap; align-items: center; }
+}
+.so-celular { display: none; }
+@media (max-width: 760px) { .so-celular { display: inline; } }

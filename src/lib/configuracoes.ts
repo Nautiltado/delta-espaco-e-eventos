@@ -8,7 +8,8 @@ export type TipoConfig =
   | "dias"
   | "centavos"
   | "faixa_centavos"
-  | "texto";
+  | "texto"
+  | "texto_opcional";
 
 export type Configuracao = {
   chave: string;
@@ -59,6 +60,8 @@ export function lerValorDoFormulario(
       if (min > max) return { ok: false, erro: "O mínimo não pode ser maior que o máximo" };
       return { ok: true, valor: { min, max } };
     }
+    case "texto_opcional":
+      return { ok: true, valor: (form.valor ?? "").trim() };
     case "texto": {
       const t = (form.valor ?? "").trim();
       return t ? { ok: true, valor: t } : { ok: false, erro: "Não pode ficar vazio" };
@@ -80,6 +83,8 @@ export function exibirValor(tipo: TipoConfig, valor: unknown): string {
       return `${valor} h`;
     case "dias":
       return `${valor} dias`;
+    case "texto_opcional":
+      return String(valor ?? "") || "(não cadastrado)";
     default:
       return String(valor);
   }

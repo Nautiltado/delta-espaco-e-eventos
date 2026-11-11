@@ -7,6 +7,8 @@ import { criarClienteServidor } from "@/lib/supabase/server";
 import { formatarCentavos } from "@/lib/dinheiro";
 import { formatarData, formatarDataComDia, formatarDataHora, hojeNaDelta } from "@/lib/datas";
 import { linkWhatsApp } from "@/lib/documentos";
+import { descreverPeriodo, STATUS_RESERVA, type StatusReserva } from "@/lib/reservas";
+import { FormularioReservarData } from "../../reservas/componentes";
 import { precoDoItem, precoSugerido, type ItemCatalogo } from "@/lib/catalogo";
 import { margem, STATUS_ORCAMENTO, STATUS_VERSAO, TIPOS_ORCAMENTO, totalItem } from "@/lib/orcamentos";
 import { SELECT_ORCAMENTO, versaoEmFoco, type ItemOrcamento, type Orcamento, type Versao } from "@/lib/orcamento-dados";
@@ -51,13 +53,17 @@ export default async function PaginaOrcamento({
   const aberto = o.status === "rascunho" || o.status === "enviado";
   const editavel = podeCriar && v.status === "rascunho";
 
-  const [{ data: its }, catalogo, motivos, validadeCfg, espacos] = await Promise.all([
+  const [{ data: its }, catalogo, motivos, validadeCfg, espacos, { data: rs }] = await Promise.all([
     supabase.from("orcamento_itens").select("*").eq("versao_id", v.id).order("ordem").order("descricao"),
     supabase.from("catalogo_itens").select("*").order("categoria").order("ordem").order("nome"),
     v.status === "rascunho" ? supabase.rpc("motivos_aprovacao", { p_versao: v.id }) : Promise.resolve({ data: [] }),
     supabase.from("configuracoes").select("valor").eq("chave", "orcamento.validade_dias").maybeSingle(),
     supabase.from("recursos").select("id, nome, capacidade").eq("tipo", "espaco").eq("ativo", true).order("capacidade"),
+    supabase.from("reservas").select("id, status, evento_inicio, evento_fim, expira_em").eq("orcamento_id", id).order("criado_em", { ascending: false }),
   ]);
+  const reservas = (rs ?? []) as { id: string; status: StatusReserva; evento_inicio: string; evento_fim: string; expira_em: string | null }[];
+  const reservaAtiva = reservas.find((r) => ["bloqueio_temporario", "confirmada", "em_preparacao", "realizada"].includes(r.status));
+  const ultimaReserva = reservaAtiva ?? reservas[0];
   const itens = (its ?? []) as ItemOrcamento[];
   const custos =
     verCusto && itens.length
@@ -281,7 +287,7 @@ export default async function PaginaOrcamento({
             )}
             {v.status === "aprovada" && (
               <p style={{ marginTop: 0 }}>
-                Aceita pelo cliente em {formatarDataHora(v.aceita_em)}. O contrato e a reserva da data saem daqui na Fase 4.
+                Aceita pelo cliente em {formatarDataHora(v.aceita_em)}. O contrato sai da página da reserva.
               </p>
             )}
             {v.status === "substituida" && <p className="mudo" style={{ marginTop: 0 }}>Esta versão foi substituída por uma mais nova.</p>}
@@ -292,6 +298,34 @@ export default async function PaginaOrcamento({
               </div>
             )}
           </section>
+
+          {(ultimaReserva || (podeCriar && o.status !== "perdido")) && (
+            <section className="cartao" id="data-do-evento">
+              <h2>Data do evento</h2>
+              {ultimaReserva && (
+                <p style={{ marginTop: 0 }}>
+                  <Link href={`/reservas/${ultimaReserva.id}`}>{descreverPeriodo(ultimaReserva.evento_inicio, ultimaReserva.evento_fim)}</Link>
+                  <br />
+                  <span className={STATUS_RESERVA[ultimaReserva.status].classe}>{STATUS_RESERVA[ultimaReserva.status].rotulo}</span>
+                  {ultimaReserva.status === "bloqueio_temporario" && <span className="mudo"> até {formatarDataHora(ultimaReserva.expira_em)}</span>}
+                </p>
+              )}
+              {!reservaAtiva && podeCriar && o.status !== "perdido" && (
+                <details open={!ultimaReserva}>
+                  <summary style={{ cursor: "pointer", fontWeight: 600 }}>{ultimaReserva ? "Reservar outra data" : "Reservar a data"}</summary>
+                  <div style={{ marginTop: 10 }}>
+                    <FormularioReservarData
+                      orcamentoId={o.id}
+                      espacos={espacos.data ?? []}
+                      externo={o.tipo === "buffet_externo"}
+                      dataInicial={o.data_evento ?? ""}
+                      espacoInicial={o.recurso_id}
+                    />
+                  </div>
+                </details>
+              )}
+            </section>
+          )}
 
           <section className="cartao">
             <h2>Versões</h2>
