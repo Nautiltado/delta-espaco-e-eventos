@@ -11,7 +11,8 @@ export type ItemFormulario = {
   categoria: string;
   unidade: string;
   descricao: string | null;
-  preco_tipo: "fixo" | "faixa";
+  preco_tipo: "fixo" | "faixa" | "a_combinar";
+  subgrupo?: string | null;
   preco: string;
   preco_min: string;
   preco_max: string;
@@ -39,6 +40,10 @@ export function FormularioItem({ item, mostrarCusto }: { item?: ItemFormulario; 
           </select>
         </div>
         <div className="campo">
+          <label htmlFor="subgrupo">Subgrupo (opcional)</label>
+          <input id="subgrupo" name="subgrupo" type="text" placeholder="Ex.: Carnes e aves" defaultValue={item?.subgrupo ?? ""} />
+        </div>
+        <div className="campo">
           <label htmlFor="unidade">Cobrado por</label>
           <select id="unidade" name="unidade" defaultValue={item?.unidade ?? "evento"}>
             {Object.entries(UNIDADES).map(([v, r]) => <option key={v} value={v}>{r}</option>)}
@@ -54,10 +59,11 @@ export function FormularioItem({ item, mostrarCusto }: { item?: ItemFormulario; 
         <div className="opcoes">
           <label><input type="radio" name="preco_tipo" value="fixo" checked={tipo === "fixo"} onChange={() => setTipo("fixo")} /> Preço fixo</label>
           <label><input type="radio" name="preco_tipo" value="faixa" checked={tipo === "faixa"} onChange={() => setTipo("faixa")} /> Faixa (negociado caso a caso)</label>
+          <label><input type="radio" name="preco_tipo" value="a_combinar" checked={tipo === "a_combinar"} onChange={() => setTipo("a_combinar")} /> A combinar (preço digitado em cada orçamento)</label>
         </div>
       </div>
       <div className="linha" style={{ marginBottom: 14 }}>
-        {tipo === "fixo" ? (
+        {tipo === "a_combinar" ? null : tipo === "fixo" ? (
           <div className="campo">
             <label htmlFor="preco">Preço (R$)</label>
             <input id="preco" name="preco" type="text" inputMode="decimal" defaultValue={item?.preco} />

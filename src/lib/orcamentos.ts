@@ -44,14 +44,29 @@ export function rotuloUnidade(unidade: string, quantidade: number): string {
 
 export const CATEGORIAS: Record<string, string> = {
   espaco: "Espaços",
-  alimentacao: "Alimentação",
+  salgado_frito: "Salgados fritos",
+  salgado_assado: "Salgados assados",
+  lanche: "Lanches e finger foods",
+  confeitaria: "Bolos e confeitaria",
+  doce: "Docinhos e sobremesas",
+  entrada: "Entradas, caldos e acompanhamentos",
+  prato: "Pratos principais",
+  salada: "Saladas",
   bebida: "Bebidas",
-  servico: "Serviços",
+  material: "Materiais de apoio",
   equipe: "Equipe",
+  servico: "Serviços",
   equipamento: "Equipamentos",
-  salgado: "Salgados",
+  alimentacao: "Alimentação (outros)",
+  salgado: "Salgados (outros)",
   outro: "Outros",
 };
+
+/** Ordem das categorias como no cardápio (a ordem do objeto acima). */
+export function ordemCategoria(categoria: string): number {
+  const i = Object.keys(CATEGORIAS).indexOf(categoria);
+  return i < 0 ? 999 : i;
+}
 
 /** Quantidade como o banco calcula: round(quantidade × preço). */
 export function totalItem(quantidade: number, precoCentavos: number): number {

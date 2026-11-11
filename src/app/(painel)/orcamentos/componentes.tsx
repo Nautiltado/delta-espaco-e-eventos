@@ -175,8 +175,9 @@ export type OpcaoCatalogo = {
   nome: string;
   unidade: string;
   descricao: string | null;
-  preco_sugerido: number;
+  preco_sugerido: number | null;
   faixa: string;
+  grupo: string;
 };
 
 /** Use com key={quantidade de itens}: ao incluir um item, o formulário recomeça limpo; com erro, mantém o que foi digitado. */
@@ -197,7 +198,7 @@ export function NovoItem({ versaoId, catalogo }: { versaoId: string; catalogo: O
     if (c) {
       setDescricao(c.nome);
       setUnidade(c.unidade);
-      setPreco(centavosParaCampo(c.preco_sugerido));
+      setPreco(c.preco_sugerido === null ? "" : centavosParaCampo(c.preco_sugerido));
     } else {
       setDescricao("");
       setPreco("");
@@ -214,7 +215,11 @@ export function NovoItem({ versaoId, catalogo }: { versaoId: string; catalogo: O
           <label htmlFor="escolha">Do catálogo</label>
           <select id="escolha" value={escolha} onChange={(e) => escolher(e.target.value)}>
             <option value="">Item livre (digite abaixo)</option>
-            {catalogo.map((c) => <option key={c.id} value={c.id}>{c.nome} · {c.faixa}</option>)}
+            {[...new Set(catalogo.map((c) => c.grupo))].map((g) => (
+              <optgroup key={g} label={g}>
+                {catalogo.filter((c) => c.grupo === g).map((c) => <option key={c.id} value={c.id}>{c.nome} · {c.faixa}</option>)}
+              </optgroup>
+            ))}
           </select>
         </div>
         <div className="campo" style={{ flex: 2, minWidth: 200 }}>
@@ -236,7 +241,8 @@ export function NovoItem({ versaoId, catalogo }: { versaoId: string; catalogo: O
         </div>
         <div className="campo">
           <label htmlFor="preco-novo">Preço unitário (R$)</label>
-          <input id="preco-novo" name="preco" type="text" inputMode="decimal" required value={preco} onChange={(e) => setPreco(e.target.value)} />
+          <input id="preco-novo" name="preco" type="text" inputMode="decimal" required value={preco} onChange={(e) => setPreco(e.target.value)}
+            placeholder={selecionado && selecionado.preco_sugerido === null ? "A combinar: digite" : undefined} />
         </div>
         <div className="campo" style={{ minWidth: 110 }}>
           <label>Total</label>

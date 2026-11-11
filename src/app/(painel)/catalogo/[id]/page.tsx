@@ -14,7 +14,7 @@ export const metadata: Metadata = { title: "Item do catálogo" };
 
 type Historico = {
   id: number;
-  preco_tipo: "fixo" | "faixa";
+  preco_tipo: "fixo" | "faixa" | "a_combinar";
   preco_centavos: number | null;
   preco_min_centavos: number | null;
   preco_max_centavos: number | null;
@@ -50,7 +50,7 @@ export default async function ItemDoCatalogo({
         <div>
           <p style={{ margin: 0 }}><Link href="/catalogo">← Catálogo</Link></p>
           <h1>{i.nome}</h1>
-          <p>{CATEGORIAS[i.categoria]} · por {UNIDADES[i.unidade]} · {precoDoItem(i)}</p>
+          <p>{CATEGORIAS[i.categoria]}{i.subgrupo ? ` · ${i.subgrupo}` : ""} · por {UNIDADES[i.unidade]} · {precoDoItem(i)}</p>
         </div>
       </div>
       {salvo && <p className="aviso ok">Item salvo.</p>}
@@ -67,6 +67,7 @@ export default async function ItemDoCatalogo({
               unidade: i.unidade,
               descricao: i.descricao,
               preco_tipo: i.preco_tipo,
+              subgrupo: i.subgrupo ?? null,
               preco: i.preco_centavos !== null ? centavosParaCampo(i.preco_centavos) : "",
               preco_min: i.preco_min_centavos !== null ? centavosParaCampo(i.preco_min_centavos) : "",
               preco_max: i.preco_max_centavos !== null ? centavosParaCampo(i.preco_max_centavos) : "",

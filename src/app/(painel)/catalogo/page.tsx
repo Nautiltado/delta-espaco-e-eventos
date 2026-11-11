@@ -1,16 +1,20 @@
 import type { Metadata } from "next";
+import { Fragment } from "react";
 import Link from "next/link";
 import { exigirPermissao } from "@/lib/acesso";
 import { pode } from "@/lib/permissoes";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { formatarCentavos } from "@/lib/dinheiro";
-import { CATEGORIAS, UNIDADES } from "@/lib/orcamentos";
-import { precoDoItem, type ItemCatalogo } from "@/lib/catalogo";
+import { CATEGORIAS, ordemCategoria, UNIDADES } from "@/lib/orcamentos";
+import { ordenarCatalogo, precoDoItem, type ItemCatalogo } from "@/lib/catalogo";
 
 export const metadata: Metadata = { title: "Catálogo" };
 
-export default async function PaginaCatalogo() {
+export default async function PaginaCatalogo({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const acesso = await exigirPermissao("orcamento.ver");
+  const { q } = await searchParams;
+  const termo = (q ?? "").trim();
+  const normalizar = (t: string) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   const verCusto = pode(acesso, "custo.ver");
   const supabase = await criarClienteServidor();
   const [{ data: itens }, { data: custos }] = await Promise.all([
@@ -18,7 +22,8 @@ export default async function PaginaCatalogo() {
     verCusto ? supabase.from("catalogo_custos").select("item_id, custo_centavos") : Promise.resolve({ data: [] }),
   ]);
   const custoPorItem = new Map((custos ?? []).map((c) => [c.item_id as string, c.custo_centavos as number]));
-  const lista = (itens ?? []) as ItemCatalogo[];
+  const todos = ordenarCatalogo((itens ?? []) as ItemCatalogo[], ordemCategoria);
+  const lista = termo ? todos.filter((i) => normalizar(`${i.nome} ${i.descricao ?? ""} ${i.subgrupo ?? ""}`).includes(normalizar(termo))) : todos;
   const categorias = [...new Set(lista.map((i) => i.categoria))];
 
   return (
@@ -26,15 +31,31 @@ export default async function PaginaCatalogo() {
       <div className="cabecalho">
         <div>
           <h1>Catálogo</h1>
-          <p>Produtos e serviços com preço de referência. No orçamento, também dá para incluir item livre.</p>
+          <p>Cardápio, materiais e serviços. Itens “a combinar” têm o preço digitado em cada orçamento. No orçamento, também dá para incluir item livre.</p>
         </div>
         {pode(acesso, "catalogo.alterar") && <Link className="botao" href="/catalogo/novo">Novo item</Link>}
       </div>
 
-      {categorias.length === 0 && <p className="cartao mudo">Nenhum item no catálogo.</p>}
+      <section className="cartao">
+        <form className="linha" style={{ alignItems: "flex-end" }}>
+          <div className="campo" style={{ flex: 1, marginBottom: 0 }}>
+            <label htmlFor="q">Procurar no catálogo</label>
+            <input id="q" name="q" type="search" defaultValue={termo} placeholder="Ex.: coxinha, filé, suco" />
+          </div>
+          <button className="botao secundario">Procurar</button>
+          {termo && <Link href="/catalogo">Limpar</Link>}
+        </form>
+        {!termo && (
+          <p className="opcoes" style={{ margin: "12px 0 0", fontSize: ".88rem" }}>
+            {categorias.map((c) => <a key={c} href={`#cat-${c}`}>{CATEGORIAS[c] ?? c}</a>)}
+          </p>
+        )}
+      </section>
+
+      {categorias.length === 0 && <p className="cartao mudo">{termo ? "Nada encontrado." : "Nenhum item no catálogo."}</p>}
       {categorias.map((cat) => (
-        <section className="cartao" key={cat}>
-          <h2>{CATEGORIAS[cat] ?? cat}</h2>
+        <section className="cartao" key={cat} id={`cat-${cat}`}>
+          <h2>{CATEGORIAS[cat] ?? cat} <span className="mudo" style={{ fontFamily: "var(--sans)", fontSize: ".85rem" }}>{lista.filter((i) => i.categoria === cat).length}</span></h2>
           <table>
             <thead>
               <tr>
@@ -46,11 +67,16 @@ export default async function PaginaCatalogo() {
               </tr>
             </thead>
             <tbody>
-              {lista.filter((i) => i.categoria === cat).map((i) => {
+              {lista.filter((i) => i.categoria === cat).map((i, n, doGrupo) => {
                 const custo = custoPorItem.get(i.id);
+                const novoSubgrupo = i.subgrupo && i.subgrupo !== doGrupo[n - 1]?.subgrupo;
                 const precoRef = i.preco_tipo === "fixo" ? i.preco_centavos : i.preco_min_centavos;
                 return (
-                  <tr key={i.id} style={i.ativo ? undefined : { opacity: 0.5 }}>
+                  <Fragment key={i.id}>
+                  {novoSubgrupo && (
+                    <tr><td colSpan={verCusto ? 5 : 3} style={{ fontWeight: 600, color: "var(--esmeralda)", paddingTop: 14 }}>{i.subgrupo}</td></tr>
+                  )}
+                  <tr style={i.ativo ? undefined : { opacity: 0.5 }}>
                     <td>
                       <Link href={`/catalogo/${i.id}`}><strong>{i.nome}</strong></Link>
                       {!i.ativo && <> <span className="selo cinza">Inativo</span></>}
@@ -67,6 +93,7 @@ export default async function PaginaCatalogo() {
                       </td>
                     )}
                   </tr>
+                  </Fragment>
                 );
               })}
             </tbody>

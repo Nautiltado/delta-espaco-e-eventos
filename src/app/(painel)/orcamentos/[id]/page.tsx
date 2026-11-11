@@ -9,8 +9,8 @@ import { formatarData, formatarDataComDia, formatarDataHora, hojeNaDelta } from 
 import { linkWhatsApp } from "@/lib/documentos";
 import { descreverPeriodo, STATUS_RESERVA, type StatusReserva } from "@/lib/reservas";
 import { FormularioReservarData } from "../../reservas/componentes";
-import { precoDoItem, precoSugerido, type ItemCatalogo } from "@/lib/catalogo";
-import { margem, STATUS_ORCAMENTO, STATUS_VERSAO, TIPOS_ORCAMENTO, totalItem } from "@/lib/orcamentos";
+import { ordenarCatalogo, precoDoItem, precoSugerido, type ItemCatalogo } from "@/lib/catalogo";
+import { CATEGORIAS, margem, ordemCategoria, STATUS_ORCAMENTO, STATUS_VERSAO, TIPOS_ORCAMENTO, totalItem } from "@/lib/orcamentos";
 import { SELECT_ORCAMENTO, versaoEmFoco, type ItemOrcamento, type Orcamento, type Versao } from "@/lib/orcamento-dados";
 import { criarNovaVersao, salvarCabecalho } from "../actions";
 import {
@@ -189,7 +189,8 @@ export default async function PaginaOrcamento({
                 <NovoItem
                   key={itens.length}
                   versaoId={v.id}
-                  catalogo={todosCatalogo.filter((c) => c.ativo).map((c) => ({
+                  catalogo={ordenarCatalogo(todosCatalogo.filter((c) => c.ativo), ordemCategoria).map((c) => ({
+                    grupo: (CATEGORIAS[c.categoria] ?? c.categoria) + (c.subgrupo ? ` · ${c.subgrupo}` : ""),
                     id: c.id,
                     nome: c.nome,
                     unidade: c.unidade,

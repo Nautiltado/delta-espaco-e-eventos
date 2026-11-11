@@ -17,7 +17,8 @@ const base = z.object({
   categoria: z.enum(Object.keys(CATEGORIAS) as [string, ...string[]]),
   unidade: z.enum(Object.keys(UNIDADES) as [string, ...string[]]),
   descricao: z.string().trim().max(500).transform((v) => v || null),
-  preco_tipo: z.enum(["fixo", "faixa"]),
+  preco_tipo: z.enum(["fixo", "faixa", "a_combinar"]),
+  subgrupo: z.string().trim().max(60).transform((v) => v || null),
   ordem: z.coerce.number().int().min(0).max(9999).default(0),
   ativo: z.boolean(),
 });
@@ -31,13 +32,16 @@ export async function salvarItem(_: EstadoItem, form: FormData): Promise<EstadoI
     unidade: form.get("unidade"),
     descricao: String(form.get("descricao") ?? ""),
     preco_tipo: form.get("preco_tipo"),
+    subgrupo: String(form.get("subgrupo") ?? ""),
     ordem: form.get("ordem") || 0,
     ativo: form.get("ativo") === "1",
   });
   if (!b.success) return { erro: b.error.issues[0].message };
 
   let precos: { preco_centavos: number | null; preco_min_centavos: number | null; preco_max_centavos: number | null };
-  if (b.data.preco_tipo === "fixo") {
+  if (b.data.preco_tipo === "a_combinar") {
+    precos = { preco_centavos: null, preco_min_centavos: null, preco_max_centavos: null };
+  } else if (b.data.preco_tipo === "fixo") {
     const p = lerReais(String(form.get("preco") ?? ""));
     if (p === null) return { erro: "Preço inválido" };
     precos = { preco_centavos: p, preco_min_centavos: null, preco_max_centavos: null };
