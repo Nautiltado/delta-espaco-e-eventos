@@ -168,7 +168,7 @@ export function FormularioPedido({ produtos, estoque, hoje, horaSugerida }: {
         <button type="button" className="botao" onClick={registrar} disabled={enviando}>
           {enviando ? "Registrando…" : `Registrar pedido · ${formatarCentavos(total)}`}
         </button>
-        <span className="mudo" style={{ fontSize: ".82rem" }}>Depois vem o Pix. Vai para a cozinha quando pago.</span>
+        <span className="mudo" style={{ fontSize: ".82rem" }}>Depois vem o Pix. Vai para a cozinha quando pago. Avise o cliente: depois de pronto, cancelar não devolve o dinheiro.</span>
       </div>
     </div>
   );

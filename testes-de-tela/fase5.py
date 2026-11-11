@@ -109,6 +109,25 @@ with sync_playwright() as p:
     ver(atd.get_by_text("cliente desistiu"), "pedido cancelado com motivo")
     atd.goto(f"{B}/tarefas"); ver(atd.get_by_text(re.compile(r"Devolver R\$\s?80,00 ao cliente do pedido PED-")).first, "tarefa de devolver o dinheiro criada")
 
+    # pedido pronto cancelado: sem devolução e vira perda
+    novo_pedido(atd, "Cliente Salgado 3 (teste)", [("Coxinha de frango (cento)", 1)])
+    atd.click(".rodape-pedido .botao"); atd.wait_for_url(re.compile(r"aviso=criado")); url3 = atd.url.split("?")[0]
+    ver(atd.get_by_text("depois de pronto, o salgado já foi feito").first, "pedido mostra a regra de cancelamento")
+    atd.fill("#pp-id", pix + "C"); atd.click("button:has-text('Pagamento recebido')"); atd.wait_for_url(re.compile(r"aviso=pago"))
+    coz.goto(f"{B}/salgados/cozinha"); coz.locator(".cozinha-pedido", has_text="Cliente Salgado 3 (teste)").get_by_role("button", name="Pronto").click()
+    expect(coz.locator(".cozinha-pedido.pronto", has_text="Cliente Salgado 3 (teste)")).to_be_visible()
+    antes3 = disp("Coxinha de frango")
+    atd.goto(url3); atd.click("summary:has-text('Cancelar pedido')")
+    ver(atd.get_by_text("o dinheiro não é devolvido"), "aviso: pronto não devolve")
+    check(atd.locator("input[name=devolver]").count() == 0, "atendimento não tem a exceção de devolver")
+    atd.fill("#pc-motivo", "cliente desistiu depois de pronto"); atd.click("button:has-text('Cancelar pedido')"); atd.wait_for_url(re.compile(r"aviso=cancelado"))
+    ver(atd.get_by_text("Sem devolução"), "cancelado sem devolução")
+    atd.goto(f"{B}/tarefas")
+    check(atd.get_by_text(re.compile(r"Devolver R\$\s?80,00 ao cliente do pedido PED-\d+-\d+ \(Cliente Salgado 3")).count() == 0, "nenhuma tarefa de devolução para o pedido pronto")
+    check(disp("Coxinha de frango") == antes3, "disponível não muda (sai do guardado como perda)")
+    adm.goto(f"{B}/salgados/estoque")
+    ver(adm.locator(".pedidos-lista li", has_text="cancelado depois de pronto").first, "perda registrada no histórico")
+
     # estoque e preços (administração)
     adm.goto(f"{B}/salgados/estoque")
     linha = adm.locator("tr", has_text="Quibe de carne").first

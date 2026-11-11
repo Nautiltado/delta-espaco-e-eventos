@@ -93,7 +93,9 @@ export async function cancelarPedido(_: Estado, form: FormData): Promise<Estado>
   const id = uuid.safeParse(form.get("pedido_id"));
   if (!id.success) return { erro: "Pedido inválido." };
   const supabase = await criarClienteServidor();
-  const { error } = await supabase.rpc("cancelar_pedido", { p_pedido: id.data, p_motivo: texto(form, "motivo") });
+  const { error } = await supabase.rpc("cancelar_pedido", {
+    p_pedido: id.data, p_motivo: texto(form, "motivo"), p_devolver_mesmo_pronto: form.get("devolver") === "on",
+  });
   if (error) return { erro: mensagemDoBanco(error) };
   recarregar(id.data);
   revalidatePath("/tarefas");

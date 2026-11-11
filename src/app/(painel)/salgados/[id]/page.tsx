@@ -11,7 +11,7 @@ import { linkWhatsApp } from "@/lib/documentos";
 import { payloadPix } from "@/lib/pix";
 import { FORMAS_PAGAMENTO } from "@/lib/reservas";
 import { lerConfiguracoes } from "@/lib/reserva-dados";
-import { CANAIS, STATUS_PEDIDO, diaDaDelta, horaDaDelta, type StatusPedido } from "@/lib/salgados";
+import { AVISO_CANCELAMENTO, CANAIS, STATUS_PEDIDO, diaDaDelta, horaDaDelta, type StatusPedido } from "@/lib/salgados";
 import { BotaoAcao, CopiarPix } from "../../reservas/componentes";
 import { entregarPedido, marcarPronto } from "../actions";
 import { FormularioCancelarPedido, FormularioPagamentoPedido } from "../componentes";
@@ -27,7 +27,7 @@ const AVISOS: Record<string, string> = {
 type Pedido = {
   id: string; numero: string; cliente_nome: string; cliente_telefone: string | null; canal: string; retirada_em: string;
   status: StatusPedido; total_centavos: number; observacao: string | null; criado_em: string; pago_em: string | null;
-  pronto_em: string | null; entregue_em: string | null; cancelado_em: string | null; cancelado_motivo: string | null;
+  pronto_em: string | null; entregue_em: string | null; cancelado_em: string | null; cancelado_motivo: string | null; devolucao: boolean;
   pedido_itens: { id: string; descricao: string; quantidade: number; preco_unitario_centavos: number; total_centavos: number;
     composicao: { estoque_item_id: string; unidades: number }[] | null }[];
   pedido_pagamentos: { id: string; valor_centavos: number; forma: string; id_externo: string | null; recebido_em: string }[];
@@ -69,6 +69,8 @@ export default async function PaginaPedido({
     ...p.pedido_itens.map((i) => `• ${i.quantidade}× ${i.descricao}`),
     `Total: ${formatarCentavos(p.total_centavos)}`,
     `Retirada: ${formatarDataComDia(dia)} às ${horaDaDelta(p.retirada_em)}`,
+    "",
+    AVISO_CANCELAMENTO,
     ...(aguardando && pix ? ["", "Pix copia e cola:", pix.codigo] : []),
   ].join("\n");
 
@@ -93,7 +95,12 @@ export default async function PaginaPedido({
       </div>
 
       {aviso && AVISOS[aviso] && <p className="aviso ok" role="status">{AVISOS[aviso]}</p>}
-      {p.status === "cancelado" && <p className="aviso erro">Cancelado em {formatarDataHora(p.cancelado_em)}: {p.cancelado_motivo}</p>}
+      {p.status === "cancelado" && (
+        <p className="aviso erro">
+          Cancelado em {formatarDataHora(p.cancelado_em)}: {p.cancelado_motivo}.{" "}
+          {p.pedido_pagamentos.length > 0 && (p.devolucao ? "Dinheiro a devolver ao cliente (veja Tarefas)." : "Sem devolução: o salgado já estava pronto.")}
+        </p>
+      )}
 
       <div className="grade" style={{ alignItems: "start" }}>
         <section className="cartao">
@@ -116,6 +123,7 @@ export default async function PaginaPedido({
           <p style={{ textAlign: "right", fontSize: "1.1rem" }}><strong>Total {formatarCentavos(p.total_centavos)}</strong></p>
           {p.observacao && <p><strong>Observação:</strong> {p.observacao}</p>}
           {p.cliente_telefone && <p className="mudo">Telefone: {p.cliente_telefone}</p>}
+          {ativo && <p className="mudo" style={{ fontSize: ".85rem" }}>{AVISO_CANCELAMENTO}</p>}
         </section>
 
         <section className="cartao">
@@ -164,7 +172,7 @@ export default async function PaginaPedido({
           {ativo && (pode(acesso, "salgados.criar") || pode(acesso, "pagamento.estornar")) && (
             <details style={{ marginTop: 16 }}>
               <summary>Cancelar pedido</summary>
-              <FormularioCancelarPedido pedidoId={p.id} pago={!aguardando} />
+              <FormularioCancelarPedido pedidoId={p.id} status={p.status as "aguardando_pagamento" | "pago" | "pronto"} podeExcecao={pode(acesso, "pagamento.estornar")} />
             </details>
           )}
         </section>

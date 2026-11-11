@@ -37,18 +37,30 @@ export function FormularioPagamentoPedido({ pedidoId, hoje }: { pedidoId: string
   );
 }
 
-export function FormularioCancelarPedido({ pedidoId, pago }: { pedidoId: string; pago: boolean }) {
+export function FormularioCancelarPedido({ pedidoId, status, podeExcecao }: {
+  pedidoId: string; status: "aguardando_pagamento" | "pago" | "pronto"; podeExcecao: boolean;
+}) {
   const [estado, enviar, enviando] = useActionState<Estado, FormData>(cancelarPedido, {});
   const [motivo, setMotivo] = useState("");
+  const [devolver, setDevolver] = useState(false);
   return (
     <form action={enviar}>
       <input type="hidden" name="pedido_id" value={pedidoId} />
       <Retorno estado={estado} />
+      {status === "pago" && <p className="aviso info">Ainda não ficou pronto: o cliente recebe o dinheiro de volta (o sistema cria a tarefa de devolver).</p>}
+      {status === "pronto" && (
+        <p className="aviso erro">Já está pronto: o dinheiro <strong>não</strong> é devolvido, e os salgados saem do estoque como perda.</p>
+      )}
       <div className="campo">
         <label htmlFor="pc-motivo">Motivo</label>
         <input id="pc-motivo" name="motivo" type="text" required value={motivo} onChange={(e) => setMotivo(e.target.value)} placeholder="Ex.: cliente desistiu" />
       </div>
-      {pago && <p className="mudo" style={{ fontSize: ".85rem" }}>Como já foi pago, o sistema cria a tarefa de devolver o dinheiro.</p>}
+      {status === "pronto" && podeExcecao && (
+        <label style={{ display: "flex", gap: 6, alignItems: "center", fontWeight: 500, marginBottom: 10 }}>
+          <input type="checkbox" name="devolver" checked={devolver} onChange={(e) => setDevolver(e.target.checked)} />
+          Devolver mesmo assim (erro nosso: atraso, pedido errado)
+        </label>
+      )}
       <button className="botao secundario" disabled={enviando}>Cancelar pedido</button>
     </form>
   );

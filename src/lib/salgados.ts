@@ -82,3 +82,7 @@ export function somarPorSalgado(
       for (const c of i.composicao ?? []) m.set(c.estoque_item_id, (m.get(c.estoque_item_id) ?? 0) + c.unidades);
   return m;
 }
+
+/** Regra combinada com o cliente: cancela com devolução até ficar pronto; depois de pronto, não. */
+export const AVISO_CANCELAMENTO =
+  "Cancelamento com devolução do valor só até o pedido ficar pronto. Depois de pronto, o salgado já foi feito e o valor não é devolvido.";

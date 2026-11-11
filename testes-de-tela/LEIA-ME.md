@@ -19,9 +19,9 @@ tarefa de cobrança, estorno, prévia do cancelamento (multa por faixa e arrepen
 da agenda, modelo de contrato e telas no celular. Precisa das contas `teste.e2e.adm`, `teste.e2e.atd` e
 `teste.e2e.fin` (perfis ADM, ATD e FIN). As datas são sorteadas em 2028 a cada rodada.
 
-`fase5.py` percorre as encomendas (31 verificações) com atendimento, cozinha e administração: produção somando no
+`fase5.py` percorre as encomendas (38 verificações) com atendimento, cozinha e administração: produção somando no
 estoque, sortido sem sabor recusado, divisão do sortido, pedido só vai para a cozinha depois de pago, Pix repetido
-recusado, pronto, retirada baixando o estoque, cancelamento de pedido pago criando a devolução, mínimo, perda com
+recusado, pronto, retirada baixando o estoque, cancelamento antes de pronto com devolução e depois de pronto sem devolução (vira perda), mínimo, perda com
 motivo, histórico ligado ao pedido, preço e telas no celular. Precisa de `teste.e2e.adm`, `teste.e2e.atd` e `teste.e2e.coz`.
 
 `concorrencia.mjs` dispara 30 pedidos simultâneos para o mesmo espaço e horário e exige exatamente um aceito.
