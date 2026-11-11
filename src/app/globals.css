@@ -188,10 +188,20 @@ h1 { overflow-wrap: anywhere; }
 .legenda span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; background: var(--esmeralda-claro); border-left: 3px solid var(--esmeralda); }
 .legenda .temporario::before { background: var(--dourado-suave); border-left-color: var(--dourado); }
 .legenda .bloqueio::before { background: var(--marfim-alt); border-left-color: var(--grafite-suave); }
+/* celular: grade compacta; cada ocupação vira uma faixa colorida e o detalhe aparece ao tocar no dia */
 @media (max-width: 760px) {
-  .calendario { grid-template-columns: minmax(0, 1fr); }
-  .calendario .dia-semana, .calendario .dia.fora, .calendario .dia.vazio { display: none; }
-  .calendario .dia { min-height: 0; flex-direction: row; flex-wrap: wrap; align-items: center; }
+  .calendario .dia-semana { padding: 4px 2px; text-align: center; font-size: .65rem; }
+  .calendario .dia { min-height: 54px; padding: 3px; }
+  .calendario .ocupacao { font-size: 0; line-height: 0; height: 6px; padding: 0; border-left-width: 0; pointer-events: none; }
+  .calendario .ocupacao.temporario { background: var(--dourado); }
+  .calendario .ocupacao.bloqueio { background: var(--grafite-suave); }
+  .calendario .ocupacao:not(.temporario):not(.bloqueio) { background: var(--esmeralda); }
 }
-.so-celular { display: none; }
-@media (max-width: 760px) { .so-celular { display: inline; } }
+.calendario .dia { position: relative; }
+.calendario .abrir-dia { position: absolute; inset: 0; z-index: 0; border-radius: 0; }
+.calendario .abrir-dia:hover { background: var(--esmeralda-claro); opacity: .45; }
+.calendario .abrir-dia:focus-visible { outline: 2px solid var(--esmeralda); outline-offset: -2px; }
+.calendario .numero-dia, .calendario .ocupacao { position: relative; z-index: 1; pointer-events: none; }
+.calendario .ocupacao { pointer-events: auto; }
+.calendario .dia.escolhido { box-shadow: inset 0 0 0 2px var(--dourado); }
+.calendario .dia { cursor: pointer; }

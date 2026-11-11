@@ -290,14 +290,14 @@ export function FormularioCancelamento({ reservaId, calculos }: { reservaId: str
 
 // ------------------------------------------------------------------ agenda
 
-export function FormularioBloqueio({ espacos, hoje }: { espacos: { id: string; nome: string }[]; hoje: string }) {
+export function FormularioBloqueio({ espacos, hoje, dataInicial = "" }: { espacos: { id: string; nome: string }[]; hoje: string; dataInicial?: string }) {
   const [estado, enviar, enviando] = useActionState<Estado, FormData>(bloquearAgenda, {});
   return (
     <form action={enviar}>
       <Retorno estado={estado} />
       <div className="campo">
         <label htmlFor="b-data">Dia</label>
-        <input id="b-data" name="data" type="date" required min={hoje} />
+        <input id="b-data" name="data" type="date" required min={hoje} defaultValue={dataInicial} />
       </div>
       <div className="linha" style={{ marginBottom: 12 }}>
         <div className="campo">
