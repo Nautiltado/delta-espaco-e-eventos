@@ -19,8 +19,19 @@ begin
   alter table parcelas disable trigger parcelas_sem_delete;
   alter table contratos disable trigger contratos_sem_delete;
   alter table reservas disable trigger reservas_sem_delete;
+  alter table pedidos disable trigger pedidos_sem_delete;
+  alter table pedido_itens disable trigger pedido_itens_sem_delete;
+  alter table pedido_pagamentos disable trigger pedido_pagamentos_imutavel;
+  alter table estoque_movimentos disable trigger estoque_movimentos_imutavel;
 
-  clis := array(select id from clientes where criado_por = any(testes) or nome like '%(teste)%');
+  -- encomendas (Fase 5)
+  delete from estoque_movimentos where criado_por = any(testes)
+    or pedido_id in (select id from pedidos where criado_por = any(testes));
+  delete from pedido_pagamentos where pedido_id in (select id from pedidos where criado_por = any(testes));
+  delete from pedido_itens where pedido_id in (select id from pedidos where criado_por = any(testes));
+  delete from pedidos where criado_por = any(testes);
+
+  clis := array(select id from clientes where criado_por = any(testes));  -- só o que as contas de teste criaram
   orcs := array(select id from orcamentos where criado_por = any(testes) or cliente_id = any(clis));
   vers := array(select id from orcamento_versoes where orcamento_id = any(orcs));
   cat  := array(select id from catalogo_itens where nome like '%(teste)%');
@@ -64,6 +75,10 @@ begin
   alter table parcelas enable trigger parcelas_sem_delete;
   alter table contratos enable trigger contratos_sem_delete;
   alter table reservas enable trigger reservas_sem_delete;
+  alter table pedidos enable trigger pedidos_sem_delete;
+  alter table pedido_itens enable trigger pedido_itens_sem_delete;
+  alter table pedido_pagamentos enable trigger pedido_pagamentos_imutavel;
+  alter table estoque_movimentos enable trigger estoque_movimentos_imutavel;
 end $$;
 select (select count(*) from usuarios) usuarios, (select count(*) from auth.users) contas, (select count(*) from clientes) clientes,
        (select count(*) from orcamentos) orcamentos, (select count(*) from reservas) reservas, (select count(*) from tarefas) tarefas,

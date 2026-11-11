@@ -35,6 +35,13 @@ export async function exigirAcesso(): Promise<Acesso> {
 }
 
 /** Exige uma permissão. Usado em páginas e em toda ação do servidor. */
+/** Basta ter uma das permissões (ex.: a página do pedido serve ao atendimento, à cozinha e ao financeiro). */
+export async function exigirAlguma(permissoes: Permissao[]): Promise<Acesso> {
+  const acesso = await exigirAcesso();
+  if (!permissoes.some((p) => pode(acesso, p))) redirect("/sem-permissao");
+  return acesso;
+}
+
 export async function exigirPermissao(permissao: Permissao): Promise<Acesso> {
   const acesso = await exigirAcesso();
   if (!pode(acesso, permissao)) redirect("/sem-permissao");

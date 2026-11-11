@@ -16,7 +16,7 @@ describe("menu por permissão", () => {
     expect(rotas).not.toContain("/usuarios");
     expect(rotas).not.toContain("/auditoria");
     expect(rotas).not.toContain("/clientes");
-    expect(rotas).toContain("/salgados");
+    expect(rotas).toContain("/salgados/cozinha");
   });
   it("administrador vê usuários e auditoria", () => {
     const rotas = menuDoUsuario(admin).map((i) => i.href);

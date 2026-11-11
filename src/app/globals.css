@@ -325,3 +325,33 @@ input.invalido { border-color: #b3261e !important; background: #fdf1f0; }
   .tabela-config tr { display: block; padding: 12px 0; border-bottom: 1px solid var(--borda); }
   .tabela-config td { display: block; width: 100% !important; border: 0; padding: 2px 0; }
 }
+
+/* ---------- encomendas e cozinha ---------- */
+.rotulo-campo { display: block; font-size: .82rem; font-weight: 600; margin-bottom: 4px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { border: 1px solid var(--borda); background: #fff; color: var(--grafite); border-radius: 99px; padding: 6px 12px; font: inherit; font-size: .88rem; cursor: pointer; }
+.chip.ativo { background: var(--esmeralda); border-color: var(--esmeralda); color: var(--marfim); }
+.cardapio { list-style: none; margin: 0; padding: 0; }
+.cardapio li { padding: 10px 0; border-bottom: 1px solid var(--borda); }
+.cardapio li:last-child { border-bottom: 0; }
+.cardapio li.escolhido strong { color: var(--esmeralda); }
+.cardapio-linha { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.contador { display: flex; align-items: center; gap: 4px; flex: 0 0 auto; }
+.contador button { width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--borda); background: #fff; font-size: 1.3rem; font-weight: 700; color: var(--esmeralda); cursor: pointer; }
+.contador button:disabled { opacity: .35; }
+.contador span { min-width: 30px; text-align: center; font-weight: 700; font-size: 1.05rem; }
+.rodape-pedido { position: sticky; bottom: 0; z-index: 10; background: var(--marfim); border-top: 1px solid var(--borda); padding: 12px 0; margin-top: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.rodape-pedido > p { flex-basis: 100%; }
+.pedido-form .cartao + .cartao { margin-top: 12px; }
+.form-inline { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.pedidos-lista { list-style: none; margin: 0; padding: 0; }
+.pedidos-lista li { display: flex; justify-content: space-between; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--borda); }
+.pedidos-lista li:last-child { border-bottom: 0; }
+.cozinha-pedido { border: 1px solid var(--borda); border-left: 5px solid var(--esmeralda); border-radius: 10px; padding: 12px 14px; background: #fff; margin-bottom: 10px; }
+.cozinha-pedido.pronto { border-left-color: var(--dourado); }
+.cozinha-pedido .hora { font-size: 1.3rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.estoque-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.estoque-item { border: 1px solid var(--borda); border-radius: 10px; padding: 10px; background: #fff; }
+.estoque-item.repor { border-color: #b3261e; background: #fdf1f0; }
+.estoque-item .num { font-size: 1.4rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+@media (max-width: 860px) { .rodape-pedido { bottom: calc(64px + env(safe-area-inset-bottom)); } }
