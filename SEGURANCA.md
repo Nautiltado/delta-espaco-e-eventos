@@ -19,3 +19,32 @@ Como cada proteção está feita. Revisado em 13/11/2026.
 | Vazamento de conteúdo | Mensagens de erro traduzidas, sem detalhe técnico; política de conteúdo (CSP) só permite o próprio site e o Supabase; o site não pode ser embutido em outro (`frame-ancestors 'none'`); HSTS, nosniff, Referrer-Policy. |
 | Uploads | Só PDF e imagem (JPG, PNG, WEBP, HEIC), até 10 MB, conferido no servidor e no próprio armazenamento; buckets privados; link de envio assinado pelo servidor e caminho gerado por ele; leitura só com permissão. |
 | Criptografia | Banco e arquivos cifrados em disco (AES-256) pelo Supabase e tudo trafega em HTTPS/TLS. CPF fica legível para o sistema poder buscar e montar contrato; a proteção é por permissão (próxima etapa: esconder CPF e telefone de quem não precisa). |
+
+## Checklist de 24 pontos (conferido em 13/11/2026)
+
+| # | Ponto | Situação |
+|---|---|---|
+| 1 | Chaves em variáveis de ambiente | ✅ nenhuma chave no código |
+| 2 | Nada de segredo no histórico do git | ✅ nenhuma chave em nenhum commit (os CPFs antigos continuam no histórico: por isso o repositório deve ficar privado) |
+| 3 | Chave secreta nunca no navegador | ✅ conferido no pacote publicado |
+| 4 | Chave pública não passa do RLS | ✅ testado: sem login, a API nega todas as tabelas, funções e arquivos |
+| 5 | RLS em todas as tabelas | ✅ todas |
+| 6 | Nenhuma política "true" genérica | ✅ nenhuma; cada uma exige permissão (sistema de uma empresa só: o escopo é por perfil) |
+| 7 | Acesso por papel, sem excesso | ✅ perfis e permissões por ação |
+| 8 | Mass assignment | ✅ campos permitidos no servidor e no banco |
+| 9 | Consultas parametrizadas | ✅ |
+| 10 | Validação de entrada | ✅ em toda ação e rota |
+| 11 | Telas sensíveis só com login | ✅ testado: tudo manda para /entrar |
+| 12 | Sessão conferida no servidor | ✅ |
+| 13 | Cookies httpOnly, secure, sameSite | ✅ |
+| 14 | Senhas com hash | ✅ (Supabase/bcrypt; convites em SHA-256) |
+| 15 | HTTPS em tudo | ✅ http → https (308) + HSTS |
+| 16 | Cabeçalhos de segurança | ✅ CSP, X-Frame-Options, nosniff, Referrer-Policy, Permissions-Policy |
+| 17 | Limite de tentativas | ✅ login, visitante, convite, troca de senha (não há rota de IA) |
+| 18 | Proteção contra robôs | 🟡 BotID ligado em observação; bloquear depois de conferir com o navegador da equipe |
+| 19 | Uploads restritos | ✅ tipo e tamanho no servidor e no armazenamento |
+| 20 | Respostas enxutas | ✅ telas buscam no servidor; o navegador recebe só o que a tela mostra (configurações restritas só para quem pode) |
+| 21 | Erros sem detalhe interno | ✅ mensagens traduzidas; o site publicado não mostra stack trace |
+| 22 | Pacotes conferidos | ✅ `npm audit`: 0 vulnerabilidades; pacotes de autores oficiais |
+| 23 | Dados sensíveis cifrados | ✅ não guardamos senha nem token de terceiros; links de convite só como hash; disco cifrado pelo Supabase |
+| 24 | Auditoria do banco antes de entregar | ✅ `supabase/tests/auditoria_rls.sql` |
