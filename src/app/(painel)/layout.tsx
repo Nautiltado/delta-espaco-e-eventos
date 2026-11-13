@@ -63,6 +63,12 @@ export default async function LayoutPainel({ children }: { children: React.React
           <Migalhas itens={itens} />
           <span className="topo-data">{hoje.charAt(0).toUpperCase() + hoje.slice(1)}</span>
         </div>
+        {acesso.perfis.includes("VIS") && (
+          <div className="faixa-visitante" role="note">
+            <strong>Modo visitante</strong> · só para ver: nomes, contatos e valores aparecem ocultos (••••••, R$ 0,00) e nada pode ser alterado.
+            <form action={sair}><button className="link">Sair</button></form>
+          </div>
+        )}
         <main className="conteudo">{children}</main>
       </div>
       <BarraInferior itens={itens} />

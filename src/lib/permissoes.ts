@@ -42,6 +42,7 @@ export const NOMES_PERFIS: Record<string, string> = {
   FIN: "Financeiro",
   COZ: "Cozinha",
   OPE: "Operacional",
+  VIS: "Visitante (só ver)",
 };
 
 export function pode(acesso: Acesso | null, permissao: Permissao): boolean {

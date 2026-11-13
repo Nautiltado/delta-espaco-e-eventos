@@ -3,6 +3,7 @@ import { cache } from "react";
 import { redirect } from "next/navigation";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { pode, type Acesso, type Permissao } from "@/lib/permissoes";
+import { ehVisitante } from "@/lib/visitante";
 
 export type Sessao = {
   authId: string;
@@ -13,6 +14,10 @@ export type Sessao = {
 /** Lê a sessão uma vez por requisição. O token é validado pelo Supabase (getClaims). */
 export const obterSessao = cache(async (): Promise<Sessao | null> => {
   const supabase = await criarClienteServidor();
+  if (await ehVisitante()) {
+    const { data: acesso } = await supabase.rpc("meu_acesso");
+    return { authId: "visitante", trocarSenha: false, acesso: (acesso as Acesso | null) ?? null };
+  }
   const { data, error } = await supabase.auth.getClaims();
   if (error || !data?.claims?.sub) return null;
 

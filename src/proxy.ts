@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { COOKIE_VISITANTE, segredoDoVisitante, visitanteValido } from "@/lib/visitante-cookie";
 
 const ROTAS_PUBLICAS = ["/entrar"];
 
@@ -9,6 +10,11 @@ const ROTAS_PUBLICAS = ["/entrar"];
  */
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
+
+  // Visitante (cookie assinado pelo servidor): entra sem sessão do banco; troca de senha não se aplica.
+  if (await visitanteValido(request.cookies.get(COOKIE_VISITANTE)?.value, segredoDoVisitante(), Date.now())) {
+    return response;
+  }
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

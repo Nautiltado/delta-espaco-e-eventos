@@ -32,6 +32,7 @@ const COM_DETALHE = new Set([
   "VALOR_INVALIDO",
   "PARCELAS_COM_PAGAMENTO",
   "PRECO_PENDENTE",
+  "VISITANTE",
 ]);
 
 const PREFIXO: Record<string, string> = {
@@ -39,6 +40,7 @@ const PREFIXO: Record<string, string> = {
   STATUS_INVALIDO: "Não é possível nesta situação: ",
   DATA_INDISPONIVEL: "Data indisponível: ",
   PRECO_PENDENTE: "Defina os preços antes de enviar: ",
+  VISITANTE: "Modo visitante: ",
 };
 
 const RESTRICOES: Record<string, string> = {

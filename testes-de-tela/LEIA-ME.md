@@ -34,6 +34,11 @@ bloqueia o envio, cento = 100 unidades no formulário, na tabela e no PDF, item 
 desconto no item, custo e margem só para a administração, alerta de venda abaixo do custo, aprovação, envio, PDFs sem
 custo, unidade de cobrança nova e celular. `supabase/tests/orcamento_etapa1.sql` cobre as mesmas regras no banco (17).
 
+`visitante.py` confere o modo visitante (13 verificações): botão na entrada, faixa, nenhum dado pessoal real nas telas
+nem no PDF (os dados reais são lidos com a conta teste.e2e.adm e nunca impressos), valores zerados, gravação recusada, cookie
+httpOnly sem token do banco, celular e saída. Local, sem a chave secreta, suba o servidor com DELTA_TESTE_LOCAL=1,
+VISITANTE_SEGREDO_TESTE e VISITANTE_TESTE_EMAIL/SENHA de uma conta de teste com perfil VIS (essas variáveis não existem na Vercel).
+
 `salgados-misto.py` percorre o cento misto (14 verificações, computador e celular): até 4 sabores em blocos de 25,
 pode repetir, não passa de 100, pedido incompleto recusado, composição no pedido e no resumo do WhatsApp.
 
