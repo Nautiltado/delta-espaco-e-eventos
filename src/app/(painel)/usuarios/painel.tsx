@@ -1,13 +1,14 @@
 "use client";
 
 import { Retorno as RetornoComum } from "@/componentes/avisos";
+import { exigeDuasEtapas } from "@/lib/duas-etapas";
 
 import { useActionState, useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { Copy, KeyRound, LogOut, MailPlus, ShieldCheck, UserCog, UserPlus, UserX, X } from "lucide-react";
 import { linkWhatsApp } from "@/lib/documentos";
 import { ACOES_HISTORICO, agruparPorModulo, permissoesDosPerfis, SENSIVEIS, SITUACOES } from "@/lib/usuarios";
 import {
-  alterarPerfis, atualizarDados, carregarHistorico, criarUsuario, desativar, forcarTrocaSenha, gerarConvite, marcarConviteEnviado,
+  alterarPerfis, atualizarDados, carregarHistorico, criarUsuario, desativar, forcarTrocaSenha, gerarConvite, marcarConviteEnviado, removerDuasEtapas,
   reativar, revogarConvite, revogarSessoes, type EstadoUsuario, type ItemHistorico,
 } from "./actions";
 
@@ -15,6 +16,7 @@ export type UsuarioLista = {
   id: string; nome: string; email: string; telefone: string | null; cargo: string | null; inicio_em: string | null; observacoes: string | null;
   ativo: boolean; criado_em: string; desativado_em: string | null; desativacao_motivo: string | null; perfis: string[];
   ultimo_acesso: string | null; tem_login: boolean; situacao: string; convite_expira_em: string | null; convite_enviado_em: string | null;
+  duas_etapas?: boolean;
 };
 export type PerfilComPermissoes = { codigo: string; nome: string; permissoes: string[] };
 
@@ -259,6 +261,7 @@ function AbaAcesso({ u, euId, ativos }: { u: UsuarioLista; euId: string; ativos:
   const [revog, acaoRevog] = useActionState<EstadoUsuario, FormData>(revogarConvite, {});
   const [sessoes, acaoSessoes, encerrando] = useActionState<EstadoUsuario, FormData>(revogarSessoes, {});
   const [troca, acaoTroca] = useActionState<EstadoUsuario, FormData>(forcarTrocaSenha, {});
+  const [semMfa, acaoSemMfa, removendoMfa] = useActionState<EstadoUsuario, FormData>(removerDuasEtapas, {});
   const [desat, acaoDesat, desativando] = useActionState<EstadoUsuario, FormData>(desativar, {});
   const [reat, acaoReat] = useActionState<EstadoUsuario, FormData>(reativar, {});
   const [confirmar, setConfirmar] = useState(false);
@@ -311,6 +314,19 @@ function AbaAcesso({ u, euId, ativos }: { u: UsuarioLista; euId: string; ativos:
         <Retorno estado={convite.link ? {} : convite} />
         <Retorno estado={revog} />
         <Retorno estado={troca} />
+        {u.tem_login && (
+          <div className="linha" style={{ alignItems: "center", gap: 10, marginTop: 10 }}>
+            <span className={u.duas_etapas ? "selo" : exigeDuasEtapas(u.perfis) ? "selo erro" : "selo cinza"}>
+              {u.duas_etapas ? "Duas etapas ativa" : exigeDuasEtapas(u.perfis) ? "Duas etapas pendente (obrigatória)" : "Sem duas etapas"}
+            </span>
+            {u.duas_etapas && !eu && (
+              <form action={acaoSemMfa}><input type="hidden" name="id" value={u.id} />
+                <button className="botao fantasma pequeno" disabled={removendoMfa}>Remover (trocou ou perdeu o celular)</button>
+              </form>
+            )}
+          </div>
+        )}
+        <Retorno estado={semMfa} />
         <p className="mudo pequeno" style={{ marginBottom: 0 }}>Ninguém vê senhas: a pessoa cria a dela pelo link, que vale uma vez e por pouco tempo.</p>
       </section>
 

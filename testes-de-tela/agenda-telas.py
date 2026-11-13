@@ -1,5 +1,8 @@
 """Agenda nas resoluções 1920 a 390, nos temas claro e escuro: sem rolagem lateral, painel abre e fecha com Esc, vistas, filtros e formulários."""
 import os, sys
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+from apoio import duas_etapas
 from playwright.sync_api import sync_playwright
 BASE="http://localhost:3100"; SENHA=os.environ["SENHA_TESTE"]; S=os.environ.get("CAPTURAS","/tmp/capturas"); os.makedirs(S, exist_ok=True)
 res=[]
@@ -8,7 +11,7 @@ with sync_playwright() as p:
     b=p.chromium.launch(executable_path="/usr/bin/google-chrome")
     ctx=b.new_context(viewport={"width":1440,"height":900}); pg=ctx.new_page()
     erros=[]; pg.on("pageerror", lambda e: erros.append(str(e)))
-    pg.goto(f"{BASE}/entrar"); pg.fill("#email","teste.e2e.adm@delta.test"); pg.fill("#senha",SENHA); pg.click("button:has-text('Entrar')"); pg.wait_for_url(f"{BASE}/")
+    pg.goto(f"{BASE}/entrar"); pg.fill("#email", "teste.e2e.adm@delta.test"); pg.fill("#senha",SENHA); pg.click("button:has-text('Entrar')"); duas_etapas(pg, BASE, "teste.e2e.adm@delta.test")
     for tema in ("claro","escuro"):
         pg.evaluate(f"localStorage.setItem('delta-tema','{tema}')")
         for w,h in [(1920,1080),(1600,900),(1440,900),(1366,768),(1024,768),(768,1024),(390,844)]:

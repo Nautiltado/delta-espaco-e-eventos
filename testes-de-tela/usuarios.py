@@ -2,6 +2,9 @@
 perfis (visitante não combina; ninguém tira o próprio administrador), dados, encerrar sessões derruba o outro na hora,
 desativar com motivo e transferência, reativar, histórico e celular. Contas teste.e2e.adm e teste.e2e.atd."""
 import os, random, re
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+from apoio import duas_etapas
 from playwright.sync_api import sync_playwright
 
 B = os.environ.get("BASE", "http://localhost:3100"); S = os.environ["SENHA_TESTE"]
@@ -10,7 +13,7 @@ res = []
 def ok(n, c, d=""): res.append(bool(c)); print("OK   " if c else "FALHA", n, str(d)[:220], flush=True)
 def entrar(b, email, w=1440):
     ctx = b.new_context(viewport={"width": w, "height": 900}); pg = ctx.new_page()
-    pg.goto(f"{B}/entrar"); pg.fill("#email", email); pg.fill("#senha", S); pg.click("button:has-text('Entrar')"); pg.wait_for_url(f"{B}/", timeout=30000)
+    pg.goto(f"{B}/entrar"); pg.fill("#email", email); pg.fill("#senha", S); pg.click("button:has-text('Entrar')"); duas_etapas(pg, B, email)
     return ctx, pg
 def abrir(pg, nome):
     pg.goto(f"{B}/usuarios?q={nome.split()[0]}"); pg.wait_for_selector(".tabela-usuarios")

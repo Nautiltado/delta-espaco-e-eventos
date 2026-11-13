@@ -1,6 +1,9 @@
 """Teste de tela da Fase 3 (Playwright). Precisa das contas teste.e2e.adm e teste.e2e.atd no banco
 e do servidor rodando em localhost:3100. Veja testes-de-tela/LEIA-ME.md."""
 import re, sys, random
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+from apoio import duas_etapas
 from playwright.sync_api import sync_playwright, expect
 
 BASE = "http://localhost:3100"
@@ -16,8 +19,8 @@ def ok(nome, cond, detalhe=""):
 def entrar(ctx, email):
     pg = ctx.new_page()
     pg.goto(f"{BASE}/entrar")
-    pg.fill("#email", email); pg.fill("#senha", SENHA); pg.click("button:has-text('Entrar')")
-    pg.wait_for_url(f"{BASE}/", timeout=20000)
+    pg.fill("#email", email); pg.fill("#senha", SENHA); pg.click("button:has-text('Entrar')");
+    duas_etapas(pg, BASE, email)
     return pg
 
 def selecionar(pg, seletor, trecho):

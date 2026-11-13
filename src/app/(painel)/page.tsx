@@ -4,6 +4,7 @@ import {
   AlertTriangle, CalendarDays, ChefHat, CircleDollarSign, ClipboardList, FileText, Plus, ShoppingBag, Wallet,
 } from "lucide-react";
 import { exigirAcesso } from "@/lib/acesso";
+import { alertasDeSeguranca } from "@/lib/alertas-seguranca";
 import { pode } from "@/lib/permissoes";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { formatarDataHora, hojeNaDelta, instanteAtual } from "@/lib/datas";
@@ -98,7 +99,9 @@ export default async function VisaoGeral() {
   }
   atividades.sort((a, b) => b.quando.localeCompare(a.quando));
 
+  const seguranca = pode(acesso, "config.critica") ? await alertasDeSeguranca(supabase, agora) : [];
   const alertas: { texto: React.ReactNode; tom: "erro" | "alerta" }[] = [
+    ...seguranca,
     ...vencendo.map((e) => ({ tom: "alerta" as const, texto: <><Link href={`/reservas/${e.id}`}>{e.clientes?.nome ?? e.titulo}</Link>: a data segura vence {formatarDataHora(e.expira_em)}. Feche o contrato ou prorrogue.</> })),
     ...(atrasadas.length ? [{ tom: "erro" as const, texto: <><Link href="/financeiro">{atrasadas.length} {atrasadas.length === 1 ? "parcela atrasada" : "parcelas atrasadas"}</Link> somando {formatarCentavos(vencido)}.</> }] : []),
     ...(aguardandoPagamento ? [{ tom: "alerta" as const, texto: <><Link href="/salgados">{aguardandoPagamento} {aguardandoPagamento === 1 ? "encomenda aguardando" : "encomendas aguardando"} pagamento</Link>: a cozinha só recebe depois de pago.</> }] : []),

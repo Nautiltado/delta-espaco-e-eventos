@@ -1,5 +1,5 @@
 import { renderToBuffer } from "@react-pdf/renderer";
-import { obterSessao } from "@/lib/acesso";
+import { obterSessao, sessaoCompleta } from "@/lib/acesso";
 import { pode } from "@/lib/permissoes";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { DocumentoOrcamento } from "@/lib/pdf/orcamento";
@@ -21,7 +21,7 @@ import {
  */
 export async function GET(request: Request, ctx: { params: Promise<{ id: string }> }) {
   const sessao = await obterSessao();
-  if (!sessao?.acesso || sessao.trocarSenha) return new Response("Faça login.", { status: 401 });
+  if (!sessaoCompleta(sessao)) return new Response("Faça login.", { status: 401 });
   if (!pode(sessao.acesso, "orcamento.ver")) return new Response("Sem permissão.", { status: 403 });
 
   const { id } = await ctx.params;

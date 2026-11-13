@@ -1,5 +1,8 @@
 """Agenda: painel lateral do dia, cadastro rápido (orçamento, sem bloquear a data), data segura, bloqueio com conflito, remoção, vistas e filtros. Conta teste.e2e.adm."""
 import os, random, re
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+from apoio import duas_etapas
 from playwright.sync_api import sync_playwright
 BASE="http://localhost:3100"; SENHA=os.environ["SENHA_TESTE"]
 D=f"2028-{random.randint(1,4):02d}-{random.randint(10,20):02d}"
@@ -8,7 +11,7 @@ def ok(n,c,d=""): res.append(bool(c)); print("OK  " if c else "FALHA",n,str(d)[:
 with sync_playwright() as p:
     b=p.chromium.launch(executable_path="/usr/bin/google-chrome")
     pg=b.new_context(viewport={"width":1440,"height":900},locale="pt-BR").new_page()
-    pg.goto(f"{BASE}/entrar"); pg.fill("#email","teste.e2e.adm@delta.test"); pg.fill("#senha",SENHA); pg.click("button:has-text('Entrar')"); pg.wait_for_url(f"{BASE}/")
+    pg.goto(f"{BASE}/entrar"); pg.fill("#email", "teste.e2e.adm@delta.test"); pg.fill("#senha",SENHA); pg.click("button:has-text('Entrar')"); duas_etapas(pg, BASE, "teste.e2e.adm@delta.test")
     pg.goto(f"{BASE}/agenda?data={D}"); pg.click(f"[data-dia='{D}'] .abrir-dia")
     ok("URL guarda o dia aberto", f"dia={D}" in pg.url, pg.url)
     pg.click(".gaveta-acoes button:has-text('Novo evento')")

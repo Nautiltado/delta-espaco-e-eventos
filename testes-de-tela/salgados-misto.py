@@ -1,6 +1,9 @@
 """Cento misto (Playwright): até 4 sabores em blocos de 25, pode repetir, não passa de 100, pedido recusado incompleto,
 composição no pedido e no resumo do WhatsApp, celular. Precisa de teste.e2e.atd e do servidor em localhost:3100."""
 import os, re
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+from apoio import duas_etapas
 from playwright.sync_api import sync_playwright
 B = os.environ.get("BASE", "http://localhost:3100"); S = os.environ["SENHA_TESTE"]
 SHOTS = os.environ.get("CAPTURAS", "/tmp/capturas"); os.makedirs(SHOTS, exist_ok=True)
@@ -10,7 +13,7 @@ with sync_playwright() as p:
     b = p.chromium.launch(executable_path="/usr/bin/google-chrome", args=["--no-sandbox"])
     for largura in (1366, 390):
         pg = b.new_page(viewport={"width": largura, "height": 900})
-        pg.goto(f"{B}/entrar"); pg.fill("#email", "teste.e2e.atd@delta.test"); pg.fill("#senha", S); pg.click("button:has-text('Entrar')"); pg.wait_for_url(f"{B}/", timeout=30000)
+        pg.goto(f"{B}/entrar"); pg.fill("#email", "teste.e2e.atd@delta.test"); pg.fill("#senha", S); pg.click("button:has-text('Entrar')"); duas_etapas(pg, B, "teste.e2e.atd@delta.test")
         pg.goto(f"{B}/salgados/novo"); pg.wait_for_selector(".cardapio")
         pg.fill("#p-nome", "Cliente Misto (teste)"); pg.fill("#p-tel", "(99) 98111-0202")
         pg.click("button[aria-label='Mais Salgados de fritura mistos (cento)']")

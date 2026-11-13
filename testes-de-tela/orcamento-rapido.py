@@ -1,4 +1,7 @@
 import os, re, random, time
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+from apoio import duas_etapas
 from playwright.sync_api import sync_playwright
 B=os.environ.get("BASE","http://localhost:3100"); S=os.environ["SENHA_TESTE"]
 def cpf():
@@ -10,7 +13,7 @@ def ok(n,c,d=""): res.append(c); print("OK   " if c else "FALHA", n, d, flush=Tr
 with sync_playwright() as p:
     b=p.chromium.launch(executable_path="/usr/bin/google-chrome",args=["--no-sandbox"])
     pg=b.new_page(viewport={"width":1366,"height":900})
-    pg.goto(f"{B}/entrar"); pg.fill("#email","teste.e2e.adm@delta.test"); pg.fill("#senha",S); pg.click("button:has-text('Entrar')"); pg.wait_for_url(f"{B}/", timeout=30000)
+    pg.goto(f"{B}/entrar"); pg.fill("#email", "teste.e2e.adm@delta.test"); pg.fill("#senha",S); pg.click("button:has-text('Entrar')"); duas_etapas(pg, B, "teste.e2e.adm@delta.test")
     pg.goto(f"{B}/clientes/novo"); pg.fill("#nome","Cliente Rápido (teste)"); pg.fill("#documento",cpf()); pg.fill("#telefone","(99) 98111-0000"); pg.select_option("#origem","whatsapp")
     pg.click("button:has-text('Salvar cliente')"); pg.wait_for_url(re.compile(r".*/clientes/[0-9a-f-]+$")); cli=pg.url.rsplit("/",1)[1]
     pg.goto(f"{B}/orcamentos/novo?cliente={cli}"); pg.fill("#titulo","Aniversário do Pedro (teste)"); pg.fill("#convidados","40"); pg.click("button:has-text('Criar orçamento')")

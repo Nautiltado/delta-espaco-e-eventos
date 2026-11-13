@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Building2, CalendarClock, FileSignature, History, Ban, Repeat, Users, Tag, Wallet, Timer, Settings2, ScrollText, ShieldCheck, Ruler } from "lucide-react";
+import { SecaoBackups } from "./backups";
+import { listarBackups } from "@/lib/backup";
+import { Building2, CalendarClock, DatabaseBackup, FileSignature, History, Ban, Repeat, Users, Tag, Wallet, Timer, Settings2, ScrollText, ShieldCheck, Ruler } from "lucide-react";
 import { exigirAcesso } from "@/lib/acesso";
 import { pode } from "@/lib/permissoes";
 import { criarClienteServidor } from "@/lib/supabase/server";
@@ -52,7 +54,8 @@ export default async function PaginaConfiguracoes({ searchParams }: { searchPara
     (a, b) => (ORDEM_GRUPOS.indexOf(a) + 99) % 99 - (ORDEM_GRUPOS.indexOf(b) + 99) % 99,
   );
 
-  const atual = secao === "tempos" || grupos.some((g) => slug(g) === secao) ? secao! : slug(grupos[0] ?? "");
+  const backups = secao === "backups" && pode(acesso, "config.critica") && process.env.SUPABASE_SECRET_KEY ? await listarBackups().catch(() => []) : [];
+  const atual = secao === "tempos" || secao === "backups" || grupos.some((g) => slug(g) === secao) ? secao! : slug(grupos[0] ?? "");
   const grupoAtual = grupos.find((g) => slug(g) === atual);
 
   const num = (k: string, p: number) => { const n = Number(configs.find((c) => c.chave === k)?.valor); return Number.isFinite(n) ? n : p; };
@@ -85,6 +88,9 @@ export default async function PaginaConfiguracoes({ searchParams }: { searchPara
           ))}
           {(espacos ?? []).length > 0 && (
             <Link href="/configuracoes?secao=tempos" aria-current={atual === "tempos" ? "page" : undefined} scroll={false}><Timer aria-hidden />Tempos dos espaços</Link>
+          )}
+          {pode(acesso, "config.critica") && (
+            <Link href="/configuracoes?secao=backups" aria-current={atual === "backups" ? "page" : undefined} scroll={false}><DatabaseBackup aria-hidden />Backups</Link>
           )}
           <p className="config-nav-titulo">Atalhos</p>
           {pode(acesso, "orcamento.ver") && <Link href="/catalogo/unidades"><Ruler aria-hidden />Unidades de cobrança</Link>}
@@ -127,6 +133,7 @@ export default async function PaginaConfiguracoes({ searchParams }: { searchPara
         </section>
       ))}
 
+      {atual === "backups" && pode(acesso, "config.critica") && <SecaoBackups arquivos={backups} />}
       {atual === "tempos" && (espacos ?? []).length > 0 && (
         <section className="cartao">
           <h2>Tempos de cada espaço</h2>

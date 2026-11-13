@@ -2,6 +2,9 @@
 data ocupada, espaços independentes, bloqueio da agenda, Pix, pagamento duplicado, estorno e cancelamento pela política.
 Precisa das contas teste.e2e.adm / .atd / .fin e do servidor em localhost:3100. Veja testes-de-tela/LEIA-ME.md."""
 import os, re, random
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+from apoio import duas_etapas
 from playwright.sync_api import sync_playwright
 
 BASE = os.environ.get("BASE", "http://localhost:3100")
@@ -36,8 +39,8 @@ def entrar(b, email, largura=1366):
     ctx = b.new_context(viewport={"width": largura, "height": 900}, bypass_csp=True)
     pg = ctx.new_page()
     pg.goto(f"{BASE}/entrar")
-    pg.fill("#email", email); pg.fill("#senha", SENHA); pg.click("button:has-text('Entrar')")
-    pg.wait_for_url(f"{BASE}/", timeout=20000)
+    pg.fill("#email", email); pg.fill("#senha", SENHA); pg.click("button:has-text('Entrar')");
+    duas_etapas(pg, BASE, email)
     return ctx, pg
 
 def aviso(pg, timeout=20000):

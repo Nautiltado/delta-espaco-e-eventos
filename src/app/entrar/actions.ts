@@ -9,6 +9,7 @@ import { visitanteLigado } from "@/lib/visitante";
 import { chave, consumir, ipDaRequisicao, limpar, mensagemDeEspera, REGRAS } from "@/lib/limite";
 import { MENSAGEM_ROBO, pareceRobo } from "@/lib/robo";
 import { precisaTrocarSenha } from "@/lib/senha-flag";
+import { exigeDuasEtapas } from "@/lib/duas-etapas";
 
 export type EstadoEntrada = { erro?: string; email?: string };
 
@@ -52,7 +53,11 @@ export async function entrar(_: EstadoEntrada, form: FormData): Promise<EstadoEn
     await supabase.auth.signOut();
     return { erro: "Seu acesso está desativado. Fale com um administrador.", email };
   }
-  redirect(precisaTrocarSenha(login.user) ? "/trocar-senha" : "/");
+  if (precisaTrocarSenha(login.user)) redirect("/trocar-senha");
+  const { data: nivel } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (nivel?.nextLevel === "aal2") redirect("/entrar/codigo");
+  if (exigeDuasEtapas((acesso as { perfis?: string[] }).perfis ?? [])) redirect("/seguranca/duas-etapas");
+  redirect("/");
 }
 
 export async function sair() {

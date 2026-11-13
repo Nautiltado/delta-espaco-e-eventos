@@ -4,7 +4,7 @@ import { COOKIE_VISITANTE, segredoDoVisitante, visitanteValido } from "@/lib/vis
 import { protegerCookie } from "@/lib/supabase/cookies";
 import { precisaTrocarSenha } from "@/lib/senha-flag";
 
-const ROTAS_PUBLICAS = ["/entrar", "/convite/"];
+const ROTAS_PUBLICAS = ["/entrar", "/convite/", "/api/backup"];
 
 /**
  * Renova a sessão do Supabase a cada requisição e manda para /entrar quem não está logado.
