@@ -2,6 +2,13 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ConteudoOrcamento } from "@/lib/pdf/orcamento";
 import type { StatusOrcamento, StatusVersao } from "@/lib/orcamentos";
+import { equivalencia, mapaDeUnidades, type Unidade } from "@/lib/unidades";
+
+/** Unidades de cobrança cadastradas (ativas e inativas: itens antigos podem usar uma desativada). */
+export async function carregarUnidades(supabase: SupabaseClient): Promise<Unidade[]> {
+  const { data } = await supabase.from("unidades").select("*").order("ordem").order("singular");
+  return ((data ?? []) as Unidade[]).map((u) => ({ ...u, passo: Number(u.passo), equivale_quantidade: u.equivale_quantidade == null ? null : Number(u.equivale_quantidade) }));
+}
 
 export type Versao = {
   id: string;
@@ -32,9 +39,14 @@ export type ItemOrcamento = {
   ordem: number;
   catalogo_item_id: string | null;
   descricao: string;
+  detalhe: string | null;
+  categoria: string | null;
   unidade: string;
   quantidade: number;
-  preco_unitario_centavos: number;
+  /** null = preço pendente (impede o envio) */
+  preco_unitario_centavos: number | null;
+  desconto_centavos: number;
+  bruto_centavos: number;
   total_centavos: number;
 };
 
@@ -86,10 +98,12 @@ export async function conteudoDaPrevia(
   itens: ItemOrcamento[],
 ): Promise<ConteudoOrcamento> {
   const ids = [...new Set(itens.map((i) => i.catalogo_item_id).filter((x): x is string => !!x))];
-  const [{ data: empresa }, { data: cats }] = await Promise.all([
+  const [{ data: empresa }, { data: cats }, unidades] = await Promise.all([
     supabase.from("configuracoes").select("chave, valor").like("chave", "empresa.%"),
     ids.length ? supabase.from("catalogo_itens").select("id, categoria").in("id", ids) : Promise.resolve({ data: [] }),
+    carregarUnidades(supabase),
   ]);
+  const mapa = mapaDeUnidades(unidades);
   const categoria = new Map(((cats ?? []) as { id: string; categoria: string }[]).map((c) => [c.id, c.categoria]));
   return {
     orcamento: {
@@ -118,13 +132,22 @@ export async function conteudoDaPrevia(
     empresa: Object.fromEntries((empresa ?? []).map((e) => [String(e.chave).replace("empresa.", ""), String(e.valor)])),
     itens: itens.map((i) => ({
       descricao: i.descricao,
+      detalhe: i.detalhe,
       unidade: i.unidade,
+      unidade_singular: mapa.get(i.unidade)?.singular,
+      unidade_plural: mapa.get(i.unidade)?.plural,
       quantidade: Number(i.quantidade),
-      preco_unitario_centavos: i.preco_unitario_centavos,
+      equivalencia: equivalencia(i.unidade, Number(i.quantidade), mapa),
+      // a prévia mostra o pendente como zero; o envio é recusado enquanto houver pendência
+      preco_unitario_centavos: i.preco_unitario_centavos ?? 0,
+      preco_pendente: i.preco_unitario_centavos == null,
+      bruto_centavos: i.bruto_centavos,
+      desconto_centavos: i.desconto_centavos,
       total_centavos: i.total_centavos,
       catalogo_item_id: i.catalogo_item_id,
-      categoria: i.catalogo_item_id ? categoria.get(i.catalogo_item_id) ?? null : null,
+      categoria: i.categoria ?? (i.catalogo_item_id ? categoria.get(i.catalogo_item_id) ?? null : null),
     })),
+    descontos_itens_centavos: itens.reduce((s, i) => s + i.desconto_centavos, 0),
     subtotal_centavos: v.subtotal_centavos,
     desconto_centavos: v.desconto_centavos,
     total_centavos: v.total_centavos,

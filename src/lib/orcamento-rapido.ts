@@ -1,4 +1,5 @@
 // Orçamento rápido: transforma um modelo (itens + regras) em linhas prontas para marcar e incluir.
+import { UNIDADES_PADRAO } from "@/lib/unidades";
 
 export type Regra = "fixa" | "por_pessoa" | "a_cada";
 
@@ -35,12 +36,12 @@ export type Linha = {
   marcado: boolean;
   quantidade: number;
   preco_centavos: number | null;
-  origem_preco: "modelo" | "ultimo" | "catalogo" | null;
+  origem_preco: "modelo" | "catalogo" | null;
   regra_texto: string | null;
 };
 
 /** Passo de arredondamento (sempre para cima) de cada unidade. */
-export const PASSO: Record<string, number> = { cento: 0.5, kg: 0.5, litro: 1, pessoa: 1, unidade: 1, evento: 1, hora: 1, diaria: 1 };
+export const PASSO: Record<string, number> = Object.fromEntries(UNIDADES_PADRAO.map((u) => [u.codigo, u.passo]));
 
 function arredondarParaCima(valor: number, passo: number): number {
   return Math.round(Math.ceil(valor / passo - 1e-9) * passo * 100) / 100;
@@ -76,9 +77,12 @@ function espacoEscolhido(opcoes: OpcaoRapida[], convidados: number | null, recur
   return (cabe ?? ordenados[ordenados.length - 1]).id;
 }
 
+/**
+ * Preço que entra na linha: o do modelo, senão o do catálogo. Sem nenhum dos dois, fica pendente (null):
+ * o último preço praticado é só referência na tela, nunca aplicado sem a pessoa digitar.
+ */
 export function precoPadrao(preco_modelo: number | null, o: OpcaoRapida): { preco: number | null; origem: Linha["origem_preco"] } {
   if (preco_modelo != null) return { preco: preco_modelo, origem: "modelo" };
-  if (o.preco_ultimo != null) return { preco: o.preco_ultimo, origem: "ultimo" };
   if (o.preco_catalogo != null) return { preco: o.preco_catalogo, origem: "catalogo" };
   return { preco: null, origem: null };
 }

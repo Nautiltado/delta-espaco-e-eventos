@@ -76,6 +76,8 @@ export function DocumentoProposta({
   const cardapio = montarCardapio(c.itens, categoriaPorNome);
   const cab = dadosDoCabecalho(c);
   const porPessoa = valorPorPessoa(c);
+  // descontos dados item a item já estão abatidos do subtotal; para o cliente aparecem somados ao desconto geral
+  const descontoTotal = c.desconto_centavos + (c.descontos_itens_centavos ?? 0);
   const empresa = c.empresa ?? {};
   const cidade = [empresa.cidade, "MA"].filter(Boolean).join("/").toUpperCase() || "BACABAL/MA";
   const rodape = ["DELTA ESPAÇO E EVENTOS", cidade, empresa.telefones].filter(Boolean).join("   |   ");
@@ -132,21 +134,21 @@ export function DocumentoProposta({
               <Text style={[s.th, { flex: 1 }]}>Descrição do serviço</Text>
               <Text style={[s.th, { width: 120, textAlign: "right" }]}>Valor total</Text>
             </View>
-            {c.desconto_centavos > 0 && (
+            {descontoTotal > 0 && (
               <>
                 <View style={s.linha}>
                   <Text style={s.colDesc}>{descricaoDoServico(c, cardapio)}</Text>
-                  <Text style={[s.colValor, { fontFamily: "Times-Roman" }]}>{formatarCentavos(c.subtotal_centavos)}</Text>
+                  <Text style={[s.colValor, { fontFamily: "Times-Roman" }]}>{formatarCentavos(c.total_centavos + descontoTotal)}</Text>
                 </View>
                 <View style={s.linha}>
                   <Text style={s.colDesc}>Desconto</Text>
-                  <Text style={[s.colValor, { fontFamily: "Times-Roman" }]}>- {formatarCentavos(c.desconto_centavos)}</Text>
+                  <Text style={[s.colValor, { fontFamily: "Times-Roman" }]}>- {formatarCentavos(descontoTotal)}</Text>
                 </View>
               </>
             )}
             <View style={[s.linha, { backgroundColor: LISTRA }]}>
-              <Text style={[s.colDesc, c.desconto_centavos > 0 ? { fontFamily: "Times-Bold" } : {}]}>
-                {c.desconto_centavos > 0 ? "Total" : descricaoDoServico(c, cardapio)}
+              <Text style={[s.colDesc, descontoTotal > 0 ? { fontFamily: "Times-Bold" } : {}]}>
+                {descontoTotal > 0 ? "Total" : descricaoDoServico(c, cardapio)}
               </Text>
               <Text style={[s.colValor, s.total]}>{formatarCentavos(c.total_centavos)}</Text>
             </View>

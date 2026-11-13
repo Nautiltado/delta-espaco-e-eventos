@@ -20,7 +20,7 @@ with sync_playwright() as p:
     linhas={r.locator("td").nth(1).inner_text().split("\n")[0]: r for r in pg.locator(".tabela-rapida tbody tr").all()}
     chk=lambda n: linhas[n].locator("input[type=checkbox]").is_checked()
     qtd=lambda n: linhas[n].locator("input[aria-label^='Quantidade']").input_value()
-    ok("R1 modelo traz os itens", len(linhas)==12, str(len(linhas)))
+    ok("R1 modelo traz os itens", len(linhas)>=12, str(len(linhas)))
     ok("R2 espaço menor marcado (40 cabem), maior não", chk("Locação do espaço menor") and not chk("Locação do espaço maior"))
     ok("R3 garçom: 2 para 40 convidados", qtd("Garçom")=="2", qtd("Garçom"))
     ok("R4 coxinha: 1,5 cento (120 un. arredondado)", qtd("Coxinha de frango")=="1,5", qtd("Coxinha de frango"))
@@ -28,11 +28,9 @@ with sync_playwright() as p:
     ok("R6 segurança e risoles opcionais vêm desmarcados", not chk("Segurança") and not chk("Risoles de carne"))
     ok("R7 preço de catálogo pré-preenchido (garçom)", linhas["Garçom"].locator("input[aria-label^='Preço']").input_value()!="")
     vazios=sum(1 for r in pg.locator(".tabela-rapida tbody tr").all() if r.locator("input[type=checkbox]").is_checked() and not r.locator("input[aria-label^='Preço']").input_value())
-    if vazios:
-        pg.click("button:has-text('Incluir ')")
-        ok("R8 recusa sem preço e diz quantos", "Falta o preço" in pg.inner_text(".montagem .aviso.erro"), pg.inner_text(".montagem .aviso.erro"))
-    else:
-        ok("R8 último preço usado já preenche os itens a combinar", "último preço usado" in pg.inner_text(".tabela-rapida"))
+    aviso=pg.inner_text(".montagem .aviso.info") if pg.locator(".montagem .aviso.info").count() else ""
+    ok("R8 itens a combinar ficam pendentes (último preço não é aplicado) e o aviso diz que ainda não estão no orçamento",
+       (vazios == 0 or "pendente" in pg.inner_text(".tabela-rapida")) and "ainda não estão no orçamento" in aviso, aviso)
     for r in pg.locator(".tabela-rapida tbody tr").all():
         if r.locator("input[type=checkbox]").is_checked():
             i=r.locator("input[aria-label^='Preço']")

@@ -12,7 +12,7 @@ import {
   type Estado,
 } from "./actions";
 import { centavosParaCampo, formatarCentavos, lerReais } from "@/lib/dinheiro";
-import { formatarQuantidade, lerQuantidade, rotuloUnidade, totalItem, TIPOS_ORCAMENTO, UNIDADES } from "@/lib/orcamentos";
+import { CATEGORIAS, formatarQuantidade, lerQuantidade, margem, totalItem, TIPOS_ORCAMENTO } from "@/lib/orcamentos";
 
 function Retorno({ estado }: { estado: Estado }) {
   if (estado.erro) return <p className="aviso erro" role="alert">{estado.erro}</p>;
@@ -117,50 +117,104 @@ export function FormularioEvento({
 export type LinhaItemDados = {
   id: string;
   descricao: string;
+  detalhe: string | null;
+  categoria: string | null;
   unidade: string;
+  unidadeRotulo: string;
+  equivalencia: string | null;
   quantidade: number;
-  preco_unitario_centavos: number;
+  /** null = pendente */
+  preco_unitario_centavos: number | null;
+  desconto_centavos: number;
+  bruto_centavos: number;
   total_centavos: number;
   custo_unitario_centavos?: number | null;
+  /** Referências para quem preenche (nunca aplicadas sozinhas). */
   faixa?: string | null;
+  ultimo_preco?: number | null;
 };
 
-export function LinhaItem({ item, editavel, verCusto }: { item: LinhaItemDados; editavel: boolean; verCusto: boolean }) {
+function Margem({ total, custo }: { total: number; custo: number | null }) {
+  if (custo == null) return <span className="mudo">sem custo</span>;
+  const m = margem(total, custo);
+  const cls = m.valor < 0 ? "texto-erro" : m.percentual < 20 ? "texto-alerta" : "texto-sucesso";
+  return <span className={cls}>{formatarCentavos(m.valor)} · {m.percentual.toFixed(0)}%</span>;
+}
+
+export function LinhaItem({ item, editavel, verCusto, podeDescontar }: {
+  item: LinhaItemDados; editavel: boolean; verCusto: boolean; podeDescontar: boolean;
+}) {
   const [estado, enviar, enviando] = useActionState<Estado, FormData>(salvarItem, {});
+  const pendente = item.preco_unitario_centavos === null;
   const custo = item.custo_unitario_centavos != null ? totalItem(item.quantidade, item.custo_unitario_centavos) : null;
+  const categoria = item.categoria ? CATEGORIAS[item.categoria] ?? item.categoria : null;
   if (!editavel) {
     return (
-      <tr>
-        <td>{item.descricao}</td>
-        <td className="numero">{formatarQuantidade(item.quantidade)} {rotuloUnidade(item.unidade, item.quantidade)}</td>
-        <td className="numero">{formatarCentavos(item.preco_unitario_centavos)}</td>
+      <tr className={pendente ? "item-pendente" : undefined}>
+        <td>
+          {item.descricao}
+          {item.detalhe && <div className="mudo pequeno">{item.detalhe}</div>}
+          {categoria && <div className="mudo pequeno">{categoria}</div>}
+        </td>
+        <td className="numero">
+          {formatarQuantidade(item.quantidade)} {item.unidadeRotulo}
+          {item.equivalencia && <div className="mudo pequeno">= {item.equivalencia}</div>}
+        </td>
+        <td className="numero">{pendente ? <span className="selo alerta">pendente</span> : formatarCentavos(item.preco_unitario_centavos!)}</td>
+        <td className="numero">{item.desconto_centavos ? `- ${formatarCentavos(item.desconto_centavos)}` : "—"}</td>
         <td className="numero">{formatarCentavos(item.total_centavos)}</td>
-        {verCusto && <td className="numero mudo">{custo != null ? formatarCentavos(custo) : "—"}</td>}
+        {verCusto && <td className="numero mudo">{custo != null ? formatarCentavos(custo) : "—"}<div className="pequeno"><Margem total={item.total_centavos} custo={custo} /></div></td>}
       </tr>
     );
   }
   const formId = `item-${item.id}`;
   return (
-    <tr>
+    <tr className={pendente ? "item-pendente" : undefined}>
       <td>
         <form id={formId} action={enviar}>
           <input type="hidden" name="id" value={item.id} />
         </form>
         <input form={formId} name="descricao" type="text" defaultValue={item.descricao} aria-label="Descrição" />
-        {item.faixa && <div className="mudo" style={{ fontSize: ".78rem" }}>Catálogo: {item.faixa}</div>}
+        <input form={formId} name="detalhe" type="text" defaultValue={item.detalhe ?? ""} aria-label="Descrição para o cliente"
+          placeholder="Descrição para o cliente (opcional)" className="campo-detalhe" maxLength={500} />
+        <div className="mudo pequeno">
+          {categoria}
+          {item.faixa && <>{categoria ? " · " : ""}Catálogo: {item.faixa}</>}
+          {item.ultimo_preco != null && <> · último usado: {formatarCentavos(item.ultimo_preco)} (referência)</>}
+        </div>
         <Retorno estado={estado.ok ? {} : estado} />
       </td>
-      <td style={{ width: 72 }}>
+      <td style={{ width: 96 }}>
         <input form={formId} name="quantidade" type="text" inputMode="decimal" aria-label="Quantidade"
           defaultValue={formatarQuantidade(item.quantidade)} />
-        <div className="mudo" style={{ fontSize: ".78rem" }}>{rotuloUnidade(item.unidade, item.quantidade)}</div>
+        <div className="mudo pequeno">{item.unidadeRotulo}</div>
+        {item.equivalencia && <div className="mudo pequeno" title="Equivalência da unidade de cobrança">= {item.equivalencia}</div>}
       </td>
       <td style={{ width: 120 }}>
         <input form={formId} name="preco" type="text" inputMode="decimal" aria-label="Preço unitário"
-          defaultValue={centavosParaCampo(item.preco_unitario_centavos)} />
+          defaultValue={pendente ? "" : centavosParaCampo(item.preco_unitario_centavos!)}
+          placeholder="a definir" className={pendente ? "invalido" : undefined} />
+        {pendente && <div className="pequeno texto-alerta">preço pendente</div>}
       </td>
-      <td className="numero">{formatarCentavos(item.total_centavos)}</td>
-      {verCusto && <td className="numero mudo">{custo != null ? formatarCentavos(custo) : "—"}</td>}
+      <td style={{ width: 104 }}>
+        {podeDescontar ? (
+          <input form={formId} name="desconto" type="text" inputMode="decimal" aria-label="Desconto no item"
+            defaultValue={item.desconto_centavos ? centavosParaCampo(item.desconto_centavos) : ""} placeholder="0,00" disabled={pendente} />
+        ) : (
+          <span className="mudo">{item.desconto_centavos ? `- ${formatarCentavos(item.desconto_centavos)}` : "—"}</span>
+        )}
+      </td>
+      <td className="numero">
+        {formatarCentavos(item.total_centavos)}
+        {item.desconto_centavos > 0 && <div className="mudo pequeno">de {formatarCentavos(item.bruto_centavos)}</div>}
+      </td>
+      {verCusto && (
+        <td style={{ width: 120 }}>
+          <input form={formId} name="custo" type="text" inputMode="decimal" aria-label="Custo unitário interno"
+            defaultValue={item.custo_unitario_centavos != null ? centavosParaCampo(item.custo_unitario_centavos) : ""} placeholder="custo unit." />
+          <div className="pequeno"><Margem total={item.total_centavos} custo={custo} /></div>
+        </td>
+      )}
       <td className="acoes">
         <button form={formId} className="botao secundario pequeno" disabled={enviando} title="Salvar alterações deste item">Salvar</button>{" "}
         <button form={formId} name="remover" value="1" className="botao secundario pequeno" disabled={enviando}
@@ -178,29 +232,38 @@ export type OpcaoCatalogo = {
   preco_sugerido: number | null;
   faixa: string;
   grupo: string;
+  ultimo_preco?: number | null;
 };
 
+export type OpcaoUnidade = { codigo: string; singular: string; plural: string; equivale_quantidade: number | null; equivale_unidade: string | null };
+
 /** Use com key={quantidade de itens}: ao incluir um item, o formulário recomeça limpo; com erro, mantém o que foi digitado. */
-export function NovoItem({ versaoId, catalogo }: { versaoId: string; catalogo: OpcaoCatalogo[] }) {
+export function NovoItem({ versaoId, catalogo, unidades }: { versaoId: string; catalogo: OpcaoCatalogo[]; unidades: OpcaoUnidade[] }) {
   const [estado, enviar, enviando] = useActionState<Estado, FormData>(adicionarItem, {});
   const [escolha, setEscolha] = useState("");
   const [descricao, setDescricao] = useState("");
-  const [unidade, setUnidade] = useState("evento");
+  const [detalhe, setDetalhe] = useState("");
+  const [categoria, setCategoria] = useState("outro");
+  const [unidade, setUnidade] = useState("unidade");
   const [preco, setPreco] = useState("");
   const [quantidade, setQuantidade] = useState("1");
   const selecionado = catalogo.find((c) => c.id === escolha);
   const q = lerQuantidade(quantidade);
-  const p = lerReais(preco);
+  const p = preco.trim() ? lerReais(preco) : null;
+  const u = unidades.find((x) => x.codigo === unidade);
+  const eq = u?.equivale_quantidade && q ? `${formatarQuantidade(q * u.equivale_quantidade)} ${unidades.find((x) => x.codigo === u.equivale_unidade)?.plural ?? ""}` : null;
 
   function escolher(id: string) {
     setEscolha(id);
     const c = catalogo.find((x) => x.id === id);
     if (c) {
       setDescricao(c.nome);
+      setDetalhe(c.descricao ?? "");
       setUnidade(c.unidade);
       setPreco(c.preco_sugerido === null ? "" : centavosParaCampo(c.preco_sugerido));
     } else {
       setDescricao("");
+      setDetalhe("");
       setPreco("");
     }
   }
@@ -214,7 +277,7 @@ export function NovoItem({ versaoId, catalogo }: { versaoId: string; catalogo: O
         <div className="campo" style={{ flex: 2, minWidth: 200 }}>
           <label htmlFor="escolha">Do catálogo</label>
           <select id="escolha" value={escolha} onChange={(e) => escolher(e.target.value)}>
-            <option value="">Item livre (digite abaixo)</option>
+            <option value="">Item personalizado (fora do catálogo)</option>
             {[...new Set(catalogo.map((c) => c.grupo))].map((g) => (
               <optgroup key={g} label={g}>
                 {catalogo.filter((c) => c.grupo === g).map((c) => <option key={c.id} value={c.id}>{c.nome} · {c.faixa}</option>)}
@@ -223,34 +286,52 @@ export function NovoItem({ versaoId, catalogo }: { versaoId: string; catalogo: O
           </select>
         </div>
         <div className="campo" style={{ flex: 2, minWidth: 200 }}>
-          <label htmlFor="descricao-novo">Descrição no orçamento</label>
+          <label htmlFor="descricao-novo">Nome no orçamento</label>
           <input id="descricao-novo" name="descricao" type="text" required value={descricao} onChange={(e) => setDescricao(e.target.value)} />
         </div>
+        {!selecionado && (
+          <div className="campo" style={{ minWidth: 160 }}>
+            <label htmlFor="categoria-novo">Categoria</label>
+            <select id="categoria-novo" name="categoria" value={categoria} onChange={(e) => setCategoria(e.target.value)}>
+              {Object.entries(CATEGORIAS).map(([v, r]) => <option key={v} value={v}>{r}</option>)}
+            </select>
+          </div>
+        )}
+      </div>
+      <div className="campo" style={{ marginTop: 10 }}>
+        <label htmlFor="detalhe-novo">Descrição para o cliente <span className="mudo">(opcional)</span></label>
+        <input id="detalhe-novo" name="detalhe" type="text" value={detalhe} onChange={(e) => setDetalhe(e.target.value)} maxLength={500} />
       </div>
       <div className="linha" style={{ marginTop: 10 }}>
         <div className="campo">
           <label htmlFor="quantidade-novo">Quantidade</label>
           <input id="quantidade-novo" name="quantidade" type="text" inputMode="decimal" value={quantidade} onChange={(e) => setQuantidade(e.target.value)} />
+          {eq && <small className="mudo">= {eq}</small>}
         </div>
         <div className="campo">
-          <label htmlFor="unidade-novo">Por</label>
+          <label htmlFor="unidade-novo">Cobrado por</label>
           <select id="unidade-novo" name="unidade" value={unidade} onChange={(e) => setUnidade(e.target.value)} disabled={!!selecionado}>
-            {Object.entries(UNIDADES).map(([v, r]) => <option key={v} value={v}>{r}</option>)}
+            {unidades.map((x) => <option key={x.codigo} value={x.codigo}>{x.singular}</option>)}
           </select>
           {selecionado && <input type="hidden" name="unidade" value={unidade} />}
         </div>
         <div className="campo">
           <label htmlFor="preco-novo">Preço unitário (R$)</label>
-          <input id="preco-novo" name="preco" type="text" inputMode="decimal" required value={preco} onChange={(e) => setPreco(e.target.value)}
-            placeholder={selecionado && selecionado.preco_sugerido === null ? "A combinar: digite" : undefined} />
+          <input id="preco-novo" name="preco" type="text" inputMode="decimal" value={preco} onChange={(e) => setPreco(e.target.value)}
+            placeholder="em branco = pendente" />
+          {selecionado?.ultimo_preco != null && <small className="mudo">Último usado: {formatarCentavos(selecionado.ultimo_preco)} (só referência)</small>}
         </div>
         <div className="campo" style={{ minWidth: 110 }}>
           <label>Total</label>
-          <div style={{ padding: "9px 0", fontWeight: 600 }}>{q !== null && p !== null ? formatarCentavos(totalItem(q, p)) : "—"}</div>
+          <div style={{ padding: "9px 0", fontWeight: 600 }}>
+            {q !== null && p !== null ? formatarCentavos(totalItem(q, p)) : q !== null && !preco.trim() ? <span className="texto-alerta">pendente</span> : "—"}
+          </div>
         </div>
         <button className="botao" disabled={enviando} style={{ marginBottom: 2 }}>{enviando ? "Incluindo…" : "Incluir item"}</button>
       </div>
-      {selecionado?.descricao && <p className="mudo" style={{ margin: "6px 0 0" }}>{selecionado.descricao}</p>}
+      {selecionado && selecionado.preco_sugerido === null && !preco.trim() && (
+        <p className="mudo pequeno" style={{ margin: "6px 0 0" }}>Este item é “a combinar” no catálogo: ele entra com preço pendente e o orçamento só pode ser enviado depois que alguém definir o valor.</p>
+      )}
     </form>
   );
 }

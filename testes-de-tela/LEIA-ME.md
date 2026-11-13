@@ -29,6 +29,11 @@ ficha, checklist marcado com nome e hora, ficha com chegada/traje/observações,
 mensagem de WhatsApp, pagamento da equipe, gasto com nota fiscal (foto), gasto a pagar, fechamento e celular.
 Precisa de `teste.e2e.fin` além das outras. Se não houver evento nos próximos 180 dias, rode com `EVENTO=<id da reserva>` (por exemplo, uma criada pelo fase4.py).
 
+`orcamento-etapa1.py` percorre os itens do orçamento (17 verificações): item "a combinar" entra com preço pendente e
+bloqueia o envio, cento = 100 unidades no formulário, na tabela e no PDF, item personalizado com categoria e descrição,
+desconto no item, custo e margem só para a administração, alerta de venda abaixo do custo, aprovação, envio, PDFs sem
+custo, unidade de cobrança nova e celular. `supabase/tests/orcamento_etapa1.sql` cobre as mesmas regras no banco (17).
+
 `agenda.py` percorre a agenda (20 verificações) com a administração: clique no dia abre o painel lateral, cadastro rápido
 cria orçamento sem bloquear a data, opção de segurar a data, verificar disponibilidade, bloqueio recusado por conflito,
 bloqueio com observação e responsável, remoção pelo painel, evento externo, vistas Semana/Dia/Lista e filtro de externos.

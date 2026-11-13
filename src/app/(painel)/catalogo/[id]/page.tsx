@@ -7,7 +7,9 @@ import { criarClienteServidor } from "@/lib/supabase/server";
 import { centavosParaCampo, formatarCentavos } from "@/lib/dinheiro";
 import { formatarDataHora } from "@/lib/datas";
 import { precoDoItem, type ItemCatalogo } from "@/lib/catalogo";
-import { CATEGORIAS, UNIDADES } from "@/lib/orcamentos";
+import { CATEGORIAS } from "@/lib/orcamentos";
+import { carregarUnidades } from "@/lib/orcamento-dados";
+import { mapaDeUnidades, rotuloDaUnidade } from "@/lib/unidades";
 import { FormularioItem } from "../formulario";
 
 export const metadata: Metadata = { title: "Item do catálogo" };
@@ -33,12 +35,13 @@ export default async function ItemDoCatalogo({
   const { salvo } = await searchParams;
   const verCusto = pode(acesso, "custo.ver");
   const supabase = await criarClienteServidor();
-  const [{ data: item }, { data: historico }, custo] = await Promise.all([
+  const [{ data: item }, { data: historico }, custo, unidades] = await Promise.all([
     supabase.from("catalogo_itens").select("*").eq("id", id).maybeSingle(),
     supabase.from("catalogo_precos").select("*").eq("item_id", id).order("vigente_desde", { ascending: false }).limit(30),
     verCusto
       ? supabase.from("catalogo_custos").select("custo_centavos").eq("item_id", id).maybeSingle()
       : Promise.resolve({ data: null }),
+    carregarUnidades(supabase),
   ]);
   if (!item) notFound();
   const i = item as ItemCatalogo;
@@ -50,7 +53,7 @@ export default async function ItemDoCatalogo({
         <div>
           <p style={{ margin: 0 }}><Link href="/catalogo">← Catálogo</Link></p>
           <h1>{i.nome}</h1>
-          <p>{CATEGORIAS[i.categoria]}{i.subgrupo ? ` · ${i.subgrupo}` : ""} · por {UNIDADES[i.unidade]} · {precoDoItem(i)}</p>
+          <p>{CATEGORIAS[i.categoria]}{i.subgrupo ? ` · ${i.subgrupo}` : ""} · por {rotuloDaUnidade(i.unidade, 1, mapaDeUnidades(unidades))} · {precoDoItem(i)}</p>
         </div>
       </div>
       {salvo && <p className="aviso ok">Item salvo.</p>}
@@ -60,6 +63,7 @@ export default async function ItemDoCatalogo({
           <h2>Editar</h2>
           <FormularioItem
             mostrarCusto={verCusto}
+            unidades={unidades}
             item={{
               id: i.id,
               nome: i.nome,

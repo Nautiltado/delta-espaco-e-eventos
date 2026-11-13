@@ -4,13 +4,14 @@ import { useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { adicionarItensEmLote, type Estado } from "./actions";
 import { centavosParaCampo, formatarCentavos, lerReais } from "@/lib/dinheiro";
-import { formatarQuantidade, lerQuantidade, rotuloUnidade, totalItem } from "@/lib/orcamentos";
+import { formatarQuantidade, lerQuantidade, totalItem } from "@/lib/orcamentos";
+import { equivalencia, mapaDeUnidades, rotuloDaUnidade, type Unidade } from "@/lib/unidades";
 import { aplicarBandejaRodada, buscarNoCatalogo, GARCOM, linhaAvulsa, linhasDoModelo, type ItemModelo, type Linha, type OpcaoRapida } from "@/lib/orcamento-rapido";
 
 type LinhaTela = Linha & { qtdTexto: string; precoTexto: string };
 type Modelo = { id: string; nome: string; descricao: string | null; itens: ItemModelo[] };
 
-const ORIGEM: Record<string, string> = { modelo: "preço do modelo", ultimo: "último preço usado", catalogo: "preço do catálogo" };
+const ORIGEM: Record<string, string> = { modelo: "preço do modelo", catalogo: "preço do catálogo" };
 
 /** A tela guarda a quantidade como texto; a regra da bandeja trabalha com número. */
 function comBandeja(linhas: LinhaTela[], opcoes: OpcaoRapida[], convidados: number | null): { linhas: LinhaTela[]; aviso: string | null } {
@@ -30,10 +31,14 @@ function paraTela(l: Linha): LinhaTela {
  * marca/desmarca, ajusta, acrescenta do catálogo pela busca e inclui tudo num clique.
  */
 export function MontagemRapida({
-  versaoId, opcoes, modelos, convidados, recursoId, externo, aberto,
+  versaoId, opcoes, modelos, convidados, recursoId, externo, aberto, totalAtual, unidades,
 }: {
   versaoId: string; opcoes: OpcaoRapida[]; modelos: Modelo[]; convidados: number | null; recursoId: string | null; externo: boolean; aberto: boolean;
+  /** Total do orçamento como está agora (sem estas linhas ainda não incluídas). */
+  totalAtual: number;
+  unidades: Unidade[];
 }) {
+  const mapaUnidades = useMemo(() => mapaDeUnidades(unidades), [unidades]);
   const router = useRouter();
   const [linhas, setLinhas] = useState<LinhaTela[]>([]);
   const [modeloAtual, setModeloAtual] = useState<string | null>(null);
@@ -81,7 +86,10 @@ export function MontagemRapida({
 
   const marcadas = linhas.filter((l) => l.marcado);
   const calculadas = marcadas.map((l) => ({ l, q: lerQuantidade(l.qtdTexto), p: lerReais(l.precoTexto) }));
-  const semPreco = calculadas.filter((c) => c.p === null).length;
+  // preço em branco = pendente (entra no orçamento, mas o envio fica bloqueado até alguém definir)
+  const calculadasComPendente = calculadas.map((c) => ({ ...c, pendente: !c.l.precoTexto.trim(), invalido: !!c.l.precoTexto.trim() && c.p === null }));
+  const semPreco = calculadasComPendente.filter((c) => c.pendente).length;
+  const precoInvalido = calculadasComPendente.filter((c) => c.invalido).length;
   const qtdInvalida = calculadas.filter((c) => c.q === null).length;
   const total = calculadas.reduce((s, c) => s + (c.q !== null && c.p !== null ? totalItem(c.q, c.p) : 0), 0);
 
@@ -92,10 +100,10 @@ export function MontagemRapida({
     if (marcadas.some((l) => l.nome === "Bandeja rodada") && garcons < 2) {
       return setEstado({ erro: "Bandeja rodada pede no mínimo 2 garçons." });
     }
-    if (semPreco) return setEstado({ erro: `Falta o preço de ${semPreco} ${semPreco === 1 ? "item" : "itens"} (em vermelho).` });
+    if (precoInvalido) return setEstado({ erro: "Confira os preços marcados em vermelho (ex.: 90,00), ou deixe em branco para definir depois." });
     iniciar(async () => {
       const r = await adicionarItensEmLote(versaoId, calculadas.map((c) => ({
-        catalogo_item_id: c.l.catalogo_item_id, descricao: c.l.nome, unidade: c.l.unidade, quantidade: c.q!, preco_centavos: c.p!,
+        catalogo_item_id: c.l.catalogo_item_id, descricao: c.l.nome, unidade: c.l.unidade, quantidade: c.q!, preco_centavos: c.l.precoTexto.trim() ? c.p! : null,
       })));
       setEstado(r);
       if (r.ok) {
@@ -138,7 +146,7 @@ export function MontagemRapida({
               <li key={o.id}>
                 <button type="button" onClick={() => acrescentar(o)}>
                   <span>{o.nome}</span>
-                  <span className="mudo">{o.grupo} · por {rotuloUnidade(o.unidade, 1)}</span>
+                  <span className="mudo">{o.grupo} · por {rotuloDaUnidade(o.unidade, 1, mapaUnidades)}</span>
                 </button>
               </li>
             ))}
@@ -168,16 +176,25 @@ export function MontagemRapida({
                         <input type="text" inputMode="decimal" value={l.qtdTexto} aria-label={`Quantidade de ${l.nome}`}
                           className={l.marcado && q === null ? "invalido" : undefined}
                           onChange={(e) => mudar(l.chave, { qtdTexto: e.target.value, marcado: true })} style={{ width: 64 }} />
-                        <span className="mudo" style={{ fontSize: ".75rem" }}>{rotuloUnidade(l.unidade, q ?? 1)}</span>
+                        <span className="mudo" style={{ fontSize: ".75rem" }}>{rotuloDaUnidade(l.unidade, q ?? 1, mapaUnidades)}</span>
                       </div>
+                      {q !== null && equivalencia(l.unidade, q, mapaUnidades) && (
+                        <div className="mudo" style={{ fontSize: ".7rem" }}>= {equivalencia(l.unidade, q, mapaUnidades)}</div>
+                      )}
                     </td>
                     <td>
-                      <input type="text" inputMode="decimal" value={l.precoTexto} placeholder="preço" aria-label={`Preço de ${l.nome}`}
-                        className={l.marcado && p === null ? "invalido" : undefined}
+                      <input type="text" inputMode="decimal" value={l.precoTexto} placeholder="a definir" aria-label={`Preço de ${l.nome}`}
+                        className={l.marcado && !!l.precoTexto.trim() && p === null ? "invalido" : undefined}
                         onChange={(e) => mudar(l.chave, { precoTexto: e.target.value, marcado: true })} />
                       {l.origem_preco && <div className="mudo" style={{ fontSize: ".7rem" }}>{ORIGEM[l.origem_preco]}</div>}
+                      {!l.precoTexto.trim() && <div className="texto-alerta" style={{ fontSize: ".7rem" }}>pendente</div>}
+                      {catalogo.get(l.catalogo_item_id)?.preco_ultimo != null && (
+                        <div className="mudo" style={{ fontSize: ".7rem" }} title="Preço usado num orçamento anterior. Só referência: não é aplicado sozinho.">
+                          último: {formatarCentavos(catalogo.get(l.catalogo_item_id)!.preco_ultimo!)}
+                        </div>
+                      )}
                     </td>
-                    <td className="numero">{l.marcado && q !== null && p !== null ? formatarCentavos(totalItem(q, p)) : "—"}</td>
+                    <td className="numero">{l.marcado && q !== null && p !== null ? formatarCentavos(totalItem(q, p)) : l.marcado && !l.precoTexto.trim() ? <span className="texto-alerta">pendente</span> : "—"}</td>
                   </tr>
                 );
               })}
@@ -196,12 +213,19 @@ export function MontagemRapida({
       {estado.ok && <p className="aviso ok" role="status">{estado.ok}</p>}
 
       {linhas.length > 0 && (
+        <p className="aviso info" style={{ marginTop: 10 }}>
+          Estes itens <strong>ainda não estão no orçamento</strong>. Total do orçamento agora: {formatarCentavos(totalAtual)}; depois de incluir:{" "}
+          <strong>{formatarCentavos(totalAtual + total)}</strong>
+          {semPreco > 0 && <> (mais {semPreco} {semPreco === 1 ? "item" : "itens"} com preço pendente)</>}.
+        </p>
+      )}
+      {linhas.length > 0 && (
         <div className="linha" style={{ alignItems: "center", marginTop: 10 }}>
           <button type="button" className="botao" onClick={incluir} disabled={enviando}>
             {enviando ? "Incluindo…" : `Incluir ${marcadas.length} ${marcadas.length === 1 ? "item" : "itens"} · ${formatarCentavos(total)}`}
           </button>
           <button type="button" className="botao secundario" onClick={() => { setLinhas([]); setModeloAtual(null); setEstado({}); }}>Limpar</button>
-          {semPreco > 0 && <span className="mudo">{semPreco} sem preço</span>}
+          {semPreco > 0 && <span className="texto-alerta pequeno">{semPreco} com preço pendente: entram, mas o envio fica bloqueado até definir</span>}
         </div>
       )}
     </details>

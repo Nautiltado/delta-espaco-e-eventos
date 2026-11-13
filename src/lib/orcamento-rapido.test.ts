@@ -48,7 +48,8 @@ describe("linhas do modelo", () => {
     expect(l.map((x) => [x.nome, x.marcado])).toEqual([
       ["Locação do espaço menor", false], ["Locação do espaço maior", true], ["Coxinha", true], ["Segurança", false],
     ]);
-    expect(l[2]).toMatchObject({ quantidade: 4.5, preco_centavos: 9000, origem_preco: "ultimo" });
+    // o último preço praticado (R$ 90) é só referência: sem preço no catálogo nem no modelo, a linha fica pendente
+    expect(l[2]).toMatchObject({ quantidade: 4.5, preco_centavos: null, origem_preco: null });
     expect(l[3]).toMatchObject({ preco_centavos: 20000, origem_preco: "modelo" });
   });
   it("usa o espaço já escolhido no orçamento; evento externo não leva locação", () => {

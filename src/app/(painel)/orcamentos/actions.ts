@@ -8,11 +8,20 @@ import { pode } from "@/lib/permissoes";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { mensagemDoBanco } from "@/lib/erros";
 import { lerReais } from "@/lib/dinheiro";
-import { lerQuantidade, TIPOS_ORCAMENTO, UNIDADES } from "@/lib/orcamentos";
+import { CATEGORIAS, lerQuantidade, TIPOS_ORCAMENTO } from "@/lib/orcamentos";
 
 export type Estado = { erro?: string; ok?: string };
 
 const uuid = z.uuid();
+/** Código de unidade: o banco confere se existe na tabela `unidades`. */
+const UNIDADE = /^[a-z_]{2,20}$/;
+
+/** Preço digitado: vazio = pendente (null); inválido = undefined. */
+function lerPrecoOpcional(v: FormDataEntryValue | null): number | null | undefined {
+  const t = String(v ?? "").trim();
+  if (!t) return null;
+  return lerReais(t) ?? undefined;
+}
 const vazioNulo = (v: FormDataEntryValue | null) => {
   const t = String(v ?? "").trim();
   return t === "" ? null : t;
@@ -98,22 +107,28 @@ export async function adicionarItem(_: Estado, form: FormData): Promise<Estado> 
   if (!versao.success) return { erro: "Versão inválida." };
   const catalogo = vazioNulo(form.get("catalogo_item_id"));
   const descricao = String(form.get("descricao") ?? "").trim();
+  const detalhe = String(form.get("detalhe") ?? "").trim().slice(0, 500);
+  const categoria = vazioNulo(form.get("categoria"));
   const unidade = String(form.get("unidade") ?? "");
   const quantidade = lerQuantidade(String(form.get("quantidade") ?? ""));
-  const preco = lerReais(String(form.get("preco") ?? ""));
+  const preco = lerPrecoOpcional(form.get("preco"));
   if (descricao.length < 2) return { erro: "Descreva o item." };
-  if (!(unidade in UNIDADES)) return { erro: "Unidade inválida." };
+  if (!UNIDADE.test(unidade)) return { erro: "Unidade inválida." };
   if (quantidade === null) return { erro: "Quantidade inválida (use até 2 casas decimais)." };
-  if (preco === null) return { erro: "Preço inválido." };
+  if (preco === undefined) return { erro: "Preço inválido. Deixe em branco se ainda não foi definido." };
+  if (categoria && !(categoria in CATEGORIAS)) return { erro: "Categoria inválida." };
 
   const supabase = await criarClienteServidor();
   const { data: ultimo } = await supabase
     .from("orcamento_itens").select("ordem").eq("versao_id", versao.data).order("ordem", { ascending: false }).limit(1);
+  const doCatalogo = catalogo && uuid.safeParse(catalogo).success ? catalogo : null;
   const { error } = await supabase.from("orcamento_itens").insert({
     versao_id: versao.data,
     ordem: (ultimo?.[0]?.ordem ?? 0) + 1,
-    catalogo_item_id: catalogo && uuid.safeParse(catalogo).success ? catalogo : null,
+    catalogo_item_id: doCatalogo,
     descricao,
+    detalhe: detalhe || null,
+    categoria: doCatalogo ? null : categoria ?? "outro",
     unidade,
     quantidade,
     preco_unitario_centavos: preco,
@@ -121,11 +136,11 @@ export async function adicionarItem(_: Estado, form: FormData): Promise<Estado> 
   if (error) return { erro: mensagemDoBanco(error) };
   const orc = await orcamentoDaVersao(versao.data);
   if (orc) recarregar(orc);
-  return { ok: "Item incluído." };
+  return { ok: preco === null ? "Item incluído com preço pendente: defina antes de enviar." : "Item incluído." };
 }
 
 export async function salvarItem(_: Estado, form: FormData): Promise<Estado> {
-  await exigirPermissao("orcamento.criar");
+  const acesso = await exigirPermissao("orcamento.criar");
   const id = uuid.safeParse(form.get("id"));
   if (!id.success) return { erro: "Item inválido." };
   const supabase = await criarClienteServidor();
@@ -141,17 +156,36 @@ export async function salvarItem(_: Estado, form: FormData): Promise<Estado> {
 
   const descricao = String(form.get("descricao") ?? "").trim();
   const quantidade = lerQuantidade(String(form.get("quantidade") ?? ""));
-  const preco = lerReais(String(form.get("preco") ?? ""));
+  const preco = lerPrecoOpcional(form.get("preco"));
   if (descricao.length < 2) return { erro: "Descreva o item." };
   if (quantidade === null) return { erro: "Quantidade inválida." };
-  if (preco === null) return { erro: "Preço inválido." };
-  const { data, error } = await supabase
-    .from("orcamento_itens")
-    .update({ descricao, quantidade, preco_unitario_centavos: preco })
-    .eq("id", id.data)
-    .select("versao_id");
+  if (preco === undefined) return { erro: "Preço inválido. Deixe em branco se ainda não foi definido." };
+  const mudar: Record<string, unknown> = { descricao, quantidade, preco_unitario_centavos: preco };
+  if (form.has("detalhe")) mudar.detalhe = String(form.get("detalhe") ?? "").trim().slice(0, 500) || null;
+  if (form.has("desconto")) {
+    const d = lerPrecoOpcional(form.get("desconto"));
+    if (d === undefined) return { erro: "Desconto inválido." };
+    if ((d ?? 0) > 0 && preco === null) return { erro: "Defina o preço antes de dar desconto no item." };
+    if ((d ?? 0) > 0 && !pode(acesso, "desconto.dar") && !pode(acesso, "desconto.aprovar")) return { erro: "Seu perfil não dá desconto." };
+    if ((d ?? 0) > Math.round(quantidade * (preco ?? 0))) return { erro: "O desconto não pode passar do valor do item." };
+    mudar.desconto_centavos = d ?? 0;
+  } else if (preco === null) {
+    mudar.desconto_centavos = 0;
+  }
+  const { data, error } = await supabase.from("orcamento_itens").update(mudar).eq("id", id.data).select("versao_id");
   if (error) return { erro: mensagemDoBanco(error) };
-  const orc = data?.[0] ? await orcamentoDaVersao(data[0].versao_id) : null;
+  if (!data?.length) return { erro: "Esta versão já foi enviada e não muda mais. Crie uma nova versão." };
+
+  // custo interno do item: só quem vê custos (fica fora da proposta)
+  if (form.has("custo") && pode(acesso, "custo.ver")) {
+    const custo = lerPrecoOpcional(form.get("custo"));
+    if (custo === undefined) return { erro: "Custo inválido." };
+    const r = custo === null
+      ? await supabase.from("orcamento_itens_custos").delete().eq("item_id", id.data)
+      : await supabase.from("orcamento_itens_custos").upsert({ item_id: id.data, custo_unitario_centavos: custo });
+    if (r.error) return { erro: mensagemDoBanco(r.error) };
+  }
+  const orc = await orcamentoDaVersao(data[0].versao_id);
   if (orc) recarregar(orc);
   return { ok: "Salvo." };
 }
@@ -267,9 +301,9 @@ export async function marcarPerdido(_: Estado, form: FormData): Promise<Estado> 
 const itemLote = z.object({
   catalogo_item_id: z.uuid(),
   descricao: z.string().trim().min(2).max(300),
-  unidade: z.enum(Object.keys(UNIDADES) as [string, ...string[]]),
+  unidade: z.string().regex(UNIDADE),
   quantidade: z.number().positive().max(1_000_000).refine((q) => Math.round(q * 100) === q * 100, "Quantidade com até 2 casas"),
-  preco_centavos: z.number().int().min(0).max(1_000_000_000),
+  preco_centavos: z.number().int().min(0).max(1_000_000_000).nullable(),   // null = pendente
 });
 
 /** Inclui vários itens de uma vez (do modelo ou da busca), num único comando: entram todos ou nenhum. */
@@ -279,7 +313,7 @@ export async function adicionarItensEmLote(versaoId: string, itens: unknown): Pr
   const lista = z.array(itemLote).min(1, "Marque ao menos um item.").max(200).safeParse(itens);
   if (!lista.success) {
     const p = lista.error.issues[0];
-    return { erro: p.path.includes("preco_centavos") ? "Falta o preço de algum item marcado." : p.message };
+    return { erro: p.path.includes("preco_centavos") ? "Preço inválido em algum item marcado." : p.message };
   }
   const supabase = await criarClienteServidor();
   const { data: ultimo } = await supabase
@@ -299,7 +333,9 @@ export async function adicionarItensEmLote(versaoId: string, itens: unknown): Pr
   if (error) return { erro: mensagemDoBanco(error) };
   const orc = await orcamentoDaVersao(versaoId);
   if (orc) recarregar(orc);
-  return { ok: lista.data.length === 1 ? "1 item incluído." : `${lista.data.length} itens incluídos.` };
+  const pendentes = lista.data.filter((i) => i.preco_centavos === null).length;
+  const incluidos = lista.data.length === 1 ? "1 item incluído" : `${lista.data.length} itens incluídos`;
+  return { ok: pendentes ? `${incluidos}; ${pendentes} com preço pendente (defina antes de enviar).` : `${incluidos}.` };
 }
 
 // ---------------------------------------------------------------- modelos de orçamento

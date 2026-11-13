@@ -40,7 +40,17 @@ export type ConteudoOrcamento = {
     /** Desde a proposta comercial (11/11/2026); versões mais antigas não têm. */
     catalogo_item_id?: string | null;
     categoria?: string | null;
+    /** Desde a etapa 1 do módulo comercial (13/11/2026). */
+    detalhe?: string | null;
+    unidade_singular?: string;
+    unidade_plural?: string;
+    equivalencia?: string | null;
+    bruto_centavos?: number;
+    desconto_centavos?: number;
+    preco_pendente?: boolean;
   }[];
+  /** Soma dos descontos dados item a item (já abatidos do subtotal). */
+  descontos_itens_centavos?: number;
   subtotal_centavos: number;
   desconto_centavos: number;
   total_centavos: number;
@@ -74,6 +84,7 @@ const s = StyleSheet.create({
   cQtd: { flex: 1.4, textAlign: "right" },
   cUnit: { flex: 1.8, textAlign: "right" },
   cTotal: { flex: 1.8, textAlign: "right" },
+  cDescMenor: { fontSize: 8, color: SUAVE, marginTop: 1 },
   totais: { marginTop: 10, marginLeft: "auto", width: 230 },
   totalLinha: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 3 },
   totalFinal: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 6, marginTop: 4, borderTopWidth: 1.5, borderTopColor: ESMERALDA, fontFamily: "Helvetica-Bold", fontSize: 12, color: ESMERALDA },
@@ -144,21 +155,35 @@ export function DocumentoOrcamento({ c, previa, hash }: { c: ConteudoOrcamento; 
             <Text style={s.cUnit}>Valor unit.</Text>
             <Text style={s.cTotal}>Total</Text>
           </View>
-          {c.itens.map((i, n) => (
-            <View style={s.linha} key={n} wrap={false}>
-              <Text style={s.cDesc}>{i.descricao}</Text>
-              <Text style={s.cQtd}>{formatarQuantidade(Number(i.quantidade))} {rotuloUnidade(i.unidade, Number(i.quantidade))}</Text>
-              <Text style={s.cUnit}>{formatarCentavos(i.preco_unitario_centavos)}</Text>
-              <Text style={s.cTotal}>{formatarCentavos(i.total_centavos)}</Text>
-            </View>
-          ))}
+          {c.itens.map((i, n) => {
+            const q = Number(i.quantidade);
+            const unidade = q > 1 ? i.unidade_plural ?? rotuloUnidade(i.unidade, q) : i.unidade_singular ?? rotuloUnidade(i.unidade, q);
+            return (
+              <View style={s.linha} key={n} wrap={false}>
+                <View style={s.cDesc}>
+                  <Text>{i.descricao}</Text>
+                  {i.detalhe ? <Text style={s.cDescMenor}>{i.detalhe}</Text> : null}
+                  {i.desconto_centavos ? <Text style={s.cDescMenor}>Desconto de {formatarCentavos(i.desconto_centavos)} sobre {formatarCentavos(i.bruto_centavos ?? 0)}</Text> : null}
+                </View>
+                <View style={s.cQtd}>
+                  <Text style={{ textAlign: "right" }}>{formatarQuantidade(q)} {unidade}</Text>
+                  {i.equivalencia ? <Text style={[s.cDescMenor, { textAlign: "right" }]}>= {i.equivalencia}</Text> : null}
+                </View>
+                <Text style={s.cUnit}>{i.preco_pendente ? "a definir" : formatarCentavos(i.preco_unitario_centavos)}</Text>
+                <Text style={s.cTotal}>{formatarCentavos(i.total_centavos)}</Text>
+              </View>
+            );
+          })}
         </View>
 
         <View style={s.totais} wrap={false}>
-          {c.desconto_centavos > 0 && (
+          {(c.desconto_centavos > 0 || (c.descontos_itens_centavos ?? 0) > 0) && (
             <>
+              {(c.descontos_itens_centavos ?? 0) > 0 && (
+                <View style={s.totalLinha}><Text>Descontos nos itens (já aplicados)</Text><Text>- {formatarCentavos(c.descontos_itens_centavos ?? 0)}</Text></View>
+              )}
               <View style={s.totalLinha}><Text>Subtotal</Text><Text>{formatarCentavos(c.subtotal_centavos)}</Text></View>
-              <View style={s.totalLinha}><Text>Desconto</Text><Text>- {formatarCentavos(c.desconto_centavos)}</Text></View>
+              {c.desconto_centavos > 0 && <View style={s.totalLinha}><Text>Desconto</Text><Text>- {formatarCentavos(c.desconto_centavos)}</Text></View>}
             </>
           )}
           <View style={s.totalFinal}><Text>Total</Text><Text>{formatarCentavos(c.total_centavos)}</Text></View>

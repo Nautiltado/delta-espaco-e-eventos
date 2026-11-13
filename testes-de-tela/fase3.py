@@ -1,6 +1,6 @@
 """Teste de tela da Fase 3 (Playwright). Precisa das contas teste.e2e.adm e teste.e2e.atd no banco
 e do servidor rodando em localhost:3100. Veja testes-de-tela/LEIA-ME.md."""
-import re, sys
+import re, sys, random
 from playwright.sync_api import sync_playwright, expect
 
 BASE = "http://localhost:3100"
@@ -32,7 +32,12 @@ with sync_playwright() as p:
     b = p.chromium.launch(executable_path="/usr/bin/google-chrome", args=["--no-sandbox"])
     ctx = b.new_context(viewport={"width": 1366, "height": 900})
     pg = entrar(ctx, "teste.e2e.adm@delta.test")
-    ok("A1 login do administrador cai no início", "Para hoje" in pg.inner_text("main"))
+    pg.wait_for_selector("main h1")
+    ok("A1 login do administrador cai no início", "Teste" in pg.inner_text("main h1"))
+    JANTAR = f"Jantar completo {random.randint(100, 999)} (teste)"
+    _d = [random.randint(0, 9) for _ in range(9)]
+    for _n in (9, 10): _d.append((sum(_d[i] * (_n + 1 - i) for i in range(_n)) * 10 % 11) % 10)
+    CPF = "".join(map(str, _d)); CPF_FMT = f"{CPF[:3]}.{CPF[3:6]}.{CPF[6:9]}-{CPF[9:]}"
 
     # ---------------- catálogo
     pg.goto(f"{BASE}/catalogo"); pg.click("text=Garçom")
@@ -40,7 +45,7 @@ with sync_playwright() as p:
     pg.wait_for_url(re.compile(r".*salvo=1"), timeout=15000)
     ok("A2 custo do garçom salvo", "Item salvo" in pg.inner_text("main"))
     pg.goto(f"{BASE}/catalogo/novo")
-    pg.fill("#nome", "Jantar completo (teste)"); pg.select_option("#categoria", "alimentacao"); pg.select_option("#unidade", "pessoa")
+    pg.fill("#nome", JANTAR); pg.select_option("#categoria", "alimentacao"); pg.select_option("#unidade", "pessoa")
     pg.fill("#descricao", "Duas carnes, arroz, salada e sobremesa")
     pg.fill("#preco", "45,50"); pg.fill("#custo", "28,00"); pg.click("button:has-text('Salvar item')")
     pg.wait_for_url(re.compile(r".*/catalogo/[0-9a-f-]+\?salvo=1"), timeout=15000)
@@ -51,12 +56,12 @@ with sync_playwright() as p:
 
     # ---------------- clientes e duplicados
     pg.goto(f"{BASE}/clientes/novo")
-    pg.fill("#nome", "Maria José da Silva Teste"); pg.fill("#documento", "529.982.247-25")
+    pg.fill("#nome", "Maria José da Silva Teste"); pg.fill("#documento", CPF_FMT)
     pg.fill("#telefone", "(99) 98888-7777"); pg.select_option("#origem", "whatsapp")
     pg.click("button:has-text('Salvar cliente')")
     pg.wait_for_url(re.compile(r".*/clientes/[0-9a-f-]+$"), timeout=15000)
     cliente1 = pg.url.rsplit("/", 1)[1]
-    ok("A4 cliente PF cadastrado com CPF formatado", "529.982.247-25" in pg.inner_text("main"))
+    ok("A4 cliente PF cadastrado com CPF formatado", CPF_FMT in pg.inner_text("main"))
     pg.goto(f"{BASE}/clientes/novo")
     pg.fill("#documento", "111.111.111-11"); pg.fill("#nome", "CPF Ruim Teste"); pg.click("button:has-text('Salvar cliente')")
     pg.wait_for_selector(".aviso.erro", timeout=10000)
@@ -104,11 +109,11 @@ with sync_playwright() as p:
 
     incluir("Locação do espaço menor", preco="1.000,00")
     incluir("Garçom", qtd="2")
-    incluir("Jantar completo (teste)", qtd="90")
+    incluir(JANTAR, qtd="90")
     incluir(descricao="Decoração simples", preco="250,50", unidade="evento")
     corpo = pg.inner_text("main")
     ok("A10 total = 1.000 + 360 + 4.095 + 250,50", "R$ 5.705,50" in corpo, "")
-    ok("A11 margem visível ao admin", "Margem bruta" in corpo)
+    ok("A11 margem visível ao admin", "Lucro bruto estimado" in corpo)
     pg.fill("#desconto", "300,00"); pg.click("button:has-text('Salvar condições')")
     esperar_ok(pg, "Condições salvas")
     ok("A12 desconto de 5,3% pede aprovação", "Precisa de aprovação" in pg.inner_text("main aside"))

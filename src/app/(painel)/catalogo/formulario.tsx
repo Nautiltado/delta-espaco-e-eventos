@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useActionState, useState } from "react";
 import { salvarItem, type EstadoItem } from "./actions";
-import { CATEGORIAS, UNIDADES } from "@/lib/orcamentos";
+import { CATEGORIAS } from "@/lib/orcamentos";
+import { UNIDADES_PADRAO } from "@/lib/unidades";
 
 export type ItemFormulario = {
   id?: string;
@@ -21,7 +22,9 @@ export type ItemFormulario = {
   custo?: string;
 };
 
-export function FormularioItem({ item, mostrarCusto }: { item?: ItemFormulario; mostrarCusto: boolean }) {
+export function FormularioItem({ item, mostrarCusto, unidades = UNIDADES_PADRAO }: {
+  item?: ItemFormulario; mostrarCusto: boolean; unidades?: { codigo: string; singular: string; ativo: boolean }[];
+}) {
   const [estado, acao, salvando] = useActionState<EstadoItem, FormData>(salvarItem, {});
   const [tipo, setTipo] = useState(item?.preco_tipo ?? "fixo");
   return (
@@ -44,9 +47,9 @@ export function FormularioItem({ item, mostrarCusto }: { item?: ItemFormulario; 
           <input id="subgrupo" name="subgrupo" type="text" placeholder="Ex.: Carnes e aves" defaultValue={item?.subgrupo ?? ""} />
         </div>
         <div className="campo">
-          <label htmlFor="unidade">Cobrado por</label>
+          <label htmlFor="unidade">Cobrado por <Link href="/catalogo/unidades" className="pequeno">(unidades)</Link></label>
           <select id="unidade" name="unidade" defaultValue={item?.unidade ?? "evento"}>
-            {Object.entries(UNIDADES).map(([v, r]) => <option key={v} value={v}>{r}</option>)}
+            {unidades.filter((u) => u.ativo || u.codigo === item?.unidade).map((u) => <option key={u.codigo} value={u.codigo}>{u.singular}</option>)}
           </select>
         </div>
       </div>

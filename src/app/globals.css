@@ -558,6 +558,9 @@ details[open] > summary { margin-bottom: 8px; }
 .painel-lateral aside .selo { font-size: .68rem; }
 .tabela-itens td input { min-height: 34px; padding: 6px 9px; }
 .tabela-itens .acoes { white-space: nowrap; width: 1%; }
+.tabela-itens .campo-detalhe { margin-top: 4px; font-size: .8rem; min-height: 30px !important; color: var(--texto-2); }
+.tabela-itens tr.item-pendente > td:first-child { box-shadow: inset 3px 0 0 var(--ambar); }
+.texto-erro { color: var(--erro); font-weight: 600; }
 @media (max-width: 1180px) { .painel-lateral { grid-template-columns: minmax(0, 1fr); } .funil { grid-template-columns: repeat(4, 250px); } }
 
 /* =====================================================================

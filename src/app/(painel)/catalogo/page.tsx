@@ -6,7 +6,9 @@ import { exigirPermissao } from "@/lib/acesso";
 import { pode } from "@/lib/permissoes";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { formatarCentavos } from "@/lib/dinheiro";
-import { CATEGORIAS, ordemCategoria, UNIDADES } from "@/lib/orcamentos";
+import { CATEGORIAS, ordemCategoria } from "@/lib/orcamentos";
+import { carregarUnidades } from "@/lib/orcamento-dados";
+import { mapaDeUnidades, rotuloDaUnidade } from "@/lib/unidades";
 import { ordenarCatalogo, precoDoItem, type ItemCatalogo } from "@/lib/catalogo";
 import { Abas, Indicador, Vazio } from "@/componentes/ui";
 
@@ -26,10 +28,12 @@ export default async function PaginaCatalogo({ searchParams }: { searchParams: P
   const verCusto = pode(acesso, "custo.ver");
   const podeEditar = pode(acesso, "catalogo.alterar");
   const supabase = await criarClienteServidor();
-  const [{ data: itens }, { data: custos }] = await Promise.all([
+  const [{ data: itens }, { data: custos }, unidades] = await Promise.all([
     supabase.from("catalogo_itens").select("*").order("categoria").order("ordem").order("nome"),
     verCusto ? supabase.from("catalogo_custos").select("item_id, custo_centavos") : Promise.resolve({ data: [] }),
+    carregarUnidades(supabase),
   ]);
+  const mapaUnidades = mapaDeUnidades(unidades);
   const custoPorItem = new Map((custos ?? []).map((c) => [c.item_id as string, c.custo_centavos as number]));
   const todos = ordenarCatalogo((itens ?? []) as ItemCatalogo[], ordemCategoria);
   const cat = sp.cat && todos.some((i) => i.categoria === sp.cat) ? sp.cat : undefined;
@@ -67,7 +71,10 @@ export default async function PaginaCatalogo({ searchParams }: { searchParams: P
           <h1>Catálogo</h1>
           <p>Cardápio, espaços, equipe e materiais que entram nos orçamentos. Itens “a combinar” têm o preço digitado em cada orçamento.</p>
         </div>
-        {podeEditar && <div className="linha"><Link className="botao" href="/catalogo/novo"><Plus aria-hidden />Novo item</Link></div>}
+        <div className="linha">
+          <Link className="botao secundario" href="/catalogo/unidades">Unidades de cobrança</Link>
+          {podeEditar && <Link className="botao" href="/catalogo/novo"><Plus aria-hidden />Novo item</Link>}
+        </div>
       </div>
 
       <div className="kpis">
@@ -137,7 +144,10 @@ export default async function PaginaCatalogo({ searchParams }: { searchParams: P
                         {!cat && i.subgrupo && <div className="mudo" style={{ fontSize: ".76rem" }}>{i.subgrupo}</div>}
                       </td>
                       <td data-rotulo="Tipo"><span className={CATEGORIAS_SERVICO.has(i.categoria) ? "selo info" : "selo cinza"}>{CATEGORIAS_SERVICO.has(i.categoria) ? "Serviço" : "Produto"}</span></td>
-                      <td data-rotulo="Por">{UNIDADES[i.unidade] ?? i.unidade}</td>
+                      <td data-rotulo="Por">
+                        {rotuloDaUnidade(i.unidade, 1, mapaUnidades)}
+                        {mapaUnidades.get(i.unidade)?.equivale_quantidade ? <span className="mudo pequeno"> (= {mapaUnidades.get(i.unidade)!.equivale_quantidade} {rotuloDaUnidade(mapaUnidades.get(i.unidade)!.equivale_unidade!, 2, mapaUnidades)})</span> : null}
+                      </td>
                       <td data-rotulo="Preço" style={{ whiteSpace: "nowrap" }}>
                         {i.preco_tipo === "a_combinar" ? <span className="selo alerta">A combinar</span> : <strong style={{ fontWeight: 600 }}>{precoDoItem(i)}</strong>}
                       </td>

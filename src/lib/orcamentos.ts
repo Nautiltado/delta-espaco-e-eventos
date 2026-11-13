@@ -1,3 +1,5 @@
+import { rotuloDaUnidade, UNIDADES_PADRAO } from "@/lib/unidades";
+
 export type StatusOrcamento = "rascunho" | "enviado" | "aprovado" | "perdido";
 export type StatusVersao = "rascunho" | "enviada" | "aprovada" | "substituida";
 
@@ -22,24 +24,12 @@ export const TIPOS_ORCAMENTO: Record<string, string> = {
   outro: "Outro",
 };
 
-export const UNIDADES: Record<string, string> = {
-  evento: "evento",
-  pessoa: "pessoa",
-  unidade: "unidade",
-  cento: "cento",
-  hora: "hora",
-  diaria: "diária",
-  kg: "kg",
-  litro: "litro",
-};
-
-const PLURAIS: Record<string, string> = {
-  evento: "eventos", pessoa: "pessoas", unidade: "unidades", cento: "centos", hora: "horas", diaria: "diárias", litro: "litros",
-};
+/** Rótulo de cada unidade (padrão; a lista viva fica na tabela `unidades`). */
+export const UNIDADES: Record<string, string> = Object.fromEntries(UNIDADES_PADRAO.map((u) => [u.codigo, u.singular]));
 
 /** "pessoa", 90 → "pessoas"; "kg" não muda. */
 export function rotuloUnidade(unidade: string, quantidade: number): string {
-  return quantidade > 1 ? (PLURAIS[unidade] ?? UNIDADES[unidade] ?? unidade) : (UNIDADES[unidade] ?? unidade);
+  return rotuloDaUnidade(unidade, quantidade);
 }
 
 export const CATEGORIAS: Record<string, string> = {

@@ -66,6 +66,7 @@ begin
   delete from catalogo_precos where item_id = any(cat);
   delete from catalogo_itens where id = any(cat);
   delete from contrato_modelos where criado_por = any(testes);
+  delete from unidades where codigo like 'teste\_%';            -- unidades criadas pelo teste da etapa 1
   delete from orcamento_modelos where criado_por = any(testes);   -- modelos salvos pelo teste do orçamento rápido
   -- configurações mexidas pelo teste (chave Pix de teste): volta ao vazio e solta a referência à conta de teste
   update configuracoes set valor = '""' where chave = 'empresa.pix_chave' and atualizado_por = any(testes);

@@ -47,7 +47,8 @@ export type DadosContrato = {
   orcamento: { numero: string; versao: number; titulo: string; convidados: number | null; local_externo: string | null };
   espacos: string[];
   evento: { inicio: string; fim: string };
-  itens: { descricao: string; unidade: string; quantidade: number; preco_unitario_centavos: number; total_centavos: number }[];
+  itens: { descricao: string; unidade: string; quantidade: number; preco_unitario_centavos: number; total_centavos: number;
+    desconto_centavos?: number; equivalencia?: string | null }[];
   subtotal_centavos: number;
   desconto_centavos: number;
   total_centavos: number;
@@ -84,7 +85,7 @@ function assinaturaDoCliente(c: DadosContrato["cliente"]): string {
 
 function textoItens(d: DadosContrato): string {
   const linhas = d.itens.map(
-    (i) => `- ${formatarQuantidade(i.quantidade)} ${rotuloUnidade(i.unidade, i.quantidade)} de ${i.descricao.trim()}: ${formatarCentavos(i.total_centavos)}`,
+    (i) => `- ${formatarQuantidade(i.quantidade)} ${rotuloUnidade(i.unidade, i.quantidade)}${i.equivalencia ? ` (${i.equivalencia})` : ""} de ${i.descricao.trim()}: ${formatarCentavos(i.total_centavos)}${i.desconto_centavos ? ` (com desconto de ${formatarCentavos(i.desconto_centavos)})` : ""}`,
   );
   if (d.desconto_centavos > 0) {
     linhas.push(`Subtotal: ${formatarCentavos(d.subtotal_centavos)}`);

@@ -31,12 +31,14 @@ const COM_DETALHE = new Set([
   "PAGAMENTO_DUPLICADO",
   "VALOR_INVALIDO",
   "PARCELAS_COM_PAGAMENTO",
+  "PRECO_PENDENTE",
 ]);
 
 const PREFIXO: Record<string, string> = {
   APROVACAO_NECESSARIA: "Precisa de aprovação de um administrador: ",
   STATUS_INVALIDO: "Não é possível nesta situação: ",
   DATA_INDISPONIVEL: "Data indisponível: ",
+  PRECO_PENDENTE: "Defina os preços antes de enviar: ",
 };
 
 const RESTRICOES: Record<string, string> = {
@@ -45,6 +47,10 @@ const RESTRICOES: Record<string, string> = {
   clientes_telefone_check: "Telefone inválido. Use DDD e número.",
   clientes_email_check: "E-mail inválido.",
   catalogo_itens_nome_key: "Já existe um item com este nome no catálogo.",
+  item_desconto_ate_bruto: "O desconto não pode passar do valor do item.",
+  item_pendente_sem_desconto: "Defina o preço antes de dar desconto no item.",
+  item_unidade_fk: "Unidade de cobrança inexistente.",
+  catalogo_itens_unidade_fk: "Unidade de cobrança inexistente.",
 };
 
 type ErroBanco = { message?: string; code?: string; details?: string } | null | undefined;

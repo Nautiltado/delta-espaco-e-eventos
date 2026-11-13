@@ -96,6 +96,7 @@ export const SUBPAGINAS: { prefixo: RegExp; rotulo: string; pai: string }[] = [
   { prefixo: /^\/clientes\/.+\/editar$/, rotulo: "Editar cliente", pai: "/clientes" },
   { prefixo: /^\/clientes\/.+/, rotulo: "Cliente", pai: "/clientes" },
   { prefixo: /^\/catalogo\/novo$/, rotulo: "Novo item", pai: "/catalogo" },
+  { prefixo: /^\/catalogo\/unidades$/, rotulo: "Unidades de cobrança", pai: "/catalogo" },
   { prefixo: /^\/catalogo\/.+/, rotulo: "Item", pai: "/catalogo" },
   { prefixo: /^\/reservas\/.+/, rotulo: "Reserva", pai: "/agenda" },
   { prefixo: /^\/eventos\/.+/, rotulo: "Ficha do evento", pai: "/eventos" },
