@@ -11,6 +11,7 @@ import { CATEGORIAS } from "@/lib/orcamentos";
 import { carregarUnidades } from "@/lib/orcamento-dados";
 import { mapaDeUnidades, rotuloDaUnidade } from "@/lib/unidades";
 import { FormularioItem } from "../formulario";
+import { AvisoDaPagina } from "@/componentes/avisos";
 
 export const metadata: Metadata = { title: "Item do catálogo" };
 
@@ -56,7 +57,7 @@ export default async function ItemDoCatalogo({
           <p>{CATEGORIAS[i.categoria]}{i.subgrupo ? ` · ${i.subgrupo}` : ""} · por {rotuloDaUnidade(i.unidade, 1, mapaDeUnidades(unidades))} · {precoDoItem(i)}</p>
         </div>
       </div>
-      {salvo && <p className="aviso ok">Item salvo.</p>}
+      {salvo && <AvisoDaPagina texto="Item salvo." />}
 
       {pode(acesso, "catalogo.alterar") ? (
         <section className="cartao">

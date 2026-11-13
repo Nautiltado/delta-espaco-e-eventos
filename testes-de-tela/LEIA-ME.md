@@ -60,3 +60,8 @@ bloqueio com observação e responsável, remoção pelo painel, evento externo,
 `concorrencia.mjs` dispara 30 pedidos simultâneos para o mesmo espaço e horário e exige exatamente um aceito.
 
 Ao final, rode `limpar-dados-de-teste.sql` no SQL do Supabase: apaga só o que as contas de teste criaram (e as contas).
+
+Padrões de tela (13/11): os retornos de sucesso aparecem como toast (`.toast`) e ficam também num `role=status`
+escondido (só para leitor de tela); formulários de "Novo …" e ações de linha abrem em janela (`dialog.janela[open]`),
+que fecha sozinha ao salvar. Listas longas têm paginação (`?pagina=`) e rolagem própria. A agenda troca de período
+sem recarregar a página (dados em `/agenda/periodo`), então o teste espera o título mudar, não a URL carregar.

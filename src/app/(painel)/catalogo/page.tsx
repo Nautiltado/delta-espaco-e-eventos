@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Fragment } from "react";
 import Link from "next/link";
-import { BookOpenText, CircleDollarSign, Clock3, EyeOff, Lock, Pencil, Plus, Search } from "lucide-react";
+import { BookOpenText, CircleDollarSign, Clock3, Eye, EyeOff, Lock, Pencil, Plus, Search } from "lucide-react";
 import { exigirPermissao } from "@/lib/acesso";
 import { pode } from "@/lib/permissoes";
 import { criarClienteServidor } from "@/lib/supabase/server";
@@ -11,6 +11,9 @@ import { carregarUnidades } from "@/lib/orcamento-dados";
 import { mapaDeUnidades, rotuloDaUnidade } from "@/lib/unidades";
 import { ordenarCatalogo, precoDoItem, type ItemCatalogo } from "@/lib/catalogo";
 import { Abas, Indicador, Vazio } from "@/componentes/ui";
+import { BotaoIcone, BotaoJanela } from "@/componentes/janela";
+import { Paginacao, recortar } from "@/componentes/paginacao";
+import { FormularioItem } from "./formulario";
 
 export const metadata: Metadata = { title: "Catálogo" };
 
@@ -19,7 +22,7 @@ const CATEGORIAS_SERVICO = new Set(["espaco", "equipe", "servico", "equipamento"
 const SITUACOES = { todos: "Todos", ativos: "Ativos", pendentes: "Preço a combinar", inativos: "Inativos" } as const;
 type Situacao = keyof typeof SITUACOES;
 
-export default async function PaginaCatalogo({ searchParams }: { searchParams: Promise<{ q?: string; cat?: string; situacao?: string }> }) {
+export default async function PaginaCatalogo({ searchParams }: { searchParams: Promise<{ q?: string; cat?: string; situacao?: string; pagina?: string }> }) {
   const acesso = await exigirPermissao("orcamento.ver");
   const sp = await searchParams;
   const termo = (sp.q ?? "").trim();
@@ -51,7 +54,8 @@ export default async function PaginaCatalogo({ searchParams }: { searchParams: P
   const porSituacao = todos.filter((i) =>
     situacao === "todos" ? true : situacao === "ativos" ? i.ativo : situacao === "inativos" ? !i.ativo : i.ativo && i.preco_tipo === "a_combinar");
   const porBusca = termo ? porSituacao.filter((i) => normalizar(`${i.nome} ${i.descricao ?? ""} ${i.subgrupo ?? ""}`).includes(normalizar(termo))) : porSituacao;
-  const lista = cat ? porBusca.filter((i) => i.categoria === cat) : porBusca;
+  const filtrada = cat ? porBusca.filter((i) => i.categoria === cat) : porBusca;
+  const { itens: lista, pagina } = recortar(filtrada, Math.max(1, Number(sp.pagina) || 1), 25);
   const categorias = [...new Set(porBusca.map((i) => i.categoria))];
 
   const link = (q: { situacao?: string; cat?: string | null; q?: string }) => {
@@ -72,8 +76,13 @@ export default async function PaginaCatalogo({ searchParams }: { searchParams: P
           <p>Cardápio, espaços, equipe e materiais que entram nos orçamentos. Itens “a combinar” têm o preço digitado em cada orçamento.</p>
         </div>
         <div className="linha">
-          <Link className="botao secundario" href="/catalogo/unidades">Unidades de cobrança</Link>
-          {podeEditar && <Link className="botao" href="/catalogo/novo"><Plus aria-hidden />Novo item</Link>}
+          <Link className="botao secundario" href="/catalogo/unidades">Unidades</Link>
+          {podeEditar && (
+            <BotaoJanela rotulo="Novo item" icone={<Plus aria-hidden />} larga titulo="Novo item do catálogo"
+              descricao="Use preço fixo para itens tabelados e faixa para o que é negociado, como a locação dos espaços.">
+              <FormularioItem mostrarCusto={verCusto} unidades={unidades} />
+            </BotaoJanela>
+          )}
         </div>
       </div>
 
@@ -113,6 +122,7 @@ export default async function PaginaCatalogo({ searchParams }: { searchParams: P
             texto={termo || cat || situacao !== "ativos" ? "Mude a busca ou os filtros." : "Cadastre o primeiro item do catálogo."}
             acao={termo || cat || situacao !== "ativos" ? <Link className="botao secundario pequeno" href="/catalogo">Limpar filtros</Link> : undefined} />
         ) : (
+          <div className="lista-rolavel">
           <table className="empilhar">
             <thead>
               <tr>
@@ -130,7 +140,7 @@ export default async function PaginaCatalogo({ searchParams }: { searchParams: P
               {lista.map((i, n) => {
                 const custo = custoPorItem.get(i.id);
                 const precoRef = i.preco_tipo === "fixo" ? i.preco_centavos : i.preco_min_centavos;
-                const novaCategoria = !cat && i.categoria !== lista[n - 1]?.categoria;
+                const novaCategoria = !cat && (n === 0 || i.categoria !== lista[n - 1]?.categoria);
                 const novoSubgrupo = i.subgrupo && (i.subgrupo !== lista[n - 1]?.subgrupo || novaCategoria);
                 const margem = custo !== undefined && precoRef ? Math.round(((precoRef - custo) * 100) / precoRef) : null;
                 return (
@@ -162,10 +172,8 @@ export default async function PaginaCatalogo({ searchParams }: { searchParams: P
                         </td>
                       )}
                       <td data-rotulo="Situação">{i.ativo ? <span className="selo">Ativo</span> : <span className="selo cinza">Inativo</span>}</td>
-                      <td className="numero">
-                        <Link className="botao fantasma pequeno" href={`/catalogo/${i.id}`} aria-label={`${podeEditar ? "Editar" : "Ver"} ${i.nome}`}>
-                          {podeEditar ? <><Pencil aria-hidden />Editar</> : "Ver"}
-                        </Link>
+                      <td className="acoes">
+                        <BotaoIcone icone={podeEditar ? <Pencil aria-hidden /> : <Eye aria-hidden />} rotulo={podeEditar ? "Editar" : "Ver detalhes"} href={`/catalogo/${i.id}`} />
                       </td>
                     </tr>
                   </Fragment>
@@ -173,9 +181,11 @@ export default async function PaginaCatalogo({ searchParams }: { searchParams: P
               })}
             </tbody>
           </table>
+          </div>
         )}
+        <Paginacao total={filtrada.length} pagina={pagina} porPagina={25} caminho="/catalogo" parametros={sp} />
         <div className="cartao-rodape mudo">
-          {lista.length} {lista.length === 1 ? "item" : "itens"} · No orçamento também dá para incluir item livre, fora do catálogo.
+          {filtrada.length} {filtrada.length === 1 ? "item" : "itens"} · No orçamento também dá para incluir item livre, fora do catálogo.
         </div>
       </section>
     </>

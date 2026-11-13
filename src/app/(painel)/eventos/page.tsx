@@ -81,11 +81,11 @@ export default async function PaginaEventos() {
       </div>
       <section className="cartao">
         <h2>Próximos ({proximos.length})</h2>
-        {proximos.length ? <ul className="pedidos-lista">{proximos.map((e) => <Linha key={e.id} e={e} />)}</ul> : <Vazio compacto icone={CalendarDays} titulo="Nenhum evento marcado" texto="Os eventos aparecem aqui quando uma data é reservada." />}
+        {proximos.length ? <ul className="pedidos-lista rola-por-dentro" style={{ maxHeight: 520 }}>{proximos.map((e) => <Linha key={e.id} e={e} />)}</ul> : <Vazio compacto icone={CalendarDays} titulo="Nenhum evento marcado" texto="Os eventos aparecem aqui quando uma data é reservada." />}
       </section>
       <section className="cartao">
         <h2>Últimos 30 dias</h2>
-        {passados.length ? <ul className="pedidos-lista">{passados.map((e) => <Linha key={e.id} e={e} />)}</ul> : <Vazio compacto icone={CalendarDays} titulo="Nenhum evento nos últimos 30 dias" />}
+        {passados.length ? <ul className="pedidos-lista rola-por-dentro" style={{ maxHeight: 420 }}>{passados.map((e) => <Linha key={e.id} e={e} />)}</ul> : <Vazio compacto icone={CalendarDays} titulo="Nenhum evento nos últimos 30 dias" />}
       </section>
     </>
   );

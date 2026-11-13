@@ -15,6 +15,7 @@ import { AVISO_CANCELAMENTO, CANAIS, STATUS_PEDIDO, diaDaDelta, horaDaDelta, typ
 import { BotaoAcao, CopiarPix } from "../../reservas/componentes";
 import { entregarPedido, marcarPronto } from "../actions";
 import { FormularioCancelarPedido, FormularioPagamentoPedido } from "../componentes";
+import { AvisoDaPagina } from "@/componentes/avisos";
 
 export const metadata: Metadata = { title: "Pedido" };
 
@@ -97,7 +98,7 @@ export default async function PaginaPedido({
         )}
       </div>
 
-      {aviso && AVISOS[aviso] && <p className="aviso ok" role="status">{AVISOS[aviso]}</p>}
+      {aviso && AVISOS[aviso] && <AvisoDaPagina texto={AVISOS[aviso]} />}
       {p.status === "cancelado" && (
         <p className="aviso erro">
           Cancelado em {formatarDataHora(p.cancelado_em)}: {p.cancelado_motivo}.{" "}

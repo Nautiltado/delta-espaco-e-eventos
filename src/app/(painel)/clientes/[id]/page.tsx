@@ -9,6 +9,7 @@ import { formatarData, formatarDataHora } from "@/lib/datas";
 import { STATUS_ORCAMENTO, type StatusOrcamento } from "@/lib/orcamentos";
 import { alternarAtivoCliente, type Duplicado } from "../actions";
 import { FormularioMesclagem } from "./mesclar";
+import { AvisoDaPagina } from "@/componentes/avisos";
 
 export const metadata: Metadata = { title: "Cliente" };
 
@@ -68,7 +69,7 @@ export default async function FichaCliente({
           )}
         </div>
       </div>
-      {mesclado && <p className="aviso ok">Cadastros mesclados. O histórico do cadastro repetido agora está aqui.</p>}
+      {mesclado && <AvisoDaPagina texto="Cadastros mesclados. O histórico do cadastro repetido agora está aqui." />}
 
       <div className="grade">
         <section className="cartao">

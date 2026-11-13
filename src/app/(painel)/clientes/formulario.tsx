@@ -1,5 +1,7 @@
 "use client";
 
+import { useJanela } from "@/componentes/avisos";
+
 import Link from "next/link";
 import { useActionState, useRef, useState, useTransition } from "react";
 import { salvarCliente, verificarDuplicados, type Duplicado, type EstadoCliente } from "./actions";
@@ -32,6 +34,7 @@ const ORIGENS = [
 ];
 
 export function FormularioCliente({ cliente }: { cliente?: ClienteFormulario }) {
+  const janela = useJanela();
   const [estado, acao, salvando] = useActionState<EstadoCliente, FormData>(salvarCliente, {});
   const inicial = estado.campos ?? {
     tipo: cliente?.tipo ?? "PF",
@@ -168,7 +171,11 @@ export function FormularioCliente({ cliente }: { cliente?: ClienteFormulario }) 
 
       <div className="linha">
         <button className="botao" disabled={salvando}>{salvando ? "Salvando…" : "Salvar cliente"}</button>
-        <Link className="botao secundario" href={cliente?.id ? `/clientes/${cliente.id}` : "/clientes"}>Cancelar</Link>
+        {janela ? (
+          <button type="button" className="botao secundario" onClick={janela.fechar}>Cancelar</button>
+        ) : (
+          <Link className="botao secundario" href={cliente?.id ? `/clientes/${cliente.id}` : "/clientes"}>Cancelar</Link>
+        )}
       </div>
     </form>
   );

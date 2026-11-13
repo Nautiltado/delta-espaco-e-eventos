@@ -10,7 +10,7 @@ res = []
 def ok(n, c, d=""): res.append(bool(c)); print("OK   " if c else "FALHA", n, str(d)[:220], flush=True)
 def abrir(pg, nome):
     pg.goto(f"{B}/usuarios?q={nome.split()[0]}"); pg.wait_for_selector(".tabela-usuarios")
-    pg.locator(".tabela-usuarios tr", has_text=nome).first.locator("button:has-text('Gerenciar acesso')").click()
+    pg.locator(".tabela-usuarios tr", has_text=nome).first.locator("button[aria-label='Gerenciar acesso']").click()
     pg.wait_for_selector(".gaveta")
 def aviso(pg):
     pg.wait_for_selector(".gaveta .aviso.ok, .gaveta .aviso.erro", timeout=20000)

@@ -14,6 +14,7 @@ import { lerConfiguracoes, type Contrato, type Pagamento, type ParcelaSituacao, 
 import { confirmarReserva, liberarBloqueio, prorrogarBloqueio, removerBloqueio } from "../actions";
 import { EnviarComprovantes, RemoverComprovante } from "../comprovantes";
 import { tamanhoLegivel } from "@/lib/comprovantes";
+import { AvisoDaPagina } from "@/componentes/avisos";
 import {
   BotaoAcao,
   CopiarPix,
@@ -158,7 +159,7 @@ export default async function PaginaReserva({
             <p>{espacos.join(" e ")} · {descreverPeriodo(reserva.evento_inicio, reserva.evento_fim)}</p>
           </div>
         </div>
-        {textoAviso && <p className="aviso ok" role="status">{textoAviso}</p>}
+        {textoAviso && <AvisoDaPagina texto={textoAviso} />}
         <section className="cartao">
           <p style={{ marginTop: 0 }}>Motivo: {reserva.motivo}</p>
           {reserva.status === "confirmada" && pode(acesso, "bloqueio.remover") && (
@@ -192,7 +193,7 @@ export default async function PaginaReserva({
         )}
       </div>
 
-      {textoAviso && <p className="aviso ok" role="status">{textoAviso}</p>}
+      {textoAviso && <AvisoDaPagina texto={textoAviso} />}
       {segura && reserva.status === "bloqueio_temporario" && (
         <p className="aviso ok">Data segura até {formatarDataHora(reserva.expira_em)}. Agora gere o contrato e cobre a entrada.</p>
       )}

@@ -5,6 +5,7 @@ import { exigirPermissao } from "@/lib/acesso";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { dadosOrcamentoRapido } from "@/lib/orcamento-rapido-dados";
 import { EditorModelo } from "../editor";
+import { AvisoDaPagina } from "@/componentes/avisos";
 
 export const metadata: Metadata = { title: "Modelo de orçamento" };
 
@@ -25,7 +26,7 @@ export default async function PaginaEditarModelo({ params, searchParams }: { par
           <h1>{novo ? "Novo modelo" : modelo!.nome}</h1>
         </div>
       </div>
-      {salvo && <p className="aviso ok">Modelo salvo.</p>}
+      {salvo && <AvisoDaPagina texto="Modelo salvo." />}
       <section className="cartao">
         <EditorModelo key={modelo?.id ?? "novo"} modelo={modelo ?? null} opcoes={opcoes} />
       </section>

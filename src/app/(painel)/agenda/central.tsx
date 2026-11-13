@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import {
   CalendarCheck, CalendarPlus, ChevronLeft, ChevronRight, FileText, Lock, MapPin, Search, Truck, Users, X,
 } from "lucide-react";
@@ -31,13 +31,18 @@ type Props = {
   clientes: { id: string; nome: string }[]; atendentes: { id: string; nome: string }[];
   usuario: { id: string; nome: string };
   permissoes: { criar: boolean; bloquear: boolean; removerBloqueio: boolean; financeiro: boolean };
+  /** De que lado o período novo entra (deslize). */
+  entrada?: "esq" | "dir" | null;
+  carregando?: boolean;
+  navegar?: (vista: Vista, ancora: string, direcao: "esq" | "dir" | null, filtro: Filtro) => void;
 };
+/** O que não muda ao trocar de período. */
+export type PropsFixas = Omit<Props, "vista" | "ancora" | "periodo" | "itens" | "diaInicial" | "filtroInicial" | "entrada" | "carregando" | "navegar">;
 
 type Modo = "resumo" | "evento" | "externo" | "bloqueio" | "consulta";
 
 const SEMANA = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
 const MAX_CHIPS = 3;
-const CHAVE_DIRECAO = "delta-agenda-direcao";
 const h = (n: number) => `${String(n).replace(".", ",")} h`;
 const curto = (nome: string) => nome.replace(/^Espaço /i, "");
 const maiuscula = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -90,27 +95,13 @@ export function CentralAgenda(p: Props) {
   const fechar = useCallback(() => { setDia(null); setModo("resumo"); atualizarUrl({ dia: null }); }, [atualizarUrl]);
   const filtrar = (f: Filtro) => { setFiltro(f); atualizarUrl({ espaco: f === "todos" ? null : f }); };
 
-  // Navegação entre períodos com deslize: a direção fica guardada para a próxima tela animar a entrada.
-  const [indo, iniciarIda] = useTransition();
-  const [saida, setSaida] = useState<"esq" | "dir" | null>(null);
-  const deslizeRef = useRef<HTMLDivElement>(null);
-  const tituloRef = useRef<HTMLHeadingElement>(null);
-  useLayoutEffect(() => {
-    let d: string | null = null;
-    try { d = sessionStorage.getItem(CHAVE_DIRECAO); sessionStorage.removeItem(CHAVE_DIRECAO); } catch {}
-    if (d === "esq" || d === "dir") {
-      deslizeRef.current?.classList.add(`entra-${d}`);
-      tituloRef.current?.classList.add(`entra-${d}`);
-    }
-  }, []);
-  const ir = (e: React.MouseEvent, destino: string, direcao: "esq" | "dir" | null) => {
-    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+  // Navegação entre períodos: o período novo já vem pronto e entra deslizando do lado para onde se foi.
+  const indo = !!p.carregando;
+  const entra = p.entrada ? ` entra-${p.entrada}` : "";
+  const ir = (e: React.MouseEvent, vista: Vista, ancora: string, direcao: "esq" | "dir" | null) => {
+    if (!p.navegar || e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
     e.preventDefault();
-    if (direcao) {
-      try { sessionStorage.setItem(CHAVE_DIRECAO, direcao); } catch {}
-      setSaida(direcao);
-    }
-    iniciarIda(() => router.push(destino, { scroll: false }));
+    p.navegar(vista, ancora, direcao, filtro);
   };
 
   const href = (vista: Vista, data: string) => {
@@ -153,18 +144,18 @@ export function CentralAgenda(p: Props) {
       <section className="cartao agenda-barra">
         <div className="agenda-nav">
           <Link className="botao secundario pequeno" href={href(p.vista, p.hoje)}
-            onClick={(e) => ir(e, href(p.vista, p.hoje), p.hoje < p.periodo.inicio ? "esq" : p.hoje >= p.periodo.fim ? "dir" : null)}>Hoje</Link>
+            onClick={(e) => ir(e, p.vista, p.hoje, p.hoje < p.periodo.inicio ? "esq" : p.hoje >= p.periodo.fim ? "dir" : null)}>Hoje</Link>
           <Link className="botao fantasma pequeno icone" href={href(p.vista, p.periodo.anterior)} aria-label="Anterior"
-            onClick={(e) => ir(e, href(p.vista, p.periodo.anterior), "esq")}><ChevronLeft aria-hidden /></Link>
+            onClick={(e) => ir(e, p.vista, p.periodo.anterior, "esq")}><ChevronLeft aria-hidden /></Link>
           <Link className="botao fantasma pequeno icone" href={href(p.vista, p.periodo.seguinte)} aria-label="Seguinte"
-            onClick={(e) => ir(e, href(p.vista, p.periodo.seguinte), "dir")}><ChevronRight aria-hidden /></Link>
-          <div className="agenda-titulo-janela"><h2 ref={tituloRef} className={saida ? `sai-${saida}` : ""}>{rotuloPeriodo(p.vista, p.ancora, p.periodo.inicio, p.periodo.fim)}</h2></div>
+            onClick={(e) => ir(e, p.vista, p.periodo.seguinte, "dir")}><ChevronRight aria-hidden /></Link>
+          <div className="agenda-titulo-janela"><h2 className={entra.trim()}>{rotuloPeriodo(p.vista, p.ancora, p.periodo.inicio, p.periodo.fim)}</h2></div>
         </div>
         <div className="agenda-filtros">
           <nav className="abas" aria-label="Visão">
             {(Object.keys(VISTAS) as Vista[]).map((v) => (
               <Link key={v} className="aba" href={href(v, dia ?? p.ancora)} aria-current={v === p.vista ? "page" : undefined}
-                onClick={(e) => ir(e, href(v, dia ?? p.ancora), null)}>{VISTAS[v]}</Link>
+                onClick={(e) => ir(e, v, dia ?? p.ancora, null)}>{VISTAS[v]}</Link>
             ))}
           </nav>
           <div className="abas" role="group" aria-label="Filtrar por espaço">
@@ -179,7 +170,7 @@ export function CentralAgenda(p: Props) {
 
       <div className="agenda-layout">
         <section className="cartao sem-respiro agenda-vista" aria-busy={indo}>
-          <div ref={deslizeRef} className={`agenda-deslize${saida ? ` sai-${saida}` : ""}${indo && !saida ? " carregando" : ""}`}>
+          <div className={`agenda-deslize${entra}${indo ? " carregando" : ""}`}>
           {p.vista === "mes" && <VistaMes p={p} porDia={porDia} dia={dia} abrir={abrir} />}
           {p.vista === "semana" && <VistaSemana p={p} porDia={porDia} dia={dia} abrir={abrir} />}
           {p.vista === "dia" && <VistaDia p={p} itens={visiveis} espacos={filtro === "todos" ? espacos : espacos.filter((e) => e.id === filtro)} mostrarExternos={filtro === "todos" || filtro === "externos"} abrir={abrir} />}

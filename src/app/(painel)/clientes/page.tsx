@@ -4,6 +4,11 @@ import { exigirPermissao } from "@/lib/acesso";
 import { pode } from "@/lib/permissoes";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { formatarDocumento, formatarTelefone } from "@/lib/documentos";
+import { Search, UserPlus, Users } from "lucide-react";
+import { BotaoJanela } from "@/componentes/janela";
+import { Paginacao, recortar } from "@/componentes/paginacao";
+import { Vazio } from "@/componentes/ui";
+import { FormularioCliente } from "./formulario";
 
 export const metadata: Metadata = { title: "Clientes" };
 
@@ -21,17 +26,19 @@ type Linha = {
 export default async function PaginaClientes({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; inativos?: string }>;
+  searchParams: Promise<{ q?: string; inativos?: string; pagina?: string }>;
 }) {
   const acesso = await exigirPermissao("cliente.ver");
-  const { q = "", inativos } = await searchParams;
+  const sp = await searchParams;
+  const { q = "", inativos } = sp;
   const supabase = await criarClienteServidor();
   const { data, error } = await supabase.rpc("buscar_clientes", {
     p_texto: q.slice(0, 100) || null,
     p_inativos: inativos === "1",
     p_limite: 200,
   });
-  const clientes = (data ?? []) as Linha[];
+  const todos = (data ?? []) as Linha[];
+  const { itens: clientes, pagina } = recortar(todos, Math.max(1, Number(sp.pagina) || 1));
 
   return (
     <>
@@ -40,25 +47,34 @@ export default async function PaginaClientes({
           <h1>Clientes</h1>
           <p>Pessoas e empresas, com CPF/CNPJ conferido e aviso de cadastro repetido.</p>
         </div>
-        {pode(acesso, "cliente.editar") && <Link className="botao" href="/clientes/novo">Novo cliente</Link>}
+        {pode(acesso, "cliente.editar") && (
+          <BotaoJanela rotulo="Novo cliente" icone={<UserPlus aria-hidden />} larga
+            descricao="Só o nome é obrigatório no primeiro contato. CPF/CNPJ e endereço serão exigidos no contrato.">
+            <FormularioCliente />
+          </BotaoJanela>
+        )}
       </div>
 
-      <section className="cartao">
-        <form className="linha" style={{ marginBottom: 16 }}>
-          <div className="campo" style={{ flex: 3 }}>
-            <label htmlFor="q">Buscar por nome, telefone ou CPF/CNPJ</label>
-            <input id="q" name="q" type="search" defaultValue={q} placeholder="Ex.: Maria, 98152 ou 620.814" autoFocus />
-          </div>
-          <label style={{ display: "flex", gap: 6, alignItems: "center", fontWeight: 500, marginBottom: 10 }}>
-            <input type="checkbox" name="inativos" value="1" defaultChecked={inativos === "1"} /> Incluir inativos
-          </label>
-          <button className="botao secundario" style={{ marginBottom: 2 }}>Buscar</button>
-        </form>
+      <section className="cartao sem-respiro">
+        <div className="cartao-cabecalho">
+          <form className="barra-filtros" style={{ width: "100%" }} role="search">
+            <div className="crescer campo-busca">
+              <Search aria-hidden />
+              <label htmlFor="q" className="sr-only">Buscar por nome, telefone ou CPF/CNPJ</label>
+              <input id="q" name="q" type="search" defaultValue={q} placeholder="Buscar por nome, telefone ou CPF/CNPJ (ex.: Maria, 98152)" autoFocus />
+            </div>
+            <label style={{ display: "flex", gap: 6, alignItems: "center", fontWeight: 500, margin: 0 }}>
+              <input type="checkbox" name="inativos" value="1" defaultChecked={inativos === "1"} /> Incluir inativos
+            </label>
+            <button className="botao secundario">Buscar</button>
+          </form>
+        </div>
 
-        {error && <p className="aviso erro">Não foi possível carregar os clientes.</p>}
+        {error && <p className="aviso erro" style={{ margin: 16 }}>Não foi possível carregar os clientes.</p>}
         {clientes.length === 0 ? (
-          <p className="mudo">{q ? "Nenhum cliente encontrado." : "Nenhum cliente cadastrado ainda."}</p>
+          <Vazio icone={Users} titulo={q ? "Nenhum cliente encontrado" : "Nenhum cliente cadastrado ainda"} texto={q ? "Tente outro nome, telefone ou documento." : undefined} />
         ) : (
+          <div className="lista-rolavel">
           <table className="empilhar">
             <thead>
               <tr>
@@ -84,8 +100,10 @@ export default async function PaginaClientes({
               ))}
             </tbody>
           </table>
+          </div>
         )}
-        {clientes.length === 200 && <p className="mudo">Mostrando os 200 primeiros. Refine a busca.</p>}
+        <Paginacao total={todos.length} pagina={pagina} caminho="/clientes" parametros={sp} />
+        {todos.length === 200 && <p className="mudo" style={{ padding: "0 16px 12px" }}>Mostrando os 200 primeiros. Refine a busca.</p>}
       </section>
     </>
   );

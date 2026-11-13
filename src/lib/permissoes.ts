@@ -87,7 +87,7 @@ export const MENU: ItemMenu[] = [
   { href: "/salgados/cozinha", rotulo: "Cozinha", grupo: "operacao", permissao: ["producao.status", "salgados.ver"] },
   { href: "/salgados/estoque", rotulo: "Estoque", grupo: "operacao", permissao: ["estoque.movimentar", "catalogo.alterar", "estoque.ver"] },
   { href: "/financeiro", rotulo: "Financeiro", grupo: "administracao", permissao: ["pagamento.confirmar", "financeiro.ver"] },
-  { href: "/contratos", rotulo: "Contratos", grupo: "administracao", permissao: "contrato.editar" },
+  { href: "/contratos", rotulo: "Contratos", grupo: "administracao", permissao: ["contrato.editar", "contrato.ver"] },
   { href: "/usuarios", rotulo: "Usuários", grupo: "administracao", permissao: "config.critica" },
   { href: "/configuracoes", rotulo: "Configurações", grupo: "administracao" },
   { href: "/auditoria", rotulo: "Auditoria", grupo: "administracao", permissao: "auditoria.ver" },

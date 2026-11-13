@@ -1,5 +1,7 @@
 "use client";
 
+import { Retorno as RetornoOk } from "@/componentes/avisos";
+
 import { useActionState } from "react";
 import { salvarConfiguracao, type EstadoConfig } from "./actions";
 import type { TipoConfig } from "@/lib/configuracoes";
@@ -55,8 +57,7 @@ export function CampoConfiguracao({
           {enviando ? "Salvando…" : "Salvar"}
         </button>
       </div>
-      {estado.erro && <p className="aviso erro" role="alert">{estado.erro}</p>}
-      {estado.ok && <p className="aviso ok" role="status">{estado.ok}</p>}
+      <RetornoOk estado={estado} />
     </form>
   );
 }

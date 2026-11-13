@@ -4,7 +4,8 @@ import { pode } from "@/lib/permissoes";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { hojeNaDelta } from "@/lib/datas";
 import { inicioDoDia, periodoDaVista, VISTAS, type EspacoAgenda, type ItemAgenda, type Vista } from "@/lib/agenda";
-import { CentralAgenda, type Folgas } from "./central";
+import { type Folgas } from "./central";
+import { AgendaNavegavel } from "./navegavel";
 
 export const metadata: Metadata = { title: "Agenda" };
 
@@ -61,25 +62,21 @@ export default async function PaginaAgenda({
   const filtro = q.espaco === "externos" || espacos.some((e) => e.id === q.espaco) ? q.espaco! : "todos";
 
   return (
-    <CentralAgenda
-      key={`${vista}-${ancora}`}
-      vista={vista}
-      ancora={ancora}
-      periodo={periodo}
-      hoje={hoje}
-      diaInicial={dia}
-      filtroInicial={filtro}
-      itens={(itens ?? []) as ItemAgenda[]}
-      espacos={espacos}
-      folgas={folgas}
-      clientes={((clientes ?? []) as { id: string; nome: string; telefone?: string | null }[]).map((c) => ({ id: c.id, nome: c.nome }))}
-      atendentes={(atendentes ?? []) as { id: string; nome: string }[]}
-      usuario={{ id: acesso.id, nome: acesso.nome }}
-      permissoes={{
-        criar: podeCriar,
-        bloquear: pode(acesso, "bloqueio.criar"),
-        removerBloqueio: pode(acesso, "bloqueio.remover"),
-        financeiro: pode(acesso, "orcamento.ver") || pode(acesso, "pagamento.confirmar"),
+    <AgendaNavegavel
+      inicial={{ vista, ancora, periodo, itens: (itens ?? []) as ItemAgenda[], diaInicial: dia, filtroInicial: filtro }}
+      fixas={{
+        hoje,
+        espacos,
+        folgas,
+        clientes: ((clientes ?? []) as { id: string; nome: string; telefone?: string | null }[]).map((c) => ({ id: c.id, nome: c.nome })),
+        atendentes: (atendentes ?? []) as { id: string; nome: string }[],
+        usuario: { id: acesso.id, nome: acesso.nome },
+        permissoes: {
+          criar: podeCriar,
+          bloquear: pode(acesso, "bloqueio.criar"),
+          removerBloqueio: pode(acesso, "bloqueio.remover"),
+          financeiro: pode(acesso, "orcamento.ver") || pode(acesso, "pagamento.confirmar"),
+        },
       }}
     />
   );

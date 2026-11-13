@@ -1,5 +1,7 @@
 "use client";
 
+import { Retorno as RetornoOk } from "@/componentes/avisos";
+
 import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -73,8 +75,7 @@ export function EditorModelo({
 
   return (
     <div>
-      {estado.erro && <p className="aviso erro" role="alert">{estado.erro}</p>}
-      {estado.ok && <p className="aviso ok" role="status">{estado.ok}</p>}
+      <RetornoOk estado={estado} />
       <div className="linha" style={{ marginBottom: 12 }}>
         <div className="campo" style={{ flex: 1 }}>
           <label htmlFor="m-nome">Nome do modelo</label>

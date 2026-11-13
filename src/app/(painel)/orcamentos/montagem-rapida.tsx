@@ -1,5 +1,7 @@
 "use client";
 
+import { Retorno as RetornoOk } from "@/componentes/avisos";
+
 import { useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { adicionarItensEmLote, type Estado } from "./actions";
@@ -209,8 +211,7 @@ export function MontagemRapida({
         const q = g && g.marcado ? lerQuantidade(g.qtdTexto) ?? 0 : 0;
         return q < 2 ? <p className="aviso erro">Bandeja rodada pede no mínimo 2 garçons.</p> : null;
       })()}
-      {estado.erro && <p className="aviso erro" role="alert">{estado.erro}</p>}
-      {estado.ok && <p className="aviso ok" role="status">{estado.ok}</p>}
+      <RetornoOk estado={estado} />
 
       {linhas.length > 0 && (
         <p className="aviso info" style={{ marginTop: 10 }}>

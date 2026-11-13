@@ -7,6 +7,9 @@ import { formatarCentavos } from "@/lib/dinheiro";
 import { formatarDataHora } from "@/lib/datas";
 import { disponivel, precisaRepor } from "@/lib/salgados";
 import { cardapioEEstoque } from "@/lib/salgados-dados";
+import { ClipboardMinus, Gauge, Pencil } from "lucide-react";
+import { BotaoJanela } from "@/componentes/janela";
+import { TituloCartao } from "@/componentes/ui";
 import { FormularioAjuste, FormularioMinimo, FormularioPreco } from "../componentes";
 
 export const metadata: Metadata = { title: "Estoque e preços" };
@@ -38,53 +41,71 @@ export default async function PaginaEstoque() {
         </div>
       </div>
 
+      <div className="estoque-colunas">
       {podeEstoque && (
-        <section className="cartao">
-          <h2>Salgados guardados</h2>
-                      <table className="empilhar">
-              <thead><tr><th>Salgado</th><th>Guardado</th><th>Vendido</th><th>Disponível</th><th>Mínimo</th><th>Perda, evento ou contagem</th></tr></thead>
+        <section className="cartao sem-respiro">
+          <TituloCartao titulo="Salgados guardados" conta={estoque.length} />
+          <div className="lista-rolavel">
+            <table className="empilhar">
+              <thead><tr><th>Salgado</th><th className="numero">Guardado</th><th className="numero">Vendido</th><th className="numero">Disponível</th><th className="numero">Mínimo</th><th><span className="sr-only">Ações</span></th></tr></thead>
               <tbody>
                 {estoque.map((e) => (
-                  <tr key={e.id}>
+                  <tr key={e.id} data-item={e.nome}>
                     <td>{e.nome}<div className="mudo" style={{ fontSize: ".8rem" }}>{e.grupo === "forno" ? "forno" : "fritura"}</div></td>
-                    <td data-rotulo="Guardado">{e.saldo}</td>
-                    <td data-rotulo="Vendido">{e.reservado}</td>
-                    <td data-rotulo="Disponível"><strong className={precisaRepor(e) ? "atrasada" : undefined}>{disponivel(e)}</strong></td>
-                    <td><FormularioMinimo id={e.id} minimo={e.minimo} /></td>
-                    <td>
-                      <details><summary>Registrar</summary><FormularioAjuste item={{ id: e.id, nome: e.nome }} /></details>
+                    <td className="numero" data-rotulo="Guardado">{e.saldo}</td>
+                    <td className="numero" data-rotulo="Vendido">{e.reservado}</td>
+                    <td className="numero" data-rotulo="Disponível"><strong className={precisaRepor(e) ? "atrasada" : undefined}>{disponivel(e)}</strong></td>
+                    <td className="numero" data-rotulo="Mínimo">{e.minimo}</td>
+                    <td className="acoes">
+                      <span className="acoes-linha">
+                        <BotaoJanela rotulo="Perda, evento ou contagem" somenteIcone icone={<ClipboardMinus aria-hidden />} titulo={`${e.nome}: perda, evento ou contagem`}>
+                          <FormularioAjuste item={{ id: e.id, nome: e.nome }} />
+                        </BotaoJanela>
+                        <BotaoJanela rotulo="Mudar mínimo" somenteIcone icone={<Gauge aria-hidden />} titulo={`${e.nome}: estoque mínimo`}
+                          descricao="Abaixo do mínimo, a cozinha vê o aviso de repor.">
+                          <FormularioMinimo id={e.id} minimo={e.minimo} />
+                        </BotaoJanela>
+                      </span>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+          </div>
         </section>
       )}
 
       {pode(acesso, "catalogo.alterar") && (
-        <section className="cartao">
-          <h2>Cardápio de encomendas</h2>
-          <p className="mudo" style={{ marginTop: 0 }}>Preço vale para pedidos novos. Pedidos já feitos guardam o preço da hora.</p>
-                      <table className="empilhar">
-              <thead><tr><th>Produto</th><th>Atual</th><th>Alterar</th></tr></thead>
+        <section className="cartao sem-respiro">
+          <TituloCartao titulo="Cardápio de encomendas" conta={produtos.length} />
+          <div className="lista-rolavel">
+            <table className="empilhar">
+              <thead><tr><th>Produto</th><th className="numero">Preço</th><th><span className="sr-only">Ações</span></th></tr></thead>
               <tbody>
                 {produtos.map((p) => (
-                  <tr key={p.id}>
+                  <tr key={p.id} data-item={p.nome}>
                     <td>{p.nome}<div className="mudo" style={{ fontSize: ".8rem" }}>{p.grupo}{p.unidades > 1 ? ` · ${p.unidades} un.` : ""}</div></td>
-                    <td data-rotulo="Preço">{p.ativo ? formatarCentavos(p.preco_centavos) : <span className="mudo">fora</span>}</td>
-                    <td><FormularioPreco id={p.id} preco={p.preco_centavos} ativo={p.ativo} /></td>
+                    <td className="numero" data-rotulo="Preço">{p.ativo ? formatarCentavos(p.preco_centavos) : <span className="selo cinza">fora de venda</span>}</td>
+                    <td className="acoes">
+                      <BotaoJanela rotulo="Mudar preço" somenteIcone icone={<Pencil aria-hidden />} titulo={`${p.nome}: preço`}
+                        descricao="Vale para pedidos novos. Pedidos já feitos guardam o preço da hora.">
+                        <FormularioPreco id={p.id} preco={p.preco_centavos} ativo={p.ativo} />
+                      </BotaoJanela>
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+          </div>
         </section>
       )}
+      </div>
 
       {podeEstoque && (
-        <section className="cartao">
+        <section className="cartao" style={{ marginTop: 16 }}>
           <h2>Últimas movimentações</h2>
           {movimentos.length ? (
-            <ul className="pedidos-lista">
+            <ul className="pedidos-lista rola-por-dentro" style={{ maxHeight: 420 }}>
               {movimentos.map((m) => (
                 <li key={m.id}>
                   <div>

@@ -48,7 +48,7 @@ with sync_playwright() as p:
     def produzir(nome, qtd):
         coz.select_option("#pr-item", label=nome); coz.locator("form .chip", has_text=re.compile(f"^{qtd}$")).click()
         coz.click("button:has-text('Registrar produção')")
-        expect(coz.get_by_role("status").filter(has_text=f"+{qtd} {nome.lower()}")).to_be_visible()
+        expect(coz.locator(".toast", has_text=f"+{qtd} {nome.lower()}").last).to_be_visible()
     def disp(nome):
         coz.goto(f"{B}/salgados/cozinha")
         return int(coz.locator(".estoque-item").filter(has_text=nome).locator(".num").inner_text())
@@ -131,22 +131,28 @@ with sync_playwright() as p:
     # estoque e preços (administração)
     adm.goto(f"{B}/salgados/estoque")
     linha = adm.locator("tr", has_text="Quibe de carne").first
-    linha.locator("input[name=minimo]").fill("50"); linha.get_by_role("button", name="Salvar").click()
-    expect(linha.get_by_text("✓")).to_be_visible(); check(True, "mínimo ajustado na tela")
-    linha.locator("input[name=minimo]").fill("100"); linha.get_by_role("button", name="Salvar").click(); expect(linha.get_by_text("✓")).to_be_visible()
-    linha.locator("summary:has-text('Registrar')").click()
-    linha.locator("input[name=quantidade]").fill("5"); linha.get_by_role("button", name="Registrar").click()
-    ver(linha.get_by_role("alert").filter(has_text="motivo"), "perda sem motivo é recusada")
-    linha.locator("input[name=observacao]").fill("teste e2e"); linha.get_by_role("button", name="Registrar").click()
-    ver(linha.get_by_role("status").filter(has_text="ajustado"), "perda com motivo registrada (o campo não se apaga após o erro)")
+    janela = adm.locator("dialog.janela[open]")
+    def toast(txt): expect(adm.locator(".toast", has_text=txt).last).to_be_visible()
+    linha.get_by_role("button", name="Mudar mínimo").click()
+    janela.locator("input[name=minimo]").fill("50"); janela.get_by_role("button", name="Salvar").click()
+    toast("ínimo"); expect(janela).to_have_count(0); check("50" in linha.inner_text(), "mínimo ajustado em janela, que fecha ao salvar")
+    linha.get_by_role("button", name="Mudar mínimo").click()
+    janela.locator("input[name=minimo]").fill("100"); janela.get_by_role("button", name="Salvar").click(); expect(janela).to_have_count(0)
+    linha.get_by_role("button", name="Perda, evento ou contagem").click()
+    janela.locator("input[name=quantidade]").fill("5"); janela.get_by_role("button", name="Registrar").click()
+    ver(janela.get_by_role("alert").filter(has_text="motivo"), "perda sem motivo é recusada (a janela continua aberta)")
+    janela.locator("input[name=observacao]").fill("teste e2e"); janela.get_by_role("button", name="Registrar").click()
+    toast("ajustado"); check(True, "perda com motivo registrada (toast) e o campo não se apagou após o erro")
     adm.goto(f"{B}/salgados/estoque")
     ver(adm.locator(".pedidos-lista li", has_text="quibe de carne · Perda").first, "histórico mostra a perda")
     ver(adm.locator(".pedidos-lista li a", has_text="PED-").first, "histórico liga a retirada ao pedido")
     agua = adm.locator("tr", has_text="Água mineral").first
-    agua.locator("input[name=preco]").fill("2,50"); agua.get_by_role("button", name="Salvar").click(); expect(agua.get_by_text("✓")).to_be_visible()
+    agua.get_by_role("button", name="Mudar preço").click()
+    janela.locator("input[name=preco]").fill("2,50"); janela.get_by_role("button", name="Salvar").click(); expect(janela).to_have_count(0)
     adm.goto(f"{B}/salgados/estoque"); agua = adm.locator("tr", has_text="Água mineral").first
     check("2,50" in agua.inner_text(), "preço novo aparece")
-    agua.locator("input[name=preco]").fill("2,00"); agua.get_by_role("button", name="Salvar").click(); expect(agua.get_by_text("✓")).to_be_visible()
+    agua.get_by_role("button", name="Mudar preço").click()
+    janela.locator("input[name=preco]").fill("2,00"); janela.get_by_role("button", name="Salvar").click(); expect(janela).to_have_count(0)
 
     # celular
     cel = entrar(b, "atd", celular=True)

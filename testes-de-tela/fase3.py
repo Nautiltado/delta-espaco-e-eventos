@@ -26,7 +26,7 @@ def selecionar(pg, seletor, trecho):
     pg.select_option(seletor, label=escolhido)
 
 def esperar_ok(pg, texto, timeout=15000):
-    pg.wait_for_selector(f".aviso:has-text('{texto}')", timeout=timeout)
+    pg.wait_for_selector(f".aviso:has-text('{texto}'), .toast:has-text('{texto}')", timeout=timeout)
 
 with sync_playwright() as p:
     b = p.chromium.launch(executable_path="/usr/bin/google-chrome", args=["--no-sandbox"])
@@ -37,10 +37,11 @@ with sync_playwright() as p:
     JANTAR = f"Jantar completo {random.randint(100, 999)} (teste)"
     _d = [random.randint(0, 9) for _ in range(9)]
     for _n in (9, 10): _d.append((sum(_d[i] * (_n + 1 - i) for i in range(_n)) * 10 % 11) % 10)
+    SUF = random.randint(1000, 9999); TEL = f"(99) 9{random.randint(1000, 9999)}-{random.randint(1000, 9999)}"
     CPF = "".join(map(str, _d)); CPF_FMT = f"{CPF[:3]}.{CPF[3:6]}.{CPF[6:9]}-{CPF[9:]}"
 
     # ---------------- catálogo
-    pg.goto(f"{BASE}/catalogo"); pg.click("text=Garçom")
+    pg.goto(f"{BASE}/catalogo?q=Gar%C3%A7om"); pg.click("text=Garçom")
     pg.fill("#custo", "120,00"); pg.click("button:has-text('Salvar item')")
     pg.wait_for_url(re.compile(r".*salvo=1"), timeout=15000)
     ok("A2 custo do garçom salvo", "Item salvo" in pg.inner_text("main"))
@@ -49,37 +50,47 @@ with sync_playwright() as p:
     pg.fill("#descricao", "Duas carnes, arroz, salada e sobremesa")
     pg.fill("#preco", "45,50"); pg.fill("#custo", "28,00"); pg.click("button:has-text('Salvar item')")
     pg.wait_for_url(re.compile(r".*/catalogo/[0-9a-f-]+\?salvo=1"), timeout=15000)
-    pg.goto(f"{BASE}/catalogo")
+    pg.goto(f"{BASE}/catalogo?q=Jantar%20completo"); pg.wait_for_selector("table")
     txt = pg.inner_text("main")
     ok("A3 catálogo mostra custo e margem ao admin", "MARGEM" in txt.upper() and "R$ 28,00" in txt and "38%" in txt, "")
     pg.screenshot(path=f"{SHOTS}/catalogo-admin.png", full_page=True)
 
     # ---------------- clientes e duplicados
     pg.goto(f"{BASE}/clientes/novo")
-    pg.fill("#nome", "Maria José da Silva Teste"); pg.fill("#documento", CPF_FMT)
-    pg.fill("#telefone", "(99) 98888-7777"); pg.select_option("#origem", "whatsapp")
+    pg.fill("#nome", f"Maria José da Silva Teste {SUF}"); pg.fill("#documento", CPF_FMT)
+    pg.fill("#telefone", TEL); pg.select_option("#origem", "whatsapp")
     pg.click("button:has-text('Salvar cliente')")
     pg.wait_for_url(re.compile(r".*/clientes/[0-9a-f-]+$"), timeout=15000)
     cliente1 = pg.url.rsplit("/", 1)[1]
+    pg.wait_for_selector(f"main h1:has-text('Maria José da Silva Teste {SUF}')")
     ok("A4 cliente PF cadastrado com CPF formatado", CPF_FMT in pg.inner_text("main"))
     pg.goto(f"{BASE}/clientes/novo")
     pg.fill("#documento", "111.111.111-11"); pg.fill("#nome", "CPF Ruim Teste"); pg.click("button:has-text('Salvar cliente')")
     pg.wait_for_selector(".aviso.erro", timeout=10000)
     ok("A5 CPF inválido recusado", "CPF inválido" in pg.inner_text(".aviso.erro"))
     pg.goto(f"{BASE}/clientes/novo")
-    pg.fill("#nome", "Maria Jose Silva Teste"); pg.fill("#telefone", "99 98888-7777"); pg.press("#telefone", "Tab")
+    pg.fill("#nome", f"Maria Jose Silva Teste {SUF}"); pg.fill("#telefone", TEL.replace("(", "").replace(")", "")); pg.press("#telefone", "Tab")
     pg.wait_for_selector(".aviso:has-text('Possível cadastro repetido')", timeout=10000)
     ok("A6 aviso de cadastro repetido aparece", "Mesmo telefone" in pg.inner_text(".aviso.info"))
     pg.screenshot(path=f"{SHOTS}/cliente-duplicado.png", full_page=True)
     pg.click("button:has-text('Salvar cliente')")
     pg.wait_for_url(re.compile(r".*/clientes/[0-9a-f-]+$"), timeout=15000)
+    cliente2 = pg.url.rsplit("/", 1)[1]
     pg.goto(f"{BASE}/clientes/{cliente1}")
-    pg.select_option("#origem", index=1); pg.check("input[name=confirmo]"); pg.click("button:has-text('Mesclar cadastros')")
-    pg.wait_for_url(re.compile(r".*mesclado=1"), timeout=15000)
+    try:
+        pg.wait_for_selector("#origem", timeout=10000)
+    except Exception:
+        pg.screenshot(path=f"{SHOTS}/falha-origem.png", full_page=True); raise
+    pg.select_option("#origem", value=cliente2); pg.check("input[name=confirmo]"); pg.click("button:has-text('Mesclar cadastros')")
+    try:
+        pg.wait_for_url(re.compile(r".*mesclado=1"), timeout=15000)
+    except Exception:
+        pg.screenshot(path=f"{SHOTS}/falha-mesclar.png", full_page=True); raise
     ok("A7 mesclagem de cadastros", "Cadastros mesclados" in pg.inner_text("main"))
-    pg.goto(f"{BASE}/clientes?q=jose%20silva")
+    pg.goto(f"{BASE}/clientes?q=jose%20silva%20{SUF}")
+    pg.wait_for_selector("tbody tr")
     ok("A8 busca sem acento acha o cliente e esconde o mesclado",
-       pg.locator("tbody tr").count() == 1 and "Maria José da Silva Teste" in pg.inner_text("tbody"))
+       pg.locator(f"tbody a[href='/clientes/{cliente1}']").count() == 1 and pg.locator(f"tbody a[href='/clientes/{cliente2}']").count() == 0)
 
     # ---------------- orçamento
     pg.goto(f"{BASE}/orcamentos/novo?cliente={cliente1}")
@@ -89,9 +100,12 @@ with sync_playwright() as p:
     pg.click("button:has-text('Criar orçamento')")
     pg.wait_for_url(re.compile(r".*/orcamentos/[0-9a-f-]+$"), timeout=15000)
     orc = pg.url.rsplit("/", 1)[1]
+    pg.wait_for_selector("summary:has-text('Incluir um item de cada vez')")
     ok("A9 orçamento criado com número", re.search(r"ORC-\d{4}-\d{4}", pg.inner_text("main")) is not None)
 
     def incluir(catalogo_rotulo=None, descricao=None, qtd="1", preco=None, unidade=None):
+        if not pg.locator("#escolha").is_visible():
+            pg.click("summary:has-text('Incluir um item de cada vez')")
         if catalogo_rotulo:
             selecionar(pg, "#escolha", catalogo_rotulo)
         if descricao:
@@ -155,8 +169,10 @@ with sync_playwright() as p:
     pg.goto(f"{BASE}/orcamentos")
     ok("A23 funil mostra o orçamento em Aprovado", "Aniversário de 15 anos (teste)" in pg.locator(".funil-coluna").nth(2).inner_text())
     pg.screenshot(path=f"{SHOTS}/funil.png", full_page=True)
-    pg.goto(f"{BASE}/tarefas")
+    pg.goto(f"{BASE}/tarefas?aba=concluidas"); pg.wait_for_selector(".cartao .abas")
     ok("A24 tarefa de retorno concluída pelo aceite", "Retornar ao cliente" in pg.inner_text("main"))
+    pg.goto(f"{BASE}/tarefas"); pg.wait_for_selector(".cartao .abas")
+    pg.click("button:has-text('Nova tarefa')")
     pg.fill("#titulo", "Ligar para confirmar convidados (teste)"); pg.click("button:has-text('Criar tarefa')")
     esperar_ok(pg, "Tarefa criada")
     ok("A25 tarefa manual criada", "Ligar para confirmar convidados (teste)" in pg.inner_text("main"))
@@ -184,6 +200,7 @@ with sync_playwright() as p:
     pa.fill("#titulo", "Coffee break (teste atendimento)"); pa.select_option("#tipo", "buffet_externo")
     pa.fill("#local_externo", "Escritório do cliente"); pa.click("button:has-text('Criar orçamento')")
     pa.wait_for_url(re.compile(r".*/orcamentos/[0-9a-f-]+$"), timeout=15000)
+    pa.click("summary:has-text('Incluir um item de cada vez')")
     selecionar(pa, "#escolha", "Jantar completo"); pa.fill("#quantidade-novo", "10")
     pa.click("button:has-text('Incluir item')")
     pa.wait_for_function("document.body.innerText.includes('R$ 455,00')", timeout=15000)

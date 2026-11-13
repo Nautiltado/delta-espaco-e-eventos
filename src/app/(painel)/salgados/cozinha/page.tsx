@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ChefHat } from "lucide-react";
-import { Vazio } from "@/componentes/ui";
+import { TituloCartao, Vazio } from "@/componentes/ui";
 import { exigirAlguma } from "@/lib/acesso";
 import { pode } from "@/lib/permissoes";
 import { criarClienteServidor } from "@/lib/supabase/server";
@@ -74,12 +74,12 @@ export default async function PaginaCozinha() {
       </div>
 
       {repor.length > 0 && (
-        <p className="aviso erro" role="status">
+        <p className="aviso erro" role="note">
           Repor: {repor.map((e) => `${e.nome.toLowerCase()} (${Math.max(0, disponivel(e))} de ${e.minimo})`).join(" · ")}
         </p>
       )}
 
-      <div className="painel-lateral">
+      <div className="painel-lateral cozinha-colunas">
         <div>
           <section className="cartao">
             <h2>Hoje ({deHoje.length})</h2>
@@ -102,19 +102,19 @@ export default async function PaginaCozinha() {
             <h2>Fiz agora</h2>
             <FormularioProducao itens={ativos.map((e) => ({ id: e.id, nome: e.nome }))} />
           </section>
-          <section className="cartao">
-            <h2>Estoque</h2>
-            <div className="estoque-grade">
-              {ativos.map((e) => (
-                <div key={e.id} className={precisaRepor(e) ? "estoque-item repor" : "estoque-item"}>
-                  <div style={{ fontSize: ".85rem" }}>{e.nome}</div>
-                  <div className="num">{disponivel(e)}</div>
-                  <div className="mudo" style={{ fontSize: ".75rem" }}>
-                    {e.reservado > 0 ? `${e.saldo} guardados, ${e.reservado} vendidos · ` : ""}mín. {e.minimo}
-                  </div>
-                </div>
+          <section className="cartao sem-respiro">
+            <TituloCartao titulo="Estoque agora" acao={<span className="mudo pequeno">disponível · mínimo</span>} />
+            <ul className="estoque-lista rola-por-dentro">
+              {[...ativos].sort((a, b) => Number(precisaRepor(b)) - Number(precisaRepor(a))).map((e) => (
+                <li key={e.id} className={precisaRepor(e) ? "estoque-item repor" : "estoque-item"}>
+                  <span className="estoque-nome">{e.nome}
+                    {e.reservado > 0 && <small className="mudo">{e.saldo} guardados, {e.reservado} vendidos</small>}
+                  </span>
+                  <span className="num">{disponivel(e)}</span>
+                  <span className="mudo pequeno estoque-min">mín. {e.minimo}</span>
+                </li>
               ))}
-            </div>
+            </ul>
           </section>
         </div>
       </div>

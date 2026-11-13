@@ -1,7 +1,9 @@
 "use client";
 
+import { Retorno as RetornoComum } from "@/componentes/avisos";
+
 import { useActionState, useCallback, useEffect, useRef, useState, useTransition } from "react";
-import { Copy, KeyRound, LogOut, MailPlus, ShieldCheck, UserPlus, UserX, X } from "lucide-react";
+import { Copy, KeyRound, LogOut, MailPlus, ShieldCheck, UserCog, UserPlus, UserX, X } from "lucide-react";
 import { linkWhatsApp } from "@/lib/documentos";
 import { ACOES_HISTORICO, agruparPorModulo, permissoesDosPerfis, SENSIVEIS, SITUACOES } from "@/lib/usuarios";
 import {
@@ -26,8 +28,7 @@ function Selo({ situacao }: { situacao: string }) {
 }
 
 function Retorno({ estado }: { estado: EstadoUsuario }) {
-  if (estado.erro) return <p className="aviso erro" role="alert">{estado.erro}</p>;
-  if (estado.ok && !estado.link) return <p className="aviso ok" role="status">{estado.ok}</p>;
+  if (!estado.link) return <RetornoComum estado={estado} fechar={false} />;
   return null;
 }
 
@@ -103,13 +104,13 @@ export function PainelUsuarios({ usuarios, todosAtivos, perfis, descricoes, euId
           </select>
           <button className="botao secundario pequeno">Filtrar</button>
         </form>
-        <div className="tabela-rolavel">
+        <div className="tabela-rolavel lista-rolavel">
           <table className="tabela-usuarios">
             <thead><tr><th>Nome</th><th>E-mail</th><th>Perfis</th><th>Situação</th><th>Último acesso</th><th>Cadastro</th><th /></tr></thead>
             <tbody>
               {usuarios.length === 0 && <tr><td colSpan={7} className="mudo">Ninguém com esses filtros.</td></tr>}
               {usuarios.map((u) => (
-                <tr key={u.id} className={u.ativo ? undefined : "linha-inativa"}>
+                <tr key={u.id} className={u.ativo ? "linha-clicavel" : "linha-inativa linha-clicavel"} onClick={(e) => { if (!(e.target as HTMLElement).closest("button, a")) setAberto(u.id); }}>
                   <td>
                     <div className="pessoa"><span className="avatar">{iniciais(u.nome)}</span>
                       <div><strong>{u.nome}</strong>{u.id === euId && <span className="mudo"> (você)</span>}{u.cargo && <div className="mudo pequeno">{u.cargo}</div>}</div>
@@ -120,7 +121,7 @@ export function PainelUsuarios({ usuarios, todosAtivos, perfis, descricoes, euId
                   <td><Selo situacao={u.situacao} /></td>
                   <td className="mudo">{u.ultimo_acesso ? dataHora.format(new Date(u.ultimo_acesso)) : "nunca"}</td>
                   <td className="mudo">{data.format(new Date(u.criado_em))}</td>
-                  <td className="acoes"><button type="button" className="botao secundario pequeno" onClick={() => setAberto(u.id)}>Gerenciar acesso</button></td>
+                  <td className="acoes"><button type="button" className="botao-icone" aria-label="Gerenciar acesso" data-dica="Gerenciar acesso" onClick={() => setAberto(u.id)}><UserCog aria-hidden /></button></td>
                 </tr>
               ))}
             </tbody>

@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState } from "react";
+import { Retorno as RetornoOk } from "@/componentes/avisos";
 import { salvarUnidade } from "../actions";
 import type { Unidade } from "@/lib/unidades";
 
@@ -8,11 +9,9 @@ type Estado = { erro?: string; ok?: string };
 
 export function FormularioUnidade({ unidade, opcoes }: { unidade?: Unidade; opcoes: { codigo: string; singular: string }[] }) {
   const [estado, acao, salvando] = useActionState<Estado, FormData>(salvarUnidade, {});
-  const [aberto, setAberto] = useState(!unidade);
-  if (unidade && !aberto) return <button type="button" className="botao fantasma pequeno" onClick={() => setAberto(true)}>Editar</button>;
   const num = (n: number | null | undefined) => (n == null ? "" : String(n).replace(".", ","));
   return (
-    <form action={acao} className="form-colunas" style={{ alignItems: "end", minWidth: unidade ? 520 : undefined }}>
+    <form action={acao} className="form-colunas" style={{ alignItems: "end" }}>
       {!unidade && <input type="hidden" name="novo" value="1" />}
       {unidade && <input type="hidden" name="codigo" value={unidade.codigo} />}
       {!unidade && (
@@ -33,12 +32,10 @@ export function FormularioUnidade({ unidade, opcoes }: { unidade?: Unidade; opco
       <label className="opcoes" style={{ display: "flex", gap: 6, alignItems: "center", fontWeight: 500 }}>
         <input type="checkbox" name="ativo" value="1" defaultChecked={unidade?.ativo ?? true} /> Ativa
       </label>
-      <div className="linha" style={{ alignItems: "center" }}>
-        <button className="botao pequeno" disabled={salvando}>{salvando ? "Salvando…" : unidade ? "Salvar" : "Criar unidade"}</button>
-        {unidade && <button type="button" className="botao fantasma pequeno" onClick={() => setAberto(false)}>Fechar</button>}
+      <div style={{ gridColumn: "1 / -1" }}><RetornoOk estado={estado} /></div>
+      <div className="janela-rodape" style={{ gridColumn: "1 / -1" }}>
+        <button className="botao" disabled={salvando}>{salvando ? "Salvando…" : unidade ? "Salvar" : "Criar unidade"}</button>
       </div>
-      {estado.erro && <p className="aviso erro" role="alert" style={{ gridColumn: "1 / -1", margin: 0 }}>{estado.erro}</p>}
-      {estado.ok && <p className="aviso ok" role="status" style={{ gridColumn: "1 / -1", margin: 0 }}>{estado.ok}</p>}
     </form>
   );
 }

@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ShoppingBag } from "lucide-react";
-import { Vazio } from "@/componentes/ui";
+import { Plus, ShoppingBag } from "lucide-react";
+import { Abas, Vazio } from "@/componentes/ui";
+import { Paginacao, paginaDoEndereco } from "@/componentes/paginacao";
 import { exigirAlguma } from "@/lib/acesso";
 import { pode } from "@/lib/permissoes";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { formatarCentavos } from "@/lib/dinheiro";
-import { formatarDataComDia, hojeNaDelta, instanteAtual } from "@/lib/datas";
+import { formatarDataComDia, hojeNaDelta } from "@/lib/datas";
 import { CANAIS, STATUS_PEDIDO, diaDaDelta, horaDaDelta } from "@/lib/salgados";
 import { SELECT_PEDIDO, type PedidoResumo } from "@/lib/salgados-dados";
 
@@ -35,15 +36,24 @@ function Lista({ pedidos, mostrarDia = false }: { pedidos: PedidoResumo[]; mostr
   );
 }
 
-export default async function PaginaEncomendas() {
+const ABAS = {
+  aguardando: "Aguardando pagamento",
+  hoje: "Retirada hoje",
+  proximos: "Próximos dias",
+  encerrados: "Entregues e cancelados",
+} as const;
+type Aba = keyof typeof ABAS;
+
+export default async function PaginaEncomendas({ searchParams }: { searchParams: Promise<{ aba?: string; pagina?: string }> }) {
   const acesso = await exigirAlguma(["salgados.criar", "retirada.registrar", "producao.status", "salgados.ver"]);
+  const sp = await searchParams;
   const supabase = await criarClienteServidor();
   const hoje = hojeNaDelta();
-  const desde = new Date(instanteAtual() - 3 * 86400000).toISOString();
-  const [{ data: abertos }, { data: recentes }] = await Promise.all([
+  const { pagina, de, ate, porPagina } = paginaDoEndereco(sp.pagina);
+  const [{ data: abertos }, { data: encerrados, count: totalEncerrados }] = await Promise.all([
     supabase.from("pedidos").select(SELECT_PEDIDO).in("status", ["aguardando_pagamento", "pago", "pronto"]).order("retirada_em"),
-    supabase.from("pedidos").select(SELECT_PEDIDO).in("status", ["entregue", "cancelado"]).gte("retirada_em", desde)
-      .order("retirada_em", { ascending: false }).limit(30),
+    supabase.from("pedidos").select(SELECT_PEDIDO, { count: "exact" }).in("status", ["entregue", "cancelado"])
+      .order("retirada_em", { ascending: false }).range(sp.aba === "encerrados" ? de : 0, sp.aba === "encerrados" ? ate : 0),
   ]);
   const ab = (abertos ?? []) as unknown as PedidoResumo[];
   const aguardando = ab.filter((p) => p.status === "aguardando_pagamento");
@@ -51,6 +61,9 @@ export default async function PaginaEncomendas() {
   const deHoje = pagos.filter((p) => diaDaDelta(p.retirada_em) <= hoje);
   const proximos = pagos.filter((p) => diaDaDelta(p.retirada_em) > hoje);
   const totalHoje = deHoje.reduce((s, p) => s + p.total_centavos, 0);
+  const conta: Record<Aba, number> = { aguardando: aguardando.length, hoje: deHoje.length, proximos: proximos.length, encerrados: totalEncerrados ?? 0 };
+  const aba: Aba = sp.aba && sp.aba in ABAS ? (sp.aba as Aba) : aguardando.length ? "aguardando" : "hoje";
+  const href = (k: Aba) => (k === "hoje" && !aguardando.length ? "/salgados" : `/salgados?aba=${k}`);
 
   return (
     <>
@@ -64,28 +77,27 @@ export default async function PaginaEncomendas() {
           {(pode(acesso, "estoque.movimentar") || pode(acesso, "catalogo.alterar")) && (
             <Link className="botao secundario" href="/salgados/estoque">Estoque e preços</Link>
           )}
-          {pode(acesso, "salgados.criar") && <Link className="botao" href="/salgados/novo">Novo pedido</Link>}
+          {pode(acesso, "salgados.criar") && <Link className="botao" href="/salgados/novo"><Plus aria-hidden />Novo pedido</Link>}
         </div>
       </div>
 
-      {aguardando.length > 0 && (
-        <section className="cartao" style={{ borderColor: "var(--dourado)" }}>
-          <h2>Aguardando pagamento ({aguardando.length})</h2>
-          <p className="mudo" style={{ marginTop: 0 }}>Confira o Pix no extrato e registre. Sem pagamento, a cozinha não recebe.</p>
-          <Lista pedidos={aguardando} mostrarDia />
-        </section>
-      )}
-      <section className="cartao">
-        <h2>Retirada hoje ({deHoje.length}){totalHoje > 0 && <span className="mudo" style={{ fontWeight: 400 }}> · {formatarCentavos(totalHoje)}</span>}</h2>
-        <Lista pedidos={deHoje} mostrarDia={deHoje.some((p) => diaDaDelta(p.retirada_em) < hoje)} />
-      </section>
-      <section className="cartao">
-        <h2>Próximos dias ({proximos.length})</h2>
-        <Lista pedidos={proximos} mostrarDia />
-      </section>
-      <section className="cartao">
-        <h2>Entregues e cancelados (últimos 3 dias)</h2>
-        <Lista pedidos={(recentes ?? []) as unknown as PedidoResumo[]} mostrarDia />
+      <section className="cartao sem-respiro">
+        <div className="cartao-cabecalho">
+          <Abas rotulo="Encomendas" itens={(Object.keys(ABAS) as Aba[]).map((k) => ({ href: href(k), rotulo: ABAS[k], conta: conta[k], ativa: aba === k }))} />
+          {aba === "hoje" && totalHoje > 0 && <span className="mudo">Total de hoje: {formatarCentavos(totalHoje)}</span>}
+        </div>
+        <div className="lista-rolavel" style={{ padding: "4px 20px" }}>
+          {aba === "aguardando" && (
+            <>
+              <p className="mudo pequeno" style={{ margin: "10px 0 0" }}>Confira o Pix no extrato e registre. Sem pagamento, a cozinha não recebe.</p>
+              <Lista pedidos={aguardando} mostrarDia />
+            </>
+          )}
+          {aba === "hoje" && <Lista pedidos={deHoje} mostrarDia={deHoje.some((p) => diaDaDelta(p.retirada_em) < hoje)} />}
+          {aba === "proximos" && <Lista pedidos={proximos} mostrarDia />}
+          {aba === "encerrados" && <Lista pedidos={(encerrados ?? []) as unknown as PedidoResumo[]} mostrarDia />}
+        </div>
+        {aba === "encerrados" && <Paginacao total={totalEncerrados ?? 0} pagina={pagina} porPagina={porPagina} caminho="/salgados" parametros={sp} />}
       </section>
     </>
   );

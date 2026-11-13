@@ -4,14 +4,18 @@ import { exigirAcesso } from "@/lib/acesso";
 import { pode } from "@/lib/permissoes";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { hojeNaDelta, instanteAtual } from "@/lib/datas";
+import { Plus } from "lucide-react";
+import { Abas } from "@/componentes/ui";
+import { BotaoJanela } from "@/componentes/janela";
 import { FormularioTarefa } from "./formulario";
 import { ListaTarefas, SELECT_TAREFA, type Tarefa } from "./lista";
 
 export const metadata: Metadata = { title: "Tarefas" };
 
-export default async function PaginaTarefas({ searchParams }: { searchParams: Promise<{ cliente?: string }> }) {
+export default async function PaginaTarefas({ searchParams }: { searchParams: Promise<{ cliente?: string; aba?: string }> }) {
   const acesso = await exigirAcesso();
-  const { cliente } = await searchParams;
+  const sp = await searchParams;
+  const { cliente } = sp;
   const supabase = await criarClienteServidor();
   let abertas = supabase.from("tarefas").select(SELECT_TAREFA).is("concluida_em", null).order("vence_em", { nullsFirst: false });
   let feitas = supabase.from("tarefas").select(SELECT_TAREFA).not("concluida_em", "is", null).order("concluida_em", { ascending: false }).limit(15);
@@ -30,6 +34,20 @@ export default async function PaginaTarefas({ searchParams }: { searchParams: Pr
   const agora = instanteAtual();
   const podeCriar = pode(acesso, "orcamento.criar") || pode(acesso, "cliente.editar");
 
+  const concluidas = (f ?? []) as unknown as Tarefa[];
+  const abas = { abertas: "Abertas", minhas: "Só as minhas", concluidas: "Concluídas recentemente" } as const;
+  type Aba = keyof typeof abas;
+  const conta: Record<Aba, number> = { abertas: todas.length, minhas: minhas.length, concluidas: concluidas.length };
+  const aba: Aba = sp.aba && sp.aba in abas ? (sp.aba as Aba) : "abertas";
+  const href = (k: Aba) => {
+    const q = new URLSearchParams();
+    if (cliente) q.set("cliente", cliente);
+    if (k !== "abertas") q.set("aba", k);
+    const t = q.toString();
+    return t ? `/tarefas?${t}` : "/tarefas";
+  };
+  const lista = aba === "minhas" ? minhas : aba === "abertas" ? [...minhas, ...outras] : concluidas;
+
   return (
     <>
       <div className="cabecalho">
@@ -40,33 +58,20 @@ export default async function PaginaTarefas({ searchParams }: { searchParams: Pr
             {cliente && <> <Link href="/tarefas">Ver todas</Link></>}
           </p>
         </div>
-      </div>
-      <div className="painel-lateral">
-        <div>
-          <section className="cartao">
-            <h2>Suas tarefas ({minhas.length})</h2>
-            <ListaTarefas tarefas={minhas} agora={agora} />
-          </section>
-          {outras.length > 0 && (
-            <section className="cartao">
-              <h2>Da equipe ({outras.length})</h2>
-              <ListaTarefas tarefas={outras} agora={agora} />
-            </section>
-          )}
-          <section className="cartao">
-            <h2>Concluídas recentemente</h2>
-            <ListaTarefas tarefas={(f ?? []) as unknown as Tarefa[]} agora={agora} />
-          </section>
-        </div>
         {podeCriar && (
-          <aside>
-            <section className="cartao">
-              <h2>Nova tarefa</h2>
-              <FormularioTarefa clienteId={cliente} hoje={hojeNaDelta()} />
-            </section>
-          </aside>
+          <BotaoJanela rotulo="Nova tarefa" icone={<Plus aria-hidden />}>
+            <FormularioTarefa clienteId={cliente} hoje={hojeNaDelta()} />
+          </BotaoJanela>
         )}
       </div>
+      <section className="cartao sem-respiro">
+        <div className="cartao-cabecalho">
+          <Abas rotulo="Tarefas" itens={(Object.keys(abas) as Aba[]).map((k) => ({ href: href(k), rotulo: abas[k], conta: conta[k], ativa: aba === k }))} />
+        </div>
+        <div className="lista-rolavel" style={{ padding: "8px 20px 16px" }}>
+          <ListaTarefas tarefas={lista} agora={agora} />
+        </div>
+      </section>
     </>
   );
 }

@@ -1,5 +1,7 @@
 "use client";
 
+import { Retorno } from "@/componentes/avisos";
+
 import { useActionState, useState } from "react";
 import {
   adicionarItem,
@@ -14,11 +16,7 @@ import {
 import { centavosParaCampo, formatarCentavos, lerReais } from "@/lib/dinheiro";
 import { CATEGORIAS, formatarQuantidade, lerQuantidade, margem, totalItem, TIPOS_ORCAMENTO } from "@/lib/orcamentos";
 
-function Retorno({ estado }: { estado: Estado }) {
-  if (estado.erro) return <p className="aviso erro" role="alert">{estado.erro}</p>;
-  if (estado.ok) return <p className="aviso ok" role="status">{estado.ok}</p>;
-  return null;
-}
+
 
 // ------------------------------------------------------------------ dados do evento
 

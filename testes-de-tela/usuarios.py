@@ -14,7 +14,7 @@ def entrar(b, email, w=1440):
     return ctx, pg
 def abrir(pg, nome):
     pg.goto(f"{B}/usuarios?q={nome.split()[0]}"); pg.wait_for_selector(".tabela-usuarios")
-    pg.locator(".tabela-usuarios tr", has_text=nome).first.locator("button:has-text('Gerenciar acesso')").click()
+    pg.locator(".tabela-usuarios tr", has_text=nome).first.locator("button[aria-label='Gerenciar acesso']").click()
     pg.wait_for_selector(".gaveta")
 def aviso(pg):
     try:

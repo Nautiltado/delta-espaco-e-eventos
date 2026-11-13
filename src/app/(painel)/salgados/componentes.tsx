@@ -4,7 +4,7 @@ import { useActionState, useState } from "react";
 import { cancelarPedido, definirMinimo, definirPreco, movimentarEstoque, pagarPedido, type Estado } from "./actions";
 import { centavosParaCampo } from "@/lib/dinheiro";
 import { FORMAS_PAGAMENTO } from "@/lib/reservas";
-import { Retorno } from "../reservas/componentes";
+import { Retorno } from "@/componentes/avisos";
 
 export function FormularioPagamentoPedido({ pedidoId, hoje }: { pedidoId: string; hoje: string }) {
   const [estado, enviar, enviando] = useActionState<Estado, FormData>(pagarPedido, {});
@@ -134,7 +134,7 @@ export function FormularioAjuste({ item }: { item: { id: string; nome: string } 
         <label htmlFor={`aj-o-${item.id}`}>Motivo</label>
         <input id={`aj-o-${item.id}`} name="observacao" type="text" value={obs} onChange={(e) => setObs(e.target.value)} placeholder="Ex.: contagem do fim do dia" />
       </div>
-      <button className="botao secundario pequeno" disabled={enviando}>Registrar</button>
+      <div className="janela-rodape"><button className="botao" disabled={enviando}>{enviando ? "Registrando…" : "Registrar"}</button></div>
     </form>
   );
 }
@@ -143,12 +143,14 @@ export function FormularioMinimo({ id, minimo }: { id: string; minimo: number })
   const [estado, enviar, enviando] = useActionState<Estado, FormData>(definirMinimo, {});
   const [valor, setValor] = useState(String(minimo));
   return (
-    <form action={enviar} className="form-inline">
+    <form action={enviar}>
       <input type="hidden" name="estoque_item_id" value={id} />
-      <input name="minimo" type="text" inputMode="numeric" value={valor} onChange={(e) => setValor(e.target.value)} aria-label="Mínimo" style={{ width: 70 }} />
-      <button className="botao secundario pequeno" disabled={enviando}>Salvar</button>
-      {estado.erro && <span className="atrasada">{estado.erro}</span>}
-      {estado.ok && <span className="mudo">✓</span>}
+      <div className="campo">
+        <label htmlFor={`min-${id}`}>Mínimo (unidades)</label>
+        <input id={`min-${id}`} name="minimo" type="text" inputMode="numeric" value={valor} onChange={(e) => setValor(e.target.value)} autoFocus />
+      </div>
+      <Retorno estado={estado} />
+      <div className="janela-rodape"><button className="botao" disabled={enviando}>{enviando ? "Salvando…" : "Salvar"}</button></div>
     </form>
   );
 }
@@ -158,15 +160,17 @@ export function FormularioPreco({ id, preco, ativo }: { id: string; preco: numbe
   const [valor, setValor] = useState(centavosParaCampo(preco));
   const [aVenda, setAVenda] = useState(ativo);
   return (
-    <form action={enviar} className="form-inline">
+    <form action={enviar}>
       <input type="hidden" name="produto_id" value={id} />
-      <input name="preco" type="text" inputMode="decimal" value={valor} onChange={(e) => setValor(e.target.value)} aria-label="Preço" style={{ width: 90 }} />
-      <label style={{ display: "flex", gap: 4, alignItems: "center", margin: 0, fontWeight: 500 }}>
-        <input type="checkbox" name="ativo" checked={aVenda} onChange={(e) => setAVenda(e.target.checked)} /> à venda
+      <div className="campo">
+        <label htmlFor={`preco-${id}`}>Preço (R$)</label>
+        <input id={`preco-${id}`} name="preco" type="text" inputMode="decimal" value={valor} onChange={(e) => setValor(e.target.value)} autoFocus />
+      </div>
+      <label style={{ display: "flex", gap: 6, alignItems: "center", fontWeight: 500 }}>
+        <input type="checkbox" name="ativo" checked={aVenda} onChange={(e) => setAVenda(e.target.checked)} /> À venda
       </label>
-      <button className="botao secundario pequeno" disabled={enviando}>Salvar</button>
-      {estado.erro && <span className="atrasada">{estado.erro}</span>}
-      {estado.ok && <span className="mudo">✓</span>}
+      <Retorno estado={estado} />
+      <div className="janela-rodape"><button className="botao" disabled={enviando}>{enviando ? "Salvando…" : "Salvar"}</button></div>
     </form>
   );
 }

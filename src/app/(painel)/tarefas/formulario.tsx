@@ -1,5 +1,7 @@
 "use client";
 
+import { Retorno as RetornoOk } from "@/componentes/avisos";
+
 import { useActionState } from "react";
 import { criarTarefa, type EstadoTarefa } from "./actions";
 
@@ -8,8 +10,7 @@ export function FormularioTarefa({ clienteId, hoje }: { clienteId?: string; hoje
   return (
     <form action={enviar} key={estado.seq ?? 0}>
       {clienteId && <input type="hidden" name="cliente_id" value={clienteId} />}
-      {estado.erro && <p className="aviso erro" role="alert">{estado.erro}</p>}
-      {estado.ok && <p className="aviso ok" role="status">{estado.ok}</p>}
+      <RetornoOk estado={estado} />
       <div className="campo">
         <label htmlFor="titulo">O que precisa ser feito</label>
         <input id="titulo" name="titulo" type="text" required placeholder="Ex.: Ligar para confirmar o número de convidados" />

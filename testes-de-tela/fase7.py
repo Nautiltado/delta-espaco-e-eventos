@@ -63,7 +63,7 @@ with sync_playwright() as p:
         if not linhas.count(): break
         l = linhas.first
         if l.get_by_role("button", name="Desmarcar pago").count(): l.get_by_role("button", name="Desmarcar pago").click(); adm.wait_for_timeout(1500); continue
-        l.get_by_role("button", name="Remover").click(); l.get_by_role("button", name=re.compile("^Sim, remover")).click(); adm.wait_for_timeout(1500)
+        l.get_by_role("button", name="Remover").click(); adm.get_by_role("button", name=re.compile("^Sim, remover")).first.click(); adm.wait_for_timeout(1500)
     adm.goto(url); expect(adm.get_by_role("heading", name="Checklist")).to_be_visible()
     if not adm.locator("#e-qtd").is_visible(): adm.click("summary:has-text('Adicionar à equipe')")
     check(adm.locator("#e-forn").input_value() == "Kaká", "quem traz a equipe já vem como Kaká")

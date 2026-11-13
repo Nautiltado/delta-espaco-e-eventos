@@ -7,6 +7,7 @@ import { instanteAtual } from "@/lib/datas";
 import { BarraInferior, BotaoMenu, MenuLateral, Migalhas } from "@/componentes/menu-lateral";
 import { sair } from "@/app/entrar/actions";
 import { BotaoRecolher, SeletorTema } from "@/componentes/seletor-tema";
+import { CaixaDeAvisos } from "@/componentes/avisos";
 
 // Painel interno, sempre com dados do usuário logado: pode esperar o servidor.
 export const instant = false;
@@ -72,6 +73,7 @@ export default async function LayoutPainel({ children }: { children: React.React
         <main className="conteudo">{children}</main>
       </div>
       <BarraInferior itens={itens} />
+      <CaixaDeAvisos />
     </div>
   );
 }

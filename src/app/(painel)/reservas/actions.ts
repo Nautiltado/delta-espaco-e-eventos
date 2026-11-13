@@ -238,6 +238,7 @@ export async function salvarModeloContrato(_: Estado, form: FormData): Promise<E
   const { data, error } = await supabase.rpc("criar_modelo_contrato", { p_titulo: titulo, p_corpo: corpo, p_anexo: anexo, p_observacao: obs });
   if (error) return { erro: mensagemDoBanco(error) };
   revalidatePath("/contratos");
+  revalidatePath("/contratos/modelo");
   return { ok: `Versão ${data} do modelo salva. Os próximos contratos usam esta versão; os já gerados não mudam.` };
 }
 

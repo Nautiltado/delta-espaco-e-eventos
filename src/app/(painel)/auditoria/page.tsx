@@ -123,6 +123,7 @@ export default async function PaginaAuditoria({
         {registros.length === 0 ? (
           <p className="mudo">Nenhum registro.</p>
         ) : (
+          <div className="lista-rolavel">
           <table>
             <thead>
               <tr>
@@ -150,6 +151,7 @@ export default async function PaginaAuditoria({
               ))}
             </tbody>
           </table>
+          </div>
         )}
         <div className="linha" style={{ marginTop: 14, justifyContent: "space-between" }}>
           {p > 1 ? <Link className="botao secundario pequeno" href={link({ tabela: filtro, pagina: p - 1 })}>← Mais recentes</Link> : <span />}

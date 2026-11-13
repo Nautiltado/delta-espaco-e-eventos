@@ -1,5 +1,7 @@
 "use client";
 
+import { Retorno as RetornoOk } from "@/componentes/avisos";
+
 import { useActionState, useState } from "react";
 import { salvarTemposEspaco, type EstadoConfig } from "./actions";
 
@@ -34,8 +36,7 @@ export function TemposDoEspaco({ id, nome, tempos, padrao, podeEditar }: {
       {podeEditar && (
         <div className="linha" style={{ alignItems: "center" }}>
           <button className="botao pequeno" disabled={enviando}>{enviando ? "Salvando…" : "Salvar"}</button>
-          {estado.erro && <span className="aviso erro" role="alert">{estado.erro}</span>}
-          {estado.ok && <span className="aviso ok" role="status">{estado.ok}</span>}
+          <RetornoOk estado={estado} />
         </div>
       )}
     </form>

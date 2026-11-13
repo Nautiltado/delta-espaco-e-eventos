@@ -78,6 +78,7 @@ export default async function PaginaFinanceiro() {
           <section className="cartao">
             <h2>A receber · {formatarCentavos(totalAberto)}</h2>
             {ativas.length === 0 && <Vazio compacto icone={Wallet} titulo="Nenhuma parcela em aberto" texto="Tudo recebido." />}
+            <div className="rola-por-dentro" style={{ maxHeight: 480 }}>
             {grupos.filter((g) => g.lista.length).map((g) => (
               <div key={g.titulo} style={{ marginBottom: 14 }}>
                 <h3 style={{ fontSize: ".95rem", margin: "6px 0" }} className={g.titulo === "Atrasadas" ? "atrasada" : undefined}>{g.titulo}</h3>
@@ -101,6 +102,7 @@ export default async function PaginaFinanceiro() {
                 </table>
               </div>
             ))}
+            </div>
           </section>
 
           <section className="cartao" id="realizados">
@@ -110,6 +112,7 @@ export default async function PaginaFinanceiro() {
               {semComprovante > 0 && <> <span className="selo dourado">{semComprovante} sem comprovante</span></>}
             </p>
             {realizados.length === 0 ? <p className="mudo" style={{ margin: 0 }}>Nenhum evento realizado ainda.</p> : (
+              <div className="rola-por-dentro lista-rolavel" style={{ maxHeight: 420 }}>
               <table>
                 <thead><tr><th>Data</th><th>Evento</th><th className="numero">Recebido</th><th>Comprovantes</th></tr></thead>
                 <tbody>
@@ -138,6 +141,7 @@ export default async function PaginaFinanceiro() {
                   })}
                 </tbody>
               </table>
+              </div>
             )}
           </section>
         </div>
@@ -145,6 +149,7 @@ export default async function PaginaFinanceiro() {
           <section className="cartao">
             <h2>Últimos lançamentos</h2>
             {(recentes ?? []).length === 0 ? <p className="mudo" style={{ margin: 0 }}>Nenhum ainda.</p> : (
+              <div className="rola-por-dentro" style={{ maxHeight: 640 }}>
               <table>
                 <tbody>
                   {((recentes ?? []) as unknown as { id: string; tipo: string; valor_centavos: number; forma: string; recebido_em: string; parcelas: { numero: number; reserva_id: string } | null }[]).map((g) => {
@@ -162,6 +167,7 @@ export default async function PaginaFinanceiro() {
                   })}
                 </tbody>
               </table>
+              </div>
             )}
           </section>
         </aside>

@@ -1,5 +1,7 @@
 "use client";
 
+import { Retorno } from "@/componentes/avisos";
+
 import { useActionState, useState } from "react";
 import {
   bloquearAgenda,
@@ -17,11 +19,7 @@ import { FORMAS_ASSINATURA, FORMAS_PAGAMENTO, INICIATIVAS } from "@/lib/reservas
 
 type Acao = (e: Estado, f: FormData) => Promise<Estado>;
 
-export function Retorno({ estado }: { estado: Estado }) {
-  if (estado.erro) return <p className="aviso erro" role="alert">{estado.erro}</p>;
-  if (estado.ok) return <p className="aviso ok" role="status">{estado.ok}</p>;
-  return null;
-}
+export { Retorno };
 
 /** Botão que dispara uma ação com campos escondidos. */
 export function BotaoAcao({

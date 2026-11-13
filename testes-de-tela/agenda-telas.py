@@ -46,7 +46,7 @@ with sync_playwright() as p:
     pg.wait_for_selector(".resultado-disp, .aviso.erro", timeout=20000)
     ok("consulta disponibilidade responde", pg.locator(".resultado-disp li").count()>=2, pg.locator(".gaveta-corpo").inner_text()[-200:])
     pg.screenshot(path=f"{S}/consulta-resultado.png")
-    pg.goto(f"{BASE}/configuracoes"); pg.wait_for_selector("text=Tempos de cada espaço")
+    pg.goto(f"{BASE}/configuracoes?secao=tempos"); pg.wait_for_selector("text=Tempos de cada espaço")
     ok("configurações mostra tempos por espaço", pg.locator(".tempos-espaco").count()>=2)
     ok("sem erros de página", not erros, str(erros[:3]))
     b.close()

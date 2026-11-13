@@ -145,5 +145,5 @@ export async function definirPreco(_: Estado, form: FormData): Promise<Estado> {
   if (error) return { erro: mensagemDoBanco(error) };
   recarregar();
   revalidatePath("/salgados/novo");
-  return { ok: "Salvo." };
+  return { ok: "Preço salvo." };
 }

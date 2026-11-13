@@ -93,13 +93,14 @@ with sync_playwright() as p:
     ok("O14 atendimento não vê custo nem margem", "Custo" not in pa.inner_text(".tabela-itens thead") and "Lucro bruto" not in pa.inner_text("main"))
 
     # unidade configurável
-    pg.goto(f"{B}/catalogo/unidades"); pg.wait_for_selector("main h1")
+    pg.goto(f"{B}/catalogo/unidades"); pg.wait_for_selector("main h1:has-text('Unidades de cobrança')"); pg.wait_for_selector(".tabela-rolavel tbody tr")
     ok("O15 lista mostra 1 cento = 100 unidades", "1 cento = 100 unidades" in pg.inner_text("main"))
     sufixo = "".join(random.choice("abcdefghij") for _ in range(4))
+    pg.click("button:has-text('Nova unidade')"); pg.wait_for_selector("#u-codigo")
     pg.fill("#u-codigo", f"teste_{sufixo}"); pg.fill("#u-sing-nova", f"dúzia teste {sufixo}"); pg.fill("#u-plu-nova", f"dúzias teste {sufixo}")
     pg.fill("#u-eq-nova", "12"); pg.select_option("#u-equ-nova", "unidade")
-    pg.click("button:has-text('Criar unidade')"); pg.wait_for_selector("text=Unidade criada.", timeout=20000)
-    pg.reload(); pg.wait_for_selector("main h1"); ok("O16 unidade nova com equivalência", f"1 dúzia teste {sufixo} = 12 unidades" in pg.inner_text("main"), pg.inner_text("main")[-500:])
+    pg.click("button:has-text('Criar unidade')"); pg.wait_for_selector(".toast:has-text('Unidade criada.')", timeout=20000)
+    pg.reload(); pg.wait_for_selector(".tabela-rolavel tbody tr"); ok("O16 unidade nova com equivalência", f"1 dúzia teste {sufixo} = 12 unidades" in pg.inner_text("main"), pg.inner_text("main")[-500:])
 
     # celular
     pc = entrar(b, "teste.e2e.adm@delta.test", 390)

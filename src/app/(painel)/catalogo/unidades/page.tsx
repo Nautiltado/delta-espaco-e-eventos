@@ -4,6 +4,8 @@ import { pode } from "@/lib/permissoes";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { carregarUnidades } from "@/lib/orcamento-dados";
 import { mapaDeUnidades, rotuloDaUnidade } from "@/lib/unidades";
+import { Pencil, Plus } from "lucide-react";
+import { BotaoJanela } from "@/componentes/janela";
 import { FormularioUnidade } from "./formulario";
 
 export const metadata: Metadata = { title: "Unidades de cobrança" };
@@ -28,9 +30,14 @@ export default async function PaginaUnidades() {
           <h1>Unidades de cobrança</h1>
           <p>Como cada item é cobrado no orçamento. A equivalência aparece no orçamento e na proposta: 2 centos = 200 unidades.</p>
         </div>
+        {podeEditar && (
+          <BotaoJanela rotulo="Nova unidade" icone={<Plus aria-hidden />} larga descricao="O passo é o arredondamento das quantidades calculadas pelos modelos (ex.: cento de 0,5 em 0,5).">
+            <FormularioUnidade opcoes={opcoes} />
+          </BotaoJanela>
+        )}
       </div>
       <section className="cartao sem-respiro">
-        <div className="tabela-rolavel">
+        <div className="tabela-rolavel lista-rolavel">
           <table>
             <thead><tr><th>Unidade</th><th>Plural</th><th>Equivalência</th><th className="numero">Passo</th><th className="numero">Itens no catálogo</th><th>Situação</th>{podeEditar && <th />}</tr></thead>
             <tbody>
@@ -45,7 +52,11 @@ export default async function PaginaUnidades() {
                   <td className="numero">{emUso.get(u.codigo) ?? 0}</td>
                   <td>{u.ativo ? <span className="selo">ativa</span> : <span className="selo cinza">inativa</span>}</td>
                   {podeEditar && (
-                    <td><FormularioUnidade unidade={u} opcoes={opcoes} /></td>
+                    <td className="acoes">
+                      <BotaoJanela rotulo="Editar" somenteIcone icone={<Pencil aria-hidden />} larga titulo={`Editar unidade: ${u.singular}`}>
+                        <FormularioUnidade unidade={u} opcoes={opcoes} />
+                      </BotaoJanela>
+                    </td>
                   )}
                 </tr>
               ))}
@@ -53,13 +64,7 @@ export default async function PaginaUnidades() {
           </table>
         </div>
       </section>
-      {podeEditar && (
-        <section className="cartao">
-          <h2>Nova unidade</h2>
-          <FormularioUnidade opcoes={opcoes} />
-        </section>
-      )}
-      <p className="mudo pequeno">O passo é o arredondamento das quantidades calculadas pelos modelos (ex.: cento de 0,5 em 0,5). Unidade inativa some das listas, mas continua valendo nos itens que já a usam.</p>
+      <p className="mudo pequeno" style={{ marginTop: 12 }}>O passo é o arredondamento das quantidades calculadas pelos modelos (ex.: cento de 0,5 em 0,5). Unidade inativa some das listas, mas continua valendo nos itens que já a usam.</p>
     </>
   );
 }
