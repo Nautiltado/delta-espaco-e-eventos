@@ -6,6 +6,7 @@ import { menuDoUsuario, NOMES_PERFIS } from "@/lib/permissoes";
 import { instanteAtual } from "@/lib/datas";
 import { BarraInferior, BotaoMenu, MenuLateral, Migalhas } from "@/componentes/menu-lateral";
 import { sair } from "@/app/entrar/actions";
+import { SeletorTema } from "@/componentes/seletor-tema";
 
 // Painel interno, sempre com dados do usuário logado: pode esperar o servidor.
 export const instant = false;
@@ -40,6 +41,8 @@ export default async function LayoutPainel({ children }: { children: React.React
         <nav aria-label="Principal">
           <MenuLateral itens={itens} />
         </nav>
+        <div style={{ marginTop: "auto" }}>
+          <SeletorTema />
         <div className="usuario">
           <span className="avatar" aria-hidden>{iniciais(acesso.nome)}</span>
           <div className="usuario-dados">
@@ -49,6 +52,7 @@ export default async function LayoutPainel({ children }: { children: React.React
           <form action={sair}>
             <button className="botao-sair" aria-label="Sair" title="Sair"><LogOut aria-hidden strokeWidth={1.8} /></button>
           </form>
+        </div>
         </div>
       </aside>
       <div className="principal">

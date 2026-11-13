@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "@fontsource-variable/inter";
 import "./globals.css";
 import { RegistrarSW } from "@/componentes/registrar-sw";
+import { SCRIPT_TEMA } from "@/lib/tema";
 
 export const metadata: Metadata = {
   title: { default: "Delta Gestão", template: "%s · Delta Gestão" },
@@ -13,7 +14,10 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#164c3a",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#164c3a" },
+    { media: "(prefers-color-scheme: dark)", color: "#0e1512" },
+  ],
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
@@ -21,7 +25,10 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" data-tema="auto" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: SCRIPT_TEMA }} />
+      </head>
       <body>{children}<RegistrarSW /></body>
     </html>
   );
