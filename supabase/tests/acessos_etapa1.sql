@@ -25,7 +25,7 @@ begin
   if n <> 0 then falhas := falhas || 'A2 atendimento leu convites'; end if;
 
   -- A3: administração cadastra com dois perfis (união das permissões)
-  perform set_config('request.jwt.claims', json_build_object('sub', a_adm, 'role', 'authenticated', 'iat', agora)::text, true);
+  perform set_config('request.jwt.claims', json_build_object('sub', a_adm, 'role', 'authenticated', 'iat', agora, 'aal', 'aal2')::text, true);
   u_novo := criar_usuario('Fulano (teste)', 'fulano.a3@delta.test', array['ATD', 'COZ'], '(85) 99999-0000', 'Atendente');
   total := total + 1;
   select count(distinct pp.permissao) into n from usuarios_perfis up join perfis_permissoes pp on pp.perfil = up.perfil

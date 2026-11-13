@@ -48,3 +48,11 @@ Como cada proteção está feita. Revisado em 13/11/2026.
 | 22 | Pacotes conferidos | ✅ `npm audit`: 0 vulnerabilidades; pacotes de autores oficiais |
 | 23 | Dados sensíveis cifrados | ✅ não guardamos senha nem token de terceiros; links de convite só como hash; disco cifrado pelo Supabase |
 | 24 | Auditoria do banco antes de entregar | ✅ `supabase/tests/auditoria_rls.sql` |
+
+## Desde 13/11 à noite
+- **Verificação em duas etapas** (app autenticador) obrigatória para Administração e Financeiro, conferida no servidor e no banco:
+  sessão desses perfis sem o código não tem permissão nenhuma. Perdeu o celular: outro administrador remove em Usuários.
+- **Backup diário** às 3h, guardado 35 dias em armazenamento privado; a administração baixa em Configurações → Backups e deve
+  guardar uma cópia fora (o arquivo tem dados pessoais).
+- **Avisos** na Visão geral para a administração: bloqueios por excesso de tentativas, acessos negados repetidos, backup atrasado.
+- **Modo visitante desligado.**

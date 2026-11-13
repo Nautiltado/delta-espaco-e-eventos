@@ -32,12 +32,13 @@ Feito e no ar: módulo comercial (orçamentos etapa 1), agenda com troca instant
 (convites, perfis, desativação), padrões de tela (janelas, toasts, paginação), contratos com editor, segurança (cookies httpOnly,
 CSP, limite de tentativas, BotID em observação, colunas protegidas), modo visitante DESLIGADO.
 
-Pronto no código, falta publicar (ramo `seguranca-duas-etapas`):
-- Verificação em duas etapas obrigatória para ADM e FIN (`/seguranca/duas-etapas`, `/entrar/codigo`, remoção em Usuários).
-  A exigência no banco está em `supabase/migrations/PENDENTE_duas_etapas.sql`: aplicar JUNTO com a publicação e renomear com a versão.
-  Testes `testes-de-tela/duas-etapas.py`: D1–D10 passaram; terminar D11–D16 (antes, apagar os fatores das contas de teste em auth.mfa_factors).
-- Backup diário (`/api/backup`, cron em `vercel.json`, bucket privado `backups`, 35 dias) e seção Configurações → Backups.
+Também no ar (13/11 à noite):
+- Verificação em duas etapas obrigatória para ADM e FIN, conferida também no banco (`tem_permissao` exige aal2 desses perfis).
+  `/seguranca/duas-etapas`, `/entrar/codigo`, remoção em Usuários. Teste `testes-de-tela/duas-etapas.py` (16/16 no site);
+  antes de rodar, apagar os fatores das contas de teste em auth.mfa_factors. Testes do banco com ADM usam `'aal': 'aal2'` nas claims.
+- Backup diário às 3h (`/api/backup`, cron em `vercel.json`, bucket privado `backups`, 35 dias) e Configurações → Backups.
 - Avisos de segurança na Visão geral (bloqueios por tentativas, acessos negados, backup atrasado).
+- Modo visitante desligado: `visitante.py` não roda mais (só se o usuário Visitante for reativado).
 
 Pendências do usuário: tornar o repositório privado; ligar Leaked Password Protection no Supabase; ligar 2FA no GitHub, Vercel e Supabase;
 conferir BotID com navegador real e então definir `BOTID_BLOQUEAR=1` na Vercel; preços/custos do catálogo; chave Pix; revisão do advogado.
