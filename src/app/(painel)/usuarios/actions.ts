@@ -219,3 +219,27 @@ export async function carregarHistorico(usuarioId: string): Promise<ItemHistoric
   const { data } = await supabase.rpc("historico_acesso", { p_usuario: usuarioId });
   return (data ?? []) as ItemHistorico[];
 }
+
+// ---------------------------------------------------------------- verificação em duas etapas
+
+/** Trocou ou perdeu o celular: a administração remove o app autenticador; a pessoa cadastra de novo ao entrar. */
+export async function removerDuasEtapas(_: EstadoUsuario, form: FormData): Promise<EstadoUsuario> {
+  const acesso = await exigirPermissao("config.critica");
+  const id = uuid.safeParse(form.get("id"));
+  if (!id.success) return { erro: "Usuário inválido." };
+  if (id.data === acesso.id) return { erro: "Peça a outro administrador para remover a sua." };
+  const supabase = await criarClienteServidor();
+  const { data: u } = await supabase.from("usuarios").select("auth_user_id").eq("id", id.data).maybeSingle();
+  if (!u?.auth_user_id) return { erro: "Esta pessoa não tem login." };
+  const admin = criarClienteAdmin();
+  const { data, error } = await admin.auth.admin.mfa.listFactors({ userId: u.auth_user_id });
+  if (error) return { erro: "Não foi possível consultar a verificação." };
+  for (const f of data?.factors ?? []) {
+    const { error: e } = await admin.auth.admin.mfa.deleteFactor({ userId: u.auth_user_id, id: f.id });
+    if (e) return { erro: "Não foi possível remover a verificação." };
+  }
+  await supabase.rpc("revogar_sessoes", { p_usuario: id.data, p_motivo: "verificação em duas etapas removida" });
+  await supabase.rpc("registrar_evento_mfa", { p_usuario: id.data, p_acao: "MFA_REMOVIDA" });
+  recarregar();
+  return { ok: "Verificação removida e sessões encerradas. No próximo acesso a pessoa cadastra o app de novo." };
+}

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { obterSessao } from "@/lib/acesso";
+import { obterSessao, sessaoCompleta } from "@/lib/acesso";
 import { pode } from "@/lib/permissoes";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { mensagemDoBanco } from "@/lib/erros";
@@ -15,7 +15,7 @@ const DATA = /^\d{4}-\d{2}-\d{2}$/;
  */
 export async function GET(req: Request) {
   const sessao = await obterSessao();
-  if (!sessao?.acesso || sessao.trocarSenha || !pode(sessao.acesso, "orcamento.ver")) {
+  if (!sessaoCompleta(sessao) || !pode(sessao.acesso, "orcamento.ver")) {
     return NextResponse.json({ erro: "Sem permissão." }, { status: 403 });
   }
   const u = new URL(req.url);

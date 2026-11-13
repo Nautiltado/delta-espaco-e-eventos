@@ -1,6 +1,9 @@
 """Fase 7 (1ª parte): ficha do evento, equipe do Kaká, checklist, gastos com nota fiscal e fechamento.
 Usa o primeiro evento da lista e as contas teste.e2e.{adm,atd,coz,fin}. Rode limpar-dados-de-teste.sql no fim."""
 import os, re
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+from apoio import duas_etapas
 from playwright.sync_api import sync_playwright, expect
 
 B = os.environ.get("BASE", "http://localhost:3100"); S = os.environ["SENHA_TESTE"]
@@ -17,7 +20,7 @@ def entrar(b, quem, celular=False):
     ctx = b.new_context(**({"viewport": {"width": 390, "height": 844}, "is_mobile": True, "has_touch": True} if celular else {}))
     pg = ctx.new_page(); pg.set_default_timeout(20000)
     pg.goto(f"{B}/entrar"); pg.fill("#email", f"teste.e2e.{quem}@delta.test"); pg.fill("#senha", S)
-    pg.click("button:has-text('Entrar')"); pg.wait_for_url(f"{B}/")
+    pg.click("button:has-text('Entrar')"); duas_etapas(pg, B, f"teste.e2e.{quem}@delta.test")
     return pg
 
 with sync_playwright() as p:

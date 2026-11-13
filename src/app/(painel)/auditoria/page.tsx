@@ -27,7 +27,8 @@ const ACOES: Record<string, string> = {
   REDEFINICAO_CRIADA: "Gerou link de redefinição", CONVITE_REVOGADO: "Revogou convite", CONVITE_ACEITO: "Aceitou convite",
   SENHA_REDEFINIDA: "Redefiniu a senha pelo link", SESSOES_REVOGADAS: "Encerrou sessões", TROCA_SENHA_FORCADA: "Forçou troca de senha",
   USUARIO_DESATIVADO: "Desativou usuário", USUARIO_REATIVADO: "Reativou usuário", ACESSO_NEGADO: "Tentou acessar sem permissão",
-  CONVITE_ENVIADO: "Enviou convite",
+  CONVITE_ENVIADO: "Enviou convite", BLOQUEIO_TENTATIVAS: "Bloqueado por excesso de tentativas",
+  MFA_ATIVADA: "Ativou a verificação em duas etapas", MFA_REMOVIDA: "Removeu a verificação em duas etapas",
 };
 
 const dataHora = new Intl.DateTimeFormat("pt-BR", {

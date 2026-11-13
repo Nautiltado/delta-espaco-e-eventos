@@ -3,6 +3,9 @@ item personalizado com categoria e descrição, desconto no item, custo e margem
 aprovação, envio, PDF sem custo e com equivalência, unidade nova configurável e celular.
 Precisa de teste.e2e.adm e teste.e2e.atd e do servidor em localhost:3100. Veja testes-de-tela/LEIA-ME.md."""
 import os, re, random, subprocess, tempfile
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+from apoio import duas_etapas
 from playwright.sync_api import sync_playwright
 
 B = os.environ.get("BASE", "http://localhost:3100"); S = os.environ["SENHA_TESTE"]
@@ -15,7 +18,7 @@ def cpf():
     return "".join(map(str, d))
 def entrar(b, email, w=1440):
     pg = b.new_page(viewport={"width": w, "height": 900})
-    pg.goto(f"{B}/entrar"); pg.fill("#email", email); pg.fill("#senha", S); pg.click("button:has-text('Entrar')"); pg.wait_for_url(f"{B}/", timeout=30000)
+    pg.goto(f"{B}/entrar"); pg.fill("#email", email); pg.fill("#senha", S); pg.click("button:has-text('Entrar')"); duas_etapas(pg, B, email)
     return pg
 def aviso(pg, escopo="main"):
     pg.wait_for_selector(f"{escopo} .aviso.ok, {escopo} .aviso.erro", timeout=20000)

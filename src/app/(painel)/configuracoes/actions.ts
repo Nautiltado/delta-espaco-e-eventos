@@ -59,3 +59,26 @@ export async function salvarTemposEspaco(_: EstadoConfig, form: FormData): Promi
   revalidatePath("/agenda");
   return { ok: "Salvo." };
 }
+
+// ---------------------------------------------------------------- backups (só administração)
+
+export async function linkDoBackup(caminho: string): Promise<{ url?: string; erro?: string }> {
+  await exigirPermissao("config.critica");
+  const { linkDeDownload } = await import("@/lib/backup");
+  const url = await linkDeDownload(caminho);
+  return url ? { url } : { erro: "Arquivo não encontrado." };
+}
+
+export async function fazerBackupAgora(): Promise<EstadoConfig> {
+  await exigirPermissao("config.critica");
+  if (!process.env.SUPABASE_SECRET_KEY) return { erro: "Backup só funciona no site publicado." };
+  try {
+    const { fazerBackup } = await import("@/lib/backup");
+    const r = await fazerBackup("manual");
+    revalidatePath("/configuracoes");
+    return { ok: `Backup feito: ${r.tabelas} tabelas, ${r.linhas} registros.` };
+  } catch (e) {
+    console.error("[backup manual]", e);
+    return { erro: "Não foi possível fazer o backup agora. Tente de novo em instantes." };
+  }
+}

@@ -15,6 +15,7 @@ export const REGRAS = {
   visitantePorIp: { maximo: 10, janelaS: 600, castigoS: 600 },
   convitePorIp: { maximo: 10, janelaS: 900, castigoS: 900 },
   trocaSenhaPorUsuario: { maximo: 6, janelaS: 900, castigoS: 900 },
+  codigoPorUsuario: { maximo: 6, janelaS: 900, castigoS: 900 },
 } satisfies Record<string, Regra>;
 
 /** IP de quem fez a requisição (na Vercel vem de cabeçalho que ela mesma preenche). */

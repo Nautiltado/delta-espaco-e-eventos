@@ -2,6 +2,9 @@
 cria a senha e entra; o link não serve de novo; senha fraca é recusada; "exigir senha nova" derruba e pede troca;
 redefinição por link. Ao fim a conta de teste fica desativada (nunca apagada). Conta teste.e2e.adm."""
 import os, random, re
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+from apoio import duas_etapas
 from playwright.sync_api import sync_playwright
 
 B = os.environ.get("BASE", "https://delta-gestao-tan.vercel.app"); S = os.environ["SENHA_TESTE"]
@@ -26,7 +29,7 @@ def criar_senha(b, link, senha):
 with sync_playwright() as p:
     b = p.chromium.launch(executable_path="/usr/bin/google-chrome", args=["--no-sandbox"])
     cadm = b.new_context(viewport={"width": 1440, "height": 900}); pg = cadm.new_page()
-    pg.goto(f"{B}/entrar"); pg.fill("#email", "teste.e2e.adm@delta.test"); pg.fill("#senha", S); pg.click("button:has-text('Entrar')"); pg.wait_for_url(f"{B}/")
+    pg.goto(f"{B}/entrar"); pg.fill("#email", "teste.e2e.adm@delta.test"); pg.fill("#senha", S); pg.click("button:has-text('Entrar')"); duas_etapas(pg, B, "teste.e2e.adm@delta.test")
 
     n = random.randint(1000, 9999); nome = f"Convidada Teste{n} (teste)"; email = f"convidada.{n}@delta.test"
     pg.goto(f"{B}/usuarios"); pg.click("button:has-text('Novo usuário')"); pg.wait_for_selector(".gaveta")
