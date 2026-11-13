@@ -10,6 +10,8 @@ const AVISOS: Record<string, string> = {
   "sem-acesso": "Sua conta não tem acesso ativo ao Delta Gestão. Fale com um administrador.",
   "senha-trocada": "Senha alterada. Entre de novo com a senha nova.",
   "visitante-desligado": "O acesso de visitante está desligado no momento.",
+  "muitas-tentativas": "Muitas tentativas seguidas. Por segurança, espere alguns minutos e tente de novo.",
+  robo: "Não conseguimos confirmar que é uma pessoa usando o navegador. Atualize a página e tente de novo.",
 };
 
 // Painel interno, sempre com dados do usuário logado: pode esperar o servidor.

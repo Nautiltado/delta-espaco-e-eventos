@@ -33,7 +33,7 @@ def cpf_valido():
     return "".join(map(str, d))
 
 def entrar(b, email, largura=1366):
-    ctx = b.new_context(viewport={"width": largura, "height": 900})
+    ctx = b.new_context(viewport={"width": largura, "height": 900}, bypass_csp=True)
     pg = ctx.new_page()
     pg.goto(f"{BASE}/entrar")
     pg.fill("#email", email); pg.fill("#senha", SENHA); pg.click("button:has-text('Entrar')")

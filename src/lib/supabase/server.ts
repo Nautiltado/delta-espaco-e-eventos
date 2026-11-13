@@ -3,6 +3,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { connection } from "next/server";
 import { env } from "@/lib/env";
+import { protegerCookie } from "@/lib/supabase/cookies";
 import { clienteDoVisitante, ehVisitante } from "@/lib/visitante";
 
 /**
@@ -26,7 +27,7 @@ function criarClienteDeUsuario(cookieStore: Awaited<ReturnType<typeof cookies>>)
       setAll(cookiesToSet) {
         try {
           cookiesToSet.forEach(({ name, value, options }) =>
-            cookieStore.set(name, value, options),
+            cookieStore.set(name, value, protegerCookie(options)),
           );
         } catch {
           // Chamado de um Server Component: o proxy renova a sessão.

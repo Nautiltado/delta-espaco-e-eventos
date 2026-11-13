@@ -37,7 +37,7 @@ begin
     insert into clientes (tipo, nome, documento) values ('PF', 'CPF Inválido', '12345678900');
     falhas := falhas || 'K2 aceitou CPF inválido';
   exception when check_violation then null; end;
-  insert into clientes (tipo, nome, documento, telefone, origem) values ('PF', 'Maria José da Silva', '62081407302', '99981522414', 'whatsapp') returning id into c1;
+  insert into clientes (tipo, nome, documento, telefone, origem) values ('PF', 'Maria José da Silva', '52998224725', '99981522414', 'whatsapp') returning id into c1;
   insert into clientes (tipo, nome, telefone) values ('PF', 'Maria Jose Silva', '99981522414') returning id into c2;
   total := total + 1;
   select count(*) into n from buscar_duplicados('Maria José Silva', '99981522414', null, c2) where id = c1;

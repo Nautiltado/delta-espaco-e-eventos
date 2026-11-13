@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { COOKIE_VISITANTE, segredoDoVisitante, visitanteValido } from "@/lib/visitante-cookie";
+import { protegerCookie } from "@/lib/supabase/cookies";
+import { precisaTrocarSenha } from "@/lib/senha-flag";
 
 const ROTAS_PUBLICAS = ["/entrar", "/convite/"];
 
@@ -28,7 +30,7 @@ export async function proxy(request: NextRequest) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
           response = NextResponse.next({ request });
           cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options),
+            response.cookies.set(name, value, protegerCookie(options)),
           );
           Object.entries(headers).forEach(([chave, valor]) => response.headers.set(chave, valor));
         },
@@ -41,9 +43,8 @@ export async function proxy(request: NextRequest) {
   const publica = ROTAS_PUBLICAS.some((r) => request.nextUrl.pathname.startsWith(r));
 
   // Senha provisória: só a tela de troca (e a saída) ficam liberadas.
-  const metadados = (data?.claims?.user_metadata ?? {}) as { trocar_senha?: boolean };
   const caminho = request.nextUrl.pathname;
-  if (logado && metadados.trocar_senha === true && caminho !== "/trocar-senha" && !publica) {
+  if (logado && precisaTrocarSenha(data?.claims as Parameters<typeof precisaTrocarSenha>[0]) && caminho !== "/trocar-senha" && !publica) {
     const url = request.nextUrl.clone();
     url.pathname = "/trocar-senha";
     url.search = "";

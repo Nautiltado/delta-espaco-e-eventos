@@ -20,5 +20,5 @@ insert into configuracoes (chave, grupo, descricao, tipo, valor, ordem, restrita
   ('remarcacao.quantidade_sem_multa',  'Remarcação',   'Remarcações permitidas sem multa',            'inteiro', '1', 30, false),
   ('evento.confirmacao_convidados_dias','Remarcação',  'Confirmação final de convidados e cardápio, dias antes', 'dias', '7', 40, false),
   ('inadimplencia.prazo_horas',        'Financeiro',   'Prazo para regularizar após notificação de atraso', 'horas', '48', 30, false),
-  ('contrato.signatario_principal',    'Contrato',     'Assina pela Delta (nome e CPF)', 'texto', '"Marileide Costa Melo Santos, CPF 278.299.013-68"', 10, true),
-  ('contrato.signatario_alternativo',  'Contrato',     'Assina pela Delta na ausência da titular (nome e CPF)', 'texto', '"Leonardo Luis Costa Santos, CPF 620.814.073-02"', 20, true);
+  ('contrato.signatario_principal',    'Contrato',     'Assina pela Delta (nome e CPF)', 'texto', '""', 10, true),
+  ('contrato.signatario_alternativo',  'Contrato',     'Assina pela Delta na ausência da titular (nome e CPF)', 'texto', '""', 20, true);

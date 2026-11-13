@@ -166,10 +166,11 @@ export async function forcarTrocaSenha(_: EstadoUsuario, form: FormData): Promis
   const { data: u } = await supabase.from("usuarios").select("auth_user_id, ativo").eq("id", id.data).maybeSingle();
   if (!u?.ativo) return { erro: "Usuário desativado." };
   if (!u.auth_user_id) return { erro: "Esta pessoa ainda não criou a senha: envie o convite." };
-  const { error } = await criarClienteAdmin().auth.admin.updateUserById(u.auth_user_id, { user_metadata: { trocar_senha: true } });
+  // app_metadata: só o servidor altera (a pessoa não consegue desligar a exigência sozinha)
+  const { error } = await criarClienteAdmin().auth.admin.updateUserById(u.auth_user_id, { app_metadata: { trocar_senha: true } });
   if (error) return { erro: "Não foi possível marcar a troca de senha." };
   await supabase.rpc("revogar_sessoes", { p_usuario: id.data, p_motivo: "troca de senha obrigatória" });
-  await supabase.rpc("registrar_evento_acesso", { p_usuario: id.data, p_acao: "TROCA_SENHA_FORCADA", p_info: { resultado: "ok" } });
+  await supabase.rpc("registrar_troca_senha_forcada", { p_usuario: id.data });
   recarregar();
   return { ok: "No próximo acesso a pessoa vai escolher uma senha nova. As sessões abertas foram encerradas." };
 }

@@ -6,6 +6,8 @@ import { redirect } from "next/navigation";
 import { criarClienteAdmin } from "@/lib/supabase/admin";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { COOKIE_VISITANTE } from "@/lib/visitante-cookie";
+import { chave, consumir, ipDaRequisicao, mensagemDeEspera, REGRAS } from "@/lib/limite";
+import { MENSAGEM_ROBO, pareceRobo } from "@/lib/robo";
 
 export type EstadoConvite = { erro?: string };
 
@@ -24,7 +26,11 @@ export async function aceitarConvite(_: EstadoConvite, form: FormData): Promise<
   const senha = String(form.get("senha") ?? "");
   const confirmacao = String(form.get("confirmacao") ?? "");
   if (!/^[A-Za-z0-9_-]{40,60}$/.test(token)) return { erro: "Link inválido." };
+  if (senha.length > 200) return { erro: "Senha longa demais." };
   if (senha !== confirmacao) return { erro: "As duas senhas não são iguais." };
+  if (await pareceRobo()) return { erro: MENSAGEM_ROBO };
+  const espera = await consumir(chave("convite:ip", await ipDaRequisicao()), REGRAS.convitePorIp);
+  if (espera > 0) return { erro: mensagemDeEspera(espera) };
 
   const admin = criarClienteAdmin();
   const { data: previa } = await admin.rpc("conferir_convite", { p_hash: hashDe(token) });
@@ -39,8 +45,8 @@ export async function aceitarConvite(_: EstadoConvite, form: FormData): Promise<
   if (error || !c?.ok) return { erro: "Este link não vale mais. Peça um novo à administração." };
 
   const r = c.auth_user_id
-    ? await admin.auth.admin.updateUserById(c.auth_user_id, { password: senha, user_metadata: { trocar_senha: false } })
-    : await admin.auth.admin.createUser({ email: c.email, password: senha, email_confirm: true, user_metadata: { trocar_senha: false } });
+    ? await admin.auth.admin.updateUserById(c.auth_user_id, { password: senha, app_metadata: { trocar_senha: false }, user_metadata: { trocar_senha: false } })
+    : await admin.auth.admin.createUser({ email: c.email, password: senha, email_confirm: true, app_metadata: { trocar_senha: false } });
   if (r.error) {
     const fraca = /weak|pwned|leaked|password/i.test(r.error.message);
     return { erro: fraca ? "Essa senha é fraca ou já apareceu em vazamentos. Escolha outra e peça um novo link." : "Não foi possível criar o acesso. Peça um novo link à administração." };

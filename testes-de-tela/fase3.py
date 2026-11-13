@@ -30,7 +30,7 @@ def esperar_ok(pg, texto, timeout=15000):
 
 with sync_playwright() as p:
     b = p.chromium.launch(executable_path="/usr/bin/google-chrome", args=["--no-sandbox"])
-    ctx = b.new_context(viewport={"width": 1366, "height": 900})
+    ctx = b.new_context(viewport={"width": 1366, "height": 900}, bypass_csp=True)
     pg = entrar(ctx, "teste.e2e.adm@delta.test")
     pg.wait_for_selector("main h1")
     ok("A1 login do administrador cai no início", "Teste" in pg.inner_text("main h1"))
@@ -179,7 +179,7 @@ with sync_playwright() as p:
     pg.screenshot(path=f"{SHOTS}/tarefas.png", full_page=True)
 
     # ---------------- atendimento
-    ctx2 = b.new_context(viewport={"width": 1366, "height": 900})
+    ctx2 = b.new_context(viewport={"width": 1366, "height": 900}, bypass_csp=True)
     pa = entrar(ctx2, "teste.e2e.atd@delta.test")
     pa.goto(f"{BASE}/orcamentos/{orc}")
     t = pa.inner_text("main")

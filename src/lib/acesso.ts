@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { pode, type Acesso, type Permissao } from "@/lib/permissoes";
 import { ehVisitante } from "@/lib/visitante";
+import { precisaTrocarSenha } from "@/lib/senha-flag";
 
 export type Sessao = {
   authId: string;
@@ -22,10 +23,9 @@ export const obterSessao = cache(async (): Promise<Sessao | null> => {
   if (error || !data?.claims?.sub) return null;
 
   const { data: acesso } = await supabase.rpc("meu_acesso");
-  const metadados = (data.claims.user_metadata ?? {}) as { trocar_senha?: boolean };
   return {
     authId: data.claims.sub,
-    trocarSenha: metadados.trocar_senha === true,
+    trocarSenha: precisaTrocarSenha(data.claims as Parameters<typeof precisaTrocarSenha>[0]),
     acesso: (acesso as Acesso | null) ?? null,
   };
 });

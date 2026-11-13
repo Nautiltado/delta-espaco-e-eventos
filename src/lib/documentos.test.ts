@@ -10,18 +10,18 @@ import {
 
 describe("CPF e CNPJ", () => {
   it("aceita documentos válidos, com ou sem máscara", () => {
-    expect(validaCpf("620.814.073-02")).toBe(true);
-    expect(validaCpf("27829901368")).toBe(true);
+    expect(validaCpf("529.982.247-25")).toBe(true);
+    expect(validaCpf("11144477735")).toBe(true);
     expect(validaCnpj("06.328.111/0001-08")).toBe(true);
   });
   it("recusa dígito errado e sequências repetidas", () => {
-    expect(validaCpf("620.814.073-03")).toBe(false);
+    expect(validaCpf("529.982.247-26")).toBe(false);
     expect(validaCpf("111.111.111-11")).toBe(false);
     expect(validaCnpj("06.328.111/0001-09")).toBe(false);
     expect(validaCnpj("00000000000000")).toBe(false);
   });
   it("formata", () => {
-    expect(formatarDocumento("62081407302")).toBe("620.814.073-02");
+    expect(formatarDocumento("52998224725")).toBe("529.982.247-25");
     expect(formatarDocumento("06328111000108")).toBe("06.328.111/0001-08");
   });
 });

@@ -3,7 +3,7 @@ import { mascararResposta, TEXTO_OCULTO as O } from "@/lib/visitante-mascara";
 
 describe("máscara do visitante", () => {
   it("cliente: nome, documento e contatos somem; id e cidade ficam", () => {
-    const r = mascararResposta([{ id: "8b0f6a52-1d2e-4c55-9a77-0b1c2d3e4f50", nome: "Joana Silva", documento: "62081407302", telefone: "99981110101", cidade: "Bacabal" }], "clientes");
+    const r = mascararResposta([{ id: "8b0f6a52-1d2e-4c55-9a77-0b1c2d3e4f50", nome: "Joana Silva", documento: "52998224725", telefone: "99981110101", cidade: "Bacabal" }], "clientes");
     expect(r).toEqual([{ id: "8b0f6a52-1d2e-4c55-9a77-0b1c2d3e4f50", nome: O, documento: O, telefone: O, cidade: "Bacabal" }]);
   });
   it("nome de item do catálogo e de espaço continuam visíveis", () => {
