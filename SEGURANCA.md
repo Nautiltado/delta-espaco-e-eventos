@@ -13,7 +13,7 @@ Como cada proteção está feita. Revisado em 13/11/2026.
 | Cookies | Sessão em cookie **httpOnly**, `Secure` e `SameSite=Lax`: código no navegador não lê o token. Cookie do visitante assinado (HMAC). |
 | Senhas | Guardadas pelo Supabase com hash (bcrypt); mínimo de 10 caracteres com letras e números. Links de convite guardados só como hash SHA-256, de uso único e com validade. "Exigir senha nova" fica em `app_metadata`, que a pessoa não consegue desligar. |
 | Limite de tentativas | Login (20 por IP e 6 por e-mail a cada 10–15 min), visitante, convite e troca de senha. Contado no banco; guarda só um resumo cifrado do IP/e-mail. |
-| Robôs | Vercel BotID (desafio invisível) no login, no visitante e no convite. |
+| Robôs | Vercel BotID (desafio invisível) no login, no visitante e no convite, **em modo observação**: registra nos logs da Vercel (`[botid]`) mas não bloqueia. Para bloquear, criar a variável `BOTID_BLOQUEAR=1` na Vercel depois de conferir que a equipe não aparece como robô. O limite de tentativas já barra o chute de senhas. |
 | Consultas | Todas pela biblioteca do Supabase ou por funções do banco, com parâmetros; nada de SQL montado com texto do usuário. |
 | Validação | Toda ação do servidor valida os campos (zod) antes de gravar; o banco tem as próprias regras (check, gatilhos). |
 | Vazamento de conteúdo | Mensagens de erro traduzidas, sem detalhe técnico; política de conteúdo (CSP) só permite o próprio site e o Supabase; o site não pode ser embutido em outro (`frame-ancestors 'none'`); HSTS, nosniff, Referrer-Policy. |
