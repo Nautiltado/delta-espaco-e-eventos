@@ -44,6 +44,9 @@ e último acesso, filtros, resumo com a soma das permissões, visitante exclusiv
 senha provisória), perfis e dados salvos, proteção da própria conta e do próprio administrador, encerrar sessões (a
 pessoa é derrubada na hora), desativar com motivo e transferência, reativar, histórico, link cancelado ao desativar,
 tentativa sem permissão registrada e celular. A U19 só roda contra a Vercel (a página do convite usa a chave secreta).
+`convite.py` (só na Vercel, 12 verificações) faz o convite de ponta a ponta: link, senha fraca recusada, senha criada e
+entrada no painel, link usado não abre de novo, "exigir senha nova" derruba a sessão e leva à troca, redefinição por link;
+no fim desativa a conta criada (nunca apaga).
 O banco tem o teste `supabase/tests/acessos_etapa1.sql` (20 verificações, desfaz tudo no fim).
 
 `salgados-misto.py` percorre o cento misto (14 verificações, computador e celular): até 4 sabores em blocos de 25,
