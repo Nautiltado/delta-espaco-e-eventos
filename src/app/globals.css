@@ -648,17 +648,28 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-sp
 .tempos-espaco .aviso { margin: 0; padding: 6px 10px; }
 
 /* ---------------------------------------------------------------- painel lateral do dia (gaveta) */
-.gaveta-fundo { position: fixed; inset: 0; z-index: 80; background: transparent; }
+.gaveta-fundo { display: none; }
+/* no computador o calendário continua clicável com o painel aberto; o conteúdo dá espaço ao painel */
+:root[data-gaveta="aberta"] .agenda-layout { grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 761px) { :root[data-gaveta="aberta"] .agenda-resumo { display: grid; grid-template-columns: 1fr 1fr; } }
+@media (min-width: 1181px) {
+  :root[data-gaveta="aberta"] .principal { padding-right: 440px; transition: padding-right .2s ease-out; }
+}
+@media (min-width: 1000px) and (max-width: 1180px) {
+  .gaveta { width: 380px; }
+  :root[data-gaveta="aberta"] .principal { padding-right: 380px; transition: padding-right .2s ease-out; }
+}
 .gaveta {
   position: fixed; top: 0; right: 0; bottom: 0; z-index: 81; width: min(440px, 100vw);
   display: flex; flex-direction: column; background: var(--superficie); border-left: 1px solid var(--borda);
   box-shadow: -18px 0 40px -18px rgba(16, 35, 27, .28); animation: gaveta-entra .22s ease-out;
 }
+@keyframes gaveta-troca { from { opacity: .35; } to { opacity: 1; } }
 @keyframes gaveta-entra { from { transform: translateX(32px); opacity: 0; } to { transform: none; opacity: 1; } }
 .gaveta-topo { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 18px 20px 14px; border-bottom: 1px solid var(--borda); }
 .gaveta-topo h2 { margin: 2px 0 0; font-size: 1.2rem; }
 .gaveta-topo p { margin: 2px 0 0; }
-.gaveta-corpo { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 18px; }
+.gaveta-corpo { flex: 1; animation: gaveta-troca .18s ease-out; overflow-y: auto; overscroll-behavior: contain; padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 18px; }
 .gaveta-secao h3 { font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; color: var(--texto-2); margin: 0 0 8px; display: flex; gap: 6px; align-items: center; }
 .gaveta-acoes { padding: 14px 20px; border-top: 1px solid var(--borda); display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; background: var(--superficie-2); }
 .gaveta-acoes > .botao:first-child { grid-column: 1 / -1; }
@@ -715,7 +726,7 @@ label.opcao input { margin-top: 1px; flex: 0 0 auto; }
   .agenda-filtros .aba { white-space: nowrap; }
   .agenda-vista { padding: 6px; }
   .calendario .mais { font-size: .6rem; padding: 0; }
-  .gaveta-fundo { background: rgba(10, 20, 15, .38); }
+  .gaveta-fundo { display: block; position: fixed; inset: 0; z-index: 80; background: rgba(10, 20, 15, .38); }
   .gaveta { top: auto; left: 0; width: 100%; max-height: 88vh; border-left: 0; border-top: 1px solid var(--borda); border-radius: 18px 18px 0 0; animation: gaveta-sobe .24s ease-out; }
   .gaveta-topo::before { content: ""; position: absolute; top: 7px; left: 50%; width: 40px; height: 4px; margin-left: -20px; border-radius: 99px; background: var(--borda-forte); }
   .gaveta-acoes { grid-template-columns: 1fr; padding-bottom: calc(14px + env(safe-area-inset-bottom)); }

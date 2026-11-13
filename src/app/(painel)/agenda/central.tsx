@@ -191,7 +191,6 @@ export function CentralAgenda(p: Props) {
 
       {dia && (
         <PainelDoDia
-          key={dia}
           p={p} dia={dia} modo={modo} setModo={setModo} fechar={fechar}
           aoMudar={() => router.refresh()}
         />
@@ -338,15 +337,21 @@ function PainelDoDia({ p, dia, modo, setModo, fechar, aoMudar }: {
   const fecharRef = useRef<HTMLButtonElement>(null);
   const painelRef = useRef<HTMLElement>(null);
   useEffect(() => {
-    fecharRef.current?.focus();
+    fecharRef.current?.focus({ preventScroll: true });
     const tecla = (e: KeyboardEvent) => { if (e.key === "Escape") fechar(); };
     window.addEventListener("keydown", tecla);
     return () => window.removeEventListener("keydown", tecla);
   }, [fechar]);
-  useEffect(() => { painelRef.current?.querySelector(".gaveta-corpo")?.scrollTo({ top: 0 }); }, [modo]);
+  useEffect(() => { painelRef.current?.querySelector(".gaveta-corpo")?.scrollTo({ top: 0 }); }, [modo, dia]);
+  useEffect(() => {
+    document.documentElement.dataset.gaveta = "aberta";
+    return () => { delete document.documentElement.dataset.gaveta; };
+  }, []);
 
-  const [avisoOk, setAvisoOk] = useState("");
-  const mudou = (msg?: string) => { if (msg) setAvisoOk(msg); aoMudar(); };
+  // aviso de sucesso vale só para o dia em que a ação foi feita
+  const [aviso, setAviso] = useState<{ dia: string; msg: string } | null>(null);
+  const avisoOk = aviso?.dia === dia ? aviso.msg : "";
+  const mudou = (msg?: string) => { if (msg) setAviso({ dia, msg }); aoMudar(); };
   const passado = dia < p.hoje;
   const titulos: Record<Modo, string> = {
     resumo: "", evento: "Novo evento", externo: "Registrar evento externo", bloqueio: "Bloquear data ou horário", consulta: "Consultar disponibilidade",
@@ -367,7 +372,7 @@ function PainelDoDia({ p, dia, modo, setModo, fechar, aoMudar }: {
           </div>
           <button ref={fecharRef} type="button" className="botao fantasma pequeno icone" onClick={fechar} aria-label="Fechar painel (Esc)"><X aria-hidden /></button>
         </header>
-        <div className="gaveta-corpo">
+        <div className="gaveta-corpo" key={dia}>
           {modo === "resumo" && avisoOk && <p className="aviso ok" role="status">{avisoOk}</p>}
           {modo === "resumo" && <ResumoDoDia p={p} dia={dia} aoMudar={mudou} />}
           {(modo === "evento" || modo === "externo") && <FormEvento key={modo} p={p} dia={dia} externo={modo === "externo"} aoMudar={aoMudar} />}
