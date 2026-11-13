@@ -36,7 +36,7 @@ function Lista({ pedidos, mostrarDia = false }: { pedidos: PedidoResumo[]; mostr
 }
 
 export default async function PaginaEncomendas() {
-  const acesso = await exigirAlguma(["salgados.criar", "retirada.registrar", "producao.status"]);
+  const acesso = await exigirAlguma(["salgados.criar", "retirada.registrar", "producao.status", "salgados.ver"]);
   const supabase = await criarClienteServidor();
   const hoje = hojeNaDelta();
   const desde = new Date(instanteAtual() - 3 * 86400000).toISOString();

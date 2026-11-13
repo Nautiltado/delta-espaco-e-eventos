@@ -3,7 +3,7 @@ import { formatarCentavos } from "@/lib/dinheiro";
 import type { Permissao } from "@/lib/permissoes";
 
 /** Quem vê os eventos: comercial, operação, financeiro e cozinha. */
-export const PERMISSOES_EVENTOS: Permissao[] = ["orcamento.ver", "escala.gerir", "evento.fechar", "producao.status", "custo.ver"];
+export const PERMISSOES_EVENTOS: Permissao[] = ["orcamento.ver", "escala.gerir", "evento.fechar", "producao.status", "custo.ver", "evento.ver"];
 
 export const FUNCOES: Record<string, { um: string; varios: string }> = {
   garcom: { um: "garçom", varios: "garçons" },

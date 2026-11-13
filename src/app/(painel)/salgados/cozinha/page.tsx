@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ChefHat } from "lucide-react";
 import { Vazio } from "@/componentes/ui";
-import { exigirPermissao } from "@/lib/acesso";
+import { exigirAlguma } from "@/lib/acesso";
 import { pode } from "@/lib/permissoes";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { formatarDataComDia, hojeNaDelta } from "@/lib/datas";
@@ -15,7 +15,7 @@ import { FormularioProducao } from "../componentes";
 export const metadata: Metadata = { title: "Cozinha" };
 
 export default async function PaginaCozinha() {
-  const acesso = await exigirPermissao("producao.status");
+  const acesso = await exigirAlguma(["producao.status", "salgados.ver"]);
   const supabase = await criarClienteServidor();
   const [{ data }, { estoque }] = await Promise.all([
     supabase.from("pedidos").select(SELECT_PEDIDO).in("status", ["pago", "pronto"]).order("retirada_em"),

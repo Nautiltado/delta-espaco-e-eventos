@@ -36,7 +36,7 @@ type Pedido = {
 export default async function PaginaPedido({
   params, searchParams,
 }: { params: Promise<{ id: string }>; searchParams: Promise<{ aviso?: string }> }) {
-  const acesso = await exigirAlguma(["salgados.criar", "retirada.registrar", "producao.status"]);
+  const acesso = await exigirAlguma(["salgados.criar", "retirada.registrar", "producao.status", "salgados.ver"]);
   const { id } = await params;
   const { aviso } = await searchParams;
   const supabase = await criarClienteServidor();

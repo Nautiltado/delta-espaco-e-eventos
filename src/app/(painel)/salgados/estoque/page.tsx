@@ -14,7 +14,7 @@ export const metadata: Metadata = { title: "Estoque e preços" };
 const TIPOS: Record<string, string> = { producao: "Produção", pedido: "Retirada", ajuste: "Contagem", perda: "Perda", evento: "Evento" };
 
 export default async function PaginaEstoque() {
-  const acesso = await exigirAlguma(["estoque.movimentar", "catalogo.alterar"]);
+  const acesso = await exigirAlguma(["estoque.movimentar", "catalogo.alterar", "estoque.ver"]);
   const supabase = await criarClienteServidor();
   const [{ produtos, estoque }, { data: movs }] = await Promise.all([
     cardapioEEstoque(supabase, { incluirInativos: true }),

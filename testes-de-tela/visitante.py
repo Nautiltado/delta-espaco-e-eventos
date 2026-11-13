@@ -66,13 +66,11 @@ with sync_playwright() as p:
     ok("V5 valores aparecem zerados", zeros >= 3, zeros)
     ok("V6 sem erro de JavaScript", not erros, erros[:2])
 
-    # tentar alterar: registrar uma encomenda (a tela abre para ver, mas gravar é recusado)
-    pg.goto(f"{B}/salgados/novo"); pg.wait_for_selector(".cardapio")
-    pg.fill("#p-nome", "Tentativa do visitante")
-    pg.click("button[aria-label='Mais Coxinha de frango (cento)']")
-    pg.click("button:has-text('Registrar pedido')")
-    pg.wait_for_selector(".rodape-pedido .aviso.erro", timeout=20000)
-    ok("V7 alteração recusada com aviso de modo visitante", "Modo visitante" in pg.inner_text(".rodape-pedido .aviso.erro"), pg.inner_text(".rodape-pedido .aviso.erro"))
+    # tentar alterar: o visitante só tem permissões de ver, então a tela de nova encomenda nem abre
+    pg.goto(f"{B}/salgados"); pg.wait_for_selector("main h1")
+    ok("V7a encomendas abrem para ver", "/sem-permissao" not in pg.url, pg.url)
+    pg.goto(f"{B}/salgados/novo"); pg.wait_for_load_state("networkidle")
+    ok("V7 nova encomenda não abre para o visitante", "/sem-permissao" in pg.url, pg.url)
     ok("V7b agenda não oferece bloquear nem criar evento", (pg.goto(f"{B}/agenda") and pg.wait_for_selector(".calendario")) is not None
        and pg.locator("button:has-text('Bloquear data')").count() == 0 and pg.locator("button:has-text('Novo evento')").count() == 0)
     # tentar criar orçamento

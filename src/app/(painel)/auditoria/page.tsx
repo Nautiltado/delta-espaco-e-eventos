@@ -8,6 +8,8 @@ export const metadata: Metadata = { title: "Auditoria" };
 const POR_PAGINA = 50;
 
 const TABELAS: Record<string, string> = {
+  acessos: "Acessos e convites",
+  convites: "Convites",
   usuarios: "Usuários",
   usuarios_perfis: "Perfis de usuário",
   perfis_permissoes: "Permissões dos perfis",
@@ -19,7 +21,14 @@ const TABELAS: Record<string, string> = {
   pagamentos: "Pagamentos",
 };
 
-const ACOES: Record<string, string> = { INSERT: "Criou", UPDATE: "Alterou", DELETE: "Removeu" };
+const ACOES: Record<string, string> = {
+  INSERT: "Criou", UPDATE: "Alterou", DELETE: "Removeu",
+  USUARIO_CRIADO: "Cadastrou usuário", PERFIS_ALTERADOS: "Alterou perfis", CONVITE_CRIADO: "Gerou convite",
+  REDEFINICAO_CRIADA: "Gerou link de redefinição", CONVITE_REVOGADO: "Revogou convite", CONVITE_ACEITO: "Aceitou convite",
+  SENHA_REDEFINIDA: "Redefiniu a senha pelo link", SESSOES_REVOGADAS: "Encerrou sessões", TROCA_SENHA_FORCADA: "Forçou troca de senha",
+  USUARIO_DESATIVADO: "Desativou usuário", USUARIO_REATIVADO: "Reativou usuário", ACESSO_NEGADO: "Tentou acessar sem permissão",
+  CONVITE_ENVIADO: "Enviou convite",
+};
 
 const dataHora = new Intl.DateTimeFormat("pt-BR", {
   dateStyle: "short",
@@ -50,6 +59,9 @@ function diferencas(r: Registro): string[] {
     return Object.entries(r.antes)
       .filter(([k]) => !ignorar.has(k))
       .map(([k, v]) => `${k}: ${JSON.stringify(v)}`);
+  }
+  if (!["INSERT", "UPDATE", "DELETE"].includes(r.acao)) {
+    return Object.entries(r.depois ?? {}).filter(([, v]) => v !== null && v !== "").map(([k, v]) => `${k}: ${JSON.stringify(v)}`);
   }
   const antes = r.antes ?? {};
   const depois = r.depois ?? {};

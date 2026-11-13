@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { COOKIE_VISITANTE, segredoDoVisitante, visitanteValido } from "@/lib/visitante-cookie";
 
-const ROTAS_PUBLICAS = ["/entrar"];
+const ROTAS_PUBLICAS = ["/entrar", "/convite/"];
 
 /**
  * Renova a sessão do Supabase a cada requisição e manda para /entrar quem não está logado.

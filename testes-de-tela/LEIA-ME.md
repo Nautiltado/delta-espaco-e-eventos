@@ -34,10 +34,17 @@ bloqueia o envio, cento = 100 unidades no formulário, na tabela e no PDF, item 
 desconto no item, custo e margem só para a administração, alerta de venda abaixo do custo, aprovação, envio, PDFs sem
 custo, unidade de cobrança nova e celular. `supabase/tests/orcamento_etapa1.sql` cobre as mesmas regras no banco (17).
 
-`visitante.py` confere o modo visitante (13 verificações): botão na entrada, faixa, nenhum dado pessoal real nas telas
-nem no PDF (os dados reais são lidos com a conta teste.e2e.adm e nunca impressos), valores zerados, gravação recusada, cookie
+`visitante.py` confere o modo visitante (14 verificações): botão na entrada, faixa, nenhum dado pessoal real nas telas
+nem no PDF (os dados reais são lidos com a conta teste.e2e.adm e nunca impressos), valores zerados, encomendas abrem para ver mas a tela de nova encomenda não, cookie
 httpOnly sem token do banco, celular e saída. Local, sem a chave secreta, suba o servidor com DELTA_TESTE_LOCAL=1,
 VISITANTE_SEGREDO_TESTE e VISITANTE_TESTE_EMAIL/SENHA de uma conta de teste com perfil VIS (essas variáveis não existem na Vercel).
+
+`usuarios.py` confere o módulo de usuários (21 verificações): atendimento não abre Usuários, lista com perfis, situação
+e último acesso, filtros, resumo com a soma das permissões, visitante exclusivo, cadastro que gera link de convite (sem
+senha provisória), perfis e dados salvos, proteção da própria conta e do próprio administrador, encerrar sessões (a
+pessoa é derrubada na hora), desativar com motivo e transferência, reativar, histórico, link cancelado ao desativar,
+tentativa sem permissão registrada e celular. A U19 só roda contra a Vercel (a página do convite usa a chave secreta).
+O banco tem o teste `supabase/tests/acessos_etapa1.sql` (20 verificações, desfaz tudo no fim).
 
 `salgados-misto.py` percorre o cento misto (14 verificações, computador e celular): até 4 sabores em blocos de 25,
 pode repetir, não passa de 100, pedido incompleto recusado, composição no pedido e no resumo do WhatsApp.

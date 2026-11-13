@@ -677,6 +677,24 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-sp
   .sai-dir, .sai-esq, .entra-dir, .entra-esq { animation-duration: .01ms; }
 }
 
+/* ---------------------------------------------------------------- usuários */
+.filtros-usuarios { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 14px; border-bottom: 1px solid var(--borda); }
+.filtros-usuarios input[type="search"] { flex: 1 1 220px; }
+.filtros-usuarios select { flex: 0 1 200px; }
+.tabela-usuarios .pessoa { display: flex; align-items: center; gap: 10px; min-width: 190px; }
+.tabela-usuarios .avatar { width: 32px; height: 32px; border-radius: 99px; display: grid; place-items: center; background: var(--verde-claro); color: var(--verde-texto); font-weight: 700; font-size: .78rem; flex: 0 0 auto; }
+.gaveta.gaveta-larga { width: min(520px, 100vw); }
+.gaveta-fundo.visivel { display: block; position: fixed; inset: 0; z-index: 80; background: rgba(10, 20, 15, .32); }
+.acoes-acesso { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; margin-bottom: 8px; }
+.link-convite { display: flex; flex-direction: column; gap: 8px; }
+.link-convite .link-texto { display: block; word-break: break-all; font-size: .78rem; padding: 6px 8px; background: var(--superficie); border-radius: 6px; border: 1px solid var(--borda); }
+.zona-perigo { border-top: 1px solid var(--borda); padding-top: 14px; }
+.resumo-permissoes { border: 1px solid var(--borda); border-radius: 10px; padding: 10px 12px; background: var(--superficie-2); }
+.modulo-permissoes { font-size: .84rem; margin-top: 6px; }
+.modulo-permissoes ul { margin: 2px 0 0; padding-left: 18px; color: var(--texto-2); }
+.historico-acesso li { padding: 8px 0; border-bottom: 1px solid var(--borda); list-style: none; }
+.historico-acesso { padding: 0; margin: 0; }
+
 /* ---------------------------------------------------------------- painel lateral do dia (gaveta) */
 .gaveta-fundo { display: none; }
 /* no computador o calendário continua clicável com o painel aberto; o conteúdo dá espaço ao painel */

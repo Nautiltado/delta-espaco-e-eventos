@@ -25,7 +25,12 @@ export type Permissao =
   | "escala.gerir"
   | "whatsapp.atender"
   | "auditoria.ver"
-  | "config.critica";
+  | "config.critica"
+  | "salgados.ver"
+  | "estoque.ver"
+  | "evento.ver"
+  | "financeiro.ver"
+  | "contrato.ver";
 
 export type Acesso = {
   id: string;
@@ -77,11 +82,11 @@ export const MENU: ItemMenu[] = [
   { href: "/orcamentos", rotulo: "Orçamentos", grupo: "comercial", permissao: "orcamento.ver" },
   { href: "/catalogo", rotulo: "Catálogo", grupo: "comercial", permissao: "orcamento.ver" },
   { href: "/agenda", rotulo: "Agenda", grupo: "operacao", permissao: "orcamento.ver" },
-  { href: "/eventos", rotulo: "Eventos", grupo: "operacao", permissao: ["orcamento.ver", "escala.gerir", "evento.fechar", "producao.status", "custo.ver"] },
-  { href: "/salgados", rotulo: "Encomendas", grupo: "operacao", permissao: "salgados.criar" },
-  { href: "/salgados/cozinha", rotulo: "Cozinha", grupo: "operacao", permissao: "producao.status" },
-  { href: "/salgados/estoque", rotulo: "Estoque", grupo: "operacao", permissao: ["estoque.movimentar", "catalogo.alterar"] },
-  { href: "/financeiro", rotulo: "Financeiro", grupo: "administracao", permissao: "pagamento.confirmar" },
+  { href: "/eventos", rotulo: "Eventos", grupo: "operacao", permissao: ["orcamento.ver", "escala.gerir", "evento.fechar", "producao.status", "custo.ver", "evento.ver"] },
+  { href: "/salgados", rotulo: "Encomendas", grupo: "operacao", permissao: ["salgados.criar", "salgados.ver"] },
+  { href: "/salgados/cozinha", rotulo: "Cozinha", grupo: "operacao", permissao: ["producao.status", "salgados.ver"] },
+  { href: "/salgados/estoque", rotulo: "Estoque", grupo: "operacao", permissao: ["estoque.movimentar", "catalogo.alterar", "estoque.ver"] },
+  { href: "/financeiro", rotulo: "Financeiro", grupo: "administracao", permissao: ["pagamento.confirmar", "financeiro.ver"] },
   { href: "/contratos", rotulo: "Contratos", grupo: "administracao", permissao: "contrato.editar" },
   { href: "/usuarios", rotulo: "Usuários", grupo: "administracao", permissao: "config.critica" },
   { href: "/configuracoes", rotulo: "Configurações", grupo: "administracao" },

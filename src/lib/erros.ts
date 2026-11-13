@@ -33,6 +33,8 @@ const COM_DETALHE = new Set([
   "PARCELAS_COM_PAGAMENTO",
   "PRECO_PENDENTE",
   "VISITANTE",
+  "PERFIL_PROTEGIDO",
+  "PERFIL_OBRIGATORIO",
 ]);
 
 const PREFIXO: Record<string, string> = {

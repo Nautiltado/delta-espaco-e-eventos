@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Wallet } from "lucide-react";
 import { Vazio } from "@/componentes/ui";
-import { exigirPermissao } from "@/lib/acesso";
+import { exigirAlguma } from "@/lib/acesso";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { formatarCentavos } from "@/lib/dinheiro";
 import { formatarData, hojeNaDelta, instanteAtual } from "@/lib/datas";
@@ -14,7 +14,7 @@ export const metadata: Metadata = { title: "Financeiro" };
 type ReservaResumo = { id: string; titulo: string | null; status: StatusReserva; evento_inicio: string; evento_fim: string; clientes: { nome: string } | null };
 
 export default async function PaginaFinanceiro() {
-  await exigirPermissao("pagamento.confirmar");
+  await exigirAlguma(["pagamento.confirmar", "financeiro.ver"]);
   const hoje = hojeNaDelta();
   const supabase = await criarClienteServidor();
 
