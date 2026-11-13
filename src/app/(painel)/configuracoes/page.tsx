@@ -9,6 +9,7 @@ import {
   type Configuracao,
 } from "@/lib/configuracoes";
 import { CampoConfiguracao } from "./campo";
+import { TemposDoEspaco } from "./tempos";
 
 export const metadata: Metadata = { title: "Configurações" };
 
@@ -24,11 +25,22 @@ export default async function PaginaConfiguracoes() {
   const acesso = await exigirAcesso();
   const podeEditar = pode(acesso, "config.critica");
   const supabase = await criarClienteServidor();
-  const { data } = await supabase.from("configuracoes").select("*").order("grupo").order("ordem");
+  const [{ data }, { data: espacos }] = await Promise.all([
+    supabase.from("configuracoes").select("*").order("grupo").order("ordem"),
+    supabase.from("recursos").select("id, nome, montagem_horas, desmontagem_horas, limpeza_horas, intervalo_horas")
+      .eq("tipo", "espaco").eq("ativo", true).order("capacidade"),
+  ]);
   const configs = (data ?? []) as Configuracao[];
   const grupos = [...new Set(configs.map((c) => c.grupo))].sort(
     (a, b) => (ORDEM_GRUPOS.indexOf(a) + 99) % 99 - (ORDEM_GRUPOS.indexOf(b) + 99) % 99,
   );
+
+  const num = (k: string, p: number) => { const n = Number(configs.find((c) => c.chave === k)?.valor); return Number.isFinite(n) ? n : p; };
+  const padrao = {
+    montagem: num("espaco.montagem_horas", 0), desmontagem: num("espaco.desmontagem_horas", 0),
+    limpeza: num("espaco.limpeza_horas", 4), intervalo: num("espaco.intervalo_horas", 0),
+  };
+  const n = (v: unknown) => (v === null || v === undefined ? null : Number(v));
 
   return (
     <>
@@ -76,6 +88,20 @@ export default async function PaginaConfiguracoes() {
           </table>
         </section>
       ))}
+
+      {(espacos ?? []).length > 0 && (
+        <section className="cartao">
+          <h2>Tempos de cada espaço</h2>
+          <p className="mudo">
+            Folgas que a agenda reserva antes e depois de cada evento. Em branco, o espaço usa o padrão geral
+            (grupo Reservas). Cada evento ainda pode ter montagem e desmontagem próprias ao segurar a data.
+          </p>
+          {(espacos ?? []).map((e) => (
+            <TemposDoEspaco key={e.id} id={e.id} nome={e.nome} padrao={padrao} podeEditar={podeEditar}
+              tempos={{ montagem: n(e.montagem_horas), desmontagem: n(e.desmontagem_horas), limpeza: n(e.limpeza_horas), intervalo: n(e.intervalo_horas) }} />
+          ))}
+        </section>
+      )}
     </>
   );
 }

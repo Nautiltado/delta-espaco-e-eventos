@@ -50,7 +50,7 @@ with sync_playwright() as p:
     n=pg.locator("td input[name=descricao]").count(); ok("R11 itens no orçamento", n==10, str(n))
     pg.screenshot(path="/tmp/capturas/orcamento-rapido.png", full_page=True)
     # modelo novo
-    pg.goto(f"{B}/orcamentos/modelos"); ok("R12 lista de modelos", "Aniversário infantil" in pg.inner_text("main"))
+    pg.goto(f"{B}/orcamentos/modelos"); pg.wait_for_load_state("networkidle"); pg.wait_for_selector("main h1"); ok("R12 lista de modelos", "Aniversário infantil" in pg.inner_text("main"))
     pg.click("text=Novo modelo"); pg.wait_for_url("**/modelos/novo")
     pg.fill("#m-nome",f"Jantar {random.randint(100,999)} (teste)")
     for termo in ["arroz branco","strogonoff de frango","salada tropical","farofa","garcom"]:
@@ -61,7 +61,7 @@ with sync_playwright() as p:
     ok("R13 simulação mostra 2 garçons para 45", "2 eventos" in g.inner_text() or "2 " in g.locator("td").nth(6).inner_text(), g.locator("td").nth(6).inner_text())
     pg.click("button:has-text('Salvar modelo')"); pg.wait_for_url(re.compile(".*/modelos/[0-9a-f-]+\\?salvo=1"), timeout=20000)
     pg.wait_for_selector("text=Modelo salvo", timeout=15000); ok("R14 modelo salvo", True)
-    pg.goto(f"{B}/orcamentos/modelos"); ok("R15 aparece na lista", "(teste)" in pg.inner_text("main"))
+    pg.goto(f"{B}/orcamentos/modelos"); pg.wait_for_load_state("networkidle"); pg.wait_for_selector("main h1"); ok("R15 aparece na lista", "(teste)" in pg.inner_text("main"))
     pg.set_viewport_size({"width":390,"height":844})
     pg.goto(f"{B}/orcamentos/novo?cliente={cli}"); pg.fill("#titulo","Celular (teste)"); pg.fill("#convidados","20"); pg.click("button:has-text('Criar orçamento')")
     pg.wait_for_url(re.compile(r".*/orcamentos/[0-9a-f-]+$")); pg.click("button.modelo:has-text('Aniversário infantil')")

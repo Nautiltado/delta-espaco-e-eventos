@@ -29,6 +29,11 @@ ficha, checklist marcado com nome e hora, ficha com chegada/traje/observações,
 mensagem de WhatsApp, pagamento da equipe, gasto com nota fiscal (foto), gasto a pagar, fechamento e celular.
 Precisa de `teste.e2e.fin` além das outras. Se não houver evento nos próximos 180 dias, rode com `EVENTO=<id da reserva>` (por exemplo, uma criada pelo fase4.py).
 
+`agenda.py` percorre a agenda (20 verificações) com a administração: clique no dia abre o painel lateral, cadastro rápido
+cria orçamento sem bloquear a data, opção de segurar a data, verificar disponibilidade, bloqueio recusado por conflito,
+bloqueio com observação e responsável, remoção pelo painel, evento externo, vistas Semana/Dia/Lista e filtro de externos.
+`agenda-telas.py` confere a agenda em 1920, 1600, 1440, 1366, 1024, 768 e 390 px nos temas claro e escuro (52 verificações).
+
 `concorrencia.mjs` dispara 30 pedidos simultâneos para o mesmo espaço e horário e exige exatamente um aceito.
 
 Ao final, rode `limpar-dados-de-teste.sql` no SQL do Supabase: apaga só o que as contas de teste criaram (e as contas).

@@ -6,7 +6,7 @@ import { menuDoUsuario, NOMES_PERFIS } from "@/lib/permissoes";
 import { instanteAtual } from "@/lib/datas";
 import { BarraInferior, BotaoMenu, MenuLateral, Migalhas } from "@/componentes/menu-lateral";
 import { sair } from "@/app/entrar/actions";
-import { SeletorTema } from "@/componentes/seletor-tema";
+import { BotaoRecolher, SeletorTema } from "@/componentes/seletor-tema";
 
 // Painel interno, sempre com dados do usuário logado: pode esperar o servidor.
 export const instant = false;
@@ -31,13 +31,16 @@ export default async function LayoutPainel({ children }: { children: React.React
         <BotaoMenu />
       </header>
       <aside className="lateral">
-        <Link href="/" className="marca" aria-label="Delta Gestão, visão geral">
-          <Image src="/logo-brasao.png" alt="" width={34} height={36} />
-          <div className="marca-texto">
-            <strong>DELTA</strong>
-            <span>Gestão</span>
-          </div>
-        </Link>
+        <div className="lateral-topo">
+          <Link href="/" className="marca" aria-label="Delta Gestão, visão geral">
+            <Image src="/logo-brasao.png" alt="" width={34} height={36} />
+            <div className="marca-texto">
+              <strong>DELTA</strong>
+              <span>Gestão</span>
+            </div>
+          </Link>
+          <BotaoRecolher />
+        </div>
         <nav aria-label="Principal">
           <MenuLateral itens={itens} />
         </nav>

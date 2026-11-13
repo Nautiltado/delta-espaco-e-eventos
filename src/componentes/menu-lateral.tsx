@@ -40,9 +40,9 @@ export function MenuLateral({ itens }: { itens: ItemMenu[] }) {
               const ativo = ativoNoMenu(item.href, caminho, itens);
               return (
                 <li key={item.href}>
-                  <Link href={item.href} aria-current={ativo ? "page" : undefined}>
+                  <Link href={item.href} aria-current={ativo ? "page" : undefined} title={item.rotulo}>
                     {Icone && <Icone aria-hidden strokeWidth={1.8} />}
-                    {item.rotulo}
+                    <span className="rotulo">{item.rotulo}</span>
                   </Link>
                 </li>
               );

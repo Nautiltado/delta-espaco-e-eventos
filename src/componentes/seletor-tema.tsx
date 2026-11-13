@@ -1,8 +1,8 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { Monitor, Moon, Sun } from "lucide-react";
-import { CHAVE_TEMA as CHAVE } from "@/lib/tema";
+import { Monitor, Moon, PanelLeft, Sun } from "lucide-react";
+import { CHAVE_LATERAL, CHAVE_TEMA as CHAVE } from "@/lib/tema";
 
 export type Tema = "claro" | "escuro" | "auto";
 const EVENTO = "delta-tema";
@@ -10,9 +10,9 @@ const EVENTO = "delta-tema";
 function ler(): Tema {
   try {
     const t = localStorage.getItem(CHAVE);
-    return t === "claro" || t === "escuro" ? t : "auto";
+    return t === "escuro" || t === "auto" ? t : "claro";
   } catch {
-    return "auto";
+    return "claro";
   }
 }
 
@@ -43,7 +43,7 @@ const OPCOES: { valor: Tema; rotulo: string; Icone: typeof Sun }[] = [
 
 /** Claro, escuro ou automático. A escolha fica salva neste aparelho. */
 export function SeletorTema() {
-  const atual = useSyncExternalStore(assinar, ler, () => "auto" as Tema);
+  const atual = useSyncExternalStore(assinar, ler, () => "claro" as Tema);
   return (
     <div className="seletor-tema" role="radiogroup" aria-label="Aparência">
       {OPCOES.map(({ valor, rotulo, Icone }) => (
@@ -53,5 +53,20 @@ export function SeletorTema() {
         </button>
       ))}
     </div>
+  );
+}
+
+/** Recolhe o menu lateral para só ícones (ou abre de novo). Fica salvo neste aparelho. */
+export function BotaoRecolher() {
+  return (
+    <button type="button" className="recolher" aria-label="Recolher ou abrir o menu" title="Recolher ou abrir o menu"
+      onClick={() => {
+        const d = document.documentElement;
+        const recolher = d.getAttribute("data-lateral") !== "recolhida";
+        if (recolher) d.setAttribute("data-lateral", "recolhida"); else d.removeAttribute("data-lateral");
+        try { localStorage.setItem(CHAVE_LATERAL, recolher ? "recolhida" : ""); } catch { /* só nesta aba */ }
+      }}>
+      <PanelLeft aria-hidden strokeWidth={1.9} />
+    </button>
   );
 }
