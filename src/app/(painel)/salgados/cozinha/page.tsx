@@ -46,7 +46,7 @@ export default async function PaginaCozinha() {
           {p.pedido_itens.map((i, k) => (
             <li key={k}>
               <strong>{i.quantidade}× {i.descricao}</strong>
-              {i.composicao && i.composicao.length > 1 && (
+              {i.composicao && (i.composicao.length > 1 || /mist|sortid/i.test(i.descricao)) && (
                 <span className="mudo"> — {i.composicao.map((c) => `${c.unidades} ${nomes.get(c.estoque_item_id)?.toLowerCase() ?? "?"}`).join(", ")}</span>
               )}
             </li>

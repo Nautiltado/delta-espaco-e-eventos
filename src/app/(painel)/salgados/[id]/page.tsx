@@ -66,7 +66,10 @@ export default async function PaginaPedido({
   }
   const resumoWa = [
     `Olá, ${p.cliente_nome.split(" ")[0]}! Seu pedido ${p.numero} no Delta:`,
-    ...p.pedido_itens.map((i) => `• ${i.quantidade}× ${i.descricao}`),
+    ...p.pedido_itens.map((i) => `• ${i.quantidade}× ${i.descricao}${
+      i.composicao && (i.composicao.length > 1 || /mist|sortid/i.test(i.descricao))
+        ? ` (${i.composicao.map((c) => `${c.unidades} ${nomes.get(c.estoque_item_id)?.toLowerCase() ?? "?"}`).join(", ")}${i.quantidade > 1 ? " em cada" : ""})`
+        : ""}`),
     `Total: ${formatarCentavos(p.total_centavos)}`,
     `Retirada: ${formatarDataComDia(dia)} às ${horaDaDelta(p.retirada_em)}`,
     "",
@@ -110,7 +113,7 @@ export default async function PaginaPedido({
               <li key={i.id}>
                 <div>
                   <strong>{i.quantidade}× {i.descricao}</strong>
-                  {i.composicao && i.composicao.length > 1 && (
+                  {i.composicao && (i.composicao.length > 1 || /mist|sortid/i.test(i.descricao)) && (
                     <div className="mudo" style={{ fontSize: ".85rem" }}>
                       {i.composicao.map((c) => `${c.unidades} ${nomes.get(c.estoque_item_id)?.toLowerCase() ?? "?"}`).join(" · ")}
                     </div>

@@ -34,6 +34,9 @@ bloqueia o envio, cento = 100 unidades no formulário, na tabela e no PDF, item 
 desconto no item, custo e margem só para a administração, alerta de venda abaixo do custo, aprovação, envio, PDFs sem
 custo, unidade de cobrança nova e celular. `supabase/tests/orcamento_etapa1.sql` cobre as mesmas regras no banco (17).
 
+`salgados-misto.py` percorre o cento misto (14 verificações, computador e celular): até 4 sabores em blocos de 25,
+pode repetir, não passa de 100, pedido incompleto recusado, composição no pedido e no resumo do WhatsApp.
+
 `agenda.py` percorre a agenda (20 verificações) com a administração: clique no dia abre o painel lateral, cadastro rápido
 cria orçamento sem bloquear a data, opção de segurar a data, verificar disponibilidade, bloqueio recusado por conflito,
 bloqueio com observação e responsável, remoção pelo painel, evento externo, vistas Semana/Dia/Lista e filtro de externos.

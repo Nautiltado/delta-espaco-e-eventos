@@ -24,7 +24,7 @@ function recarregar(id?: string) {
 const itemPedido = z.object({
   produto_id: z.uuid(),
   quantidade: z.number().int().positive().max(1000),
-  sortido: z.array(z.uuid()).max(10).optional(),
+  sortido: z.array(z.uuid()).max(20).optional(),   // misto: um sabor por bloco, com repetição
 });
 
 export async function criarPedido(dados: {

@@ -801,6 +801,11 @@ label.opcao input { margin-top: 1px; flex: 0 0 auto; }
 .cardapio li.escolhido strong { color: var(--verde-texto); }
 .cardapio-linha { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .contador { display: flex; align-items: center; gap: 4px; flex: 0 0 auto; }
+.contador.pequeno button { width: 32px; height: 32px; font-size: 1rem; }
+.contador.pequeno span { min-width: 30px; text-align: center; font-weight: 600; font-variant-numeric: tabular-nums; }
+.misto-sabores { list-style: none; margin: 6px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 6px; }
+.misto-sabores li { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 8px 6px 12px; border: 1px solid var(--borda); border-radius: 10px; font-size: .88rem; }
+.misto-sabores li.escolhido { border-color: var(--verde-texto); background: var(--verde-claro-2); font-weight: 600; }
 .contador button { width: 38px; height: 38px; border-radius: 10px; border: 1px solid var(--borda-forte); background: var(--campo-fundo); font-size: 1.2rem; font-weight: 600; color: var(--verde-texto); cursor: pointer; transition: all var(--transicao); }
 .contador button:hover:not(:disabled) { background: var(--verde-claro); border-color: var(--verde-texto); }
 .contador button:disabled { opacity: .35; }

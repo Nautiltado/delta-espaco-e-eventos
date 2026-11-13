@@ -3,7 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { criarPedido, type Estado } from "../actions";
 import { formatarCentavos } from "@/lib/dinheiro";
-import { CANAIS, disponivel, dividirSortido, type Produto, type SaldoEstoque } from "@/lib/salgados";
+import { CANAIS, composicaoDoProduto, disponivel, type Produto, type SaldoEstoque } from "@/lib/salgados";
 import { somarDias } from "@/lib/reservas";
 
 type Linha = { quantidade: number; sabores: string[] };
@@ -31,13 +31,15 @@ export function FormularioPedido({ produtos, estoque, hoje, horaSugerida }: {
   const consumo = new Map<string, number>();
   for (const p of escolhidos) {
     const q = linhas[p.id].quantidade;
-    const partes = p.estoque_item_id ? [{ estoque_item_id: p.estoque_item_id, unidades: p.unidades }] : dividirSortido(p.unidades, linhas[p.id].sabores);
+    const partes = composicaoDoProduto(p, linhas[p.id].sabores);
     for (const c of partes) consumo.set(c.estoque_item_id, (consumo.get(c.estoque_item_id) ?? 0) + c.unidades * q);
   }
   const faltas = [...consumo.entries()]
     .map(([id, u]) => ({ s: porId.get(id), u }))
     .filter((x) => x.s && x.u > disponivel(x.s));
   const sortidoSemSabor = escolhidos.filter((p) => p.sortido && !linhas[p.id].sabores.length);
+  const blocosDe = (p: Produto) => (p.bloco_unidades ? p.unidades / p.bloco_unidades : 0);
+  const mistoIncompleto = escolhidos.filter((p) => p.bloco_unidades && linhas[p.id].sabores.length !== blocosDe(p));
   const soEncomendaHoje = data === hoje && escolhidos.some((p) => p.so_encomenda);
 
   function mudar(id: string, delta: number) {
@@ -55,9 +57,29 @@ export function FormularioPedido({ produtos, estoque, hoje, horaSugerida }: {
     });
   }
 
+  /** Misto: põe ou tira um bloco de 25 de um sabor (no máximo os 4 blocos do cento). */
+  function mudarBloco(p: Produto, sabor: string, delta: number) {
+    setEstado({});
+    setLinhas((l) => {
+      const atual = l[p.id] ?? { quantidade: 1, sabores: [] };
+      let sabores = atual.sabores;
+      if (delta > 0 && sabores.length < blocosDe(p)) sabores = [...sabores, sabor];
+      if (delta < 0) {
+        const i = sabores.lastIndexOf(sabor);
+        if (i >= 0) sabores = sabores.filter((_, n) => n !== i);
+      }
+      return { ...l, [p.id]: { ...atual, sabores } };
+    });
+  }
+
   function registrar() {
     if (!escolhidos.length) return setEstado({ erro: "Inclua ao menos um item." });
     if (sortidoSemSabor.length) return setEstado({ erro: `Escolha os sabores do ${sortidoSemSabor[0].nome.toLowerCase()}.` });
+    if (mistoIncompleto.length) {
+      const p = mistoIncompleto[0];
+      const faltam = blocosDe(p) - linhas[p.id].sabores.length;
+      return setEstado({ erro: `Complete o ${p.nome.toLowerCase()}: faltam ${faltam * p.bloco_unidades!} unidades (${faltam} ${faltam === 1 ? "bloco" : "blocos"} de ${p.bloco_unidades}).` });
+    }
     setEstado({});
     iniciar(async () => {
       const r = await criarPedido({
@@ -130,7 +152,37 @@ export function FormularioPedido({ produtos, estoque, hoje, horaSugerida }: {
                       <button type="button" onClick={() => mudar(p.id, 1)} aria-label={`Mais ${p.nome}`}>+</button>
                     </div>
                   </div>
-                  {p.sortido && q > 0 && (
+                  {p.sortido && q > 0 && p.bloco_unidades && (() => {
+                    const total = blocosDe(p);
+                    const usados = l.sabores.length;
+                    return (
+                      <div className="misto" style={{ marginTop: 8 }}>
+                        <span className="mudo" style={{ fontSize: ".8rem" }}>
+                          Até {total} sabores, {p.bloco_unidades} unidades cada (pode repetir).{" "}
+                          <strong className={usados === total ? "texto-sucesso" : "texto-alerta"}>
+                            {usados * p.bloco_unidades} de {p.unidades}
+                          </strong>
+                          {q > 1 && <> · os {q} centos saem com esta mesma combinação</>}
+                        </span>
+                        <ul className="misto-sabores">
+                          {estoque.filter((e) => e.ativo && e.grupo === p.sortido_grupo).map((e) => {
+                            const n = l.sabores.filter((x) => x === e.id).length;
+                            return (
+                              <li key={e.id} className={n ? "escolhido" : undefined}>
+                                <span>{e.nome}</span>
+                                <div className="contador pequeno">
+                                  <button type="button" onClick={() => mudarBloco(p, e.id, -1)} disabled={!n} aria-label={`Menos ${p.bloco_unidades} de ${e.nome}`}>−</button>
+                                  <span aria-label={`Unidades de ${e.nome}`}>{n * p.bloco_unidades!}</span>
+                                  <button type="button" onClick={() => mudarBloco(p, e.id, 1)} disabled={usados >= total} aria-label={`Mais ${p.bloco_unidades} de ${e.nome}`}>+</button>
+                                </div>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
+                    );
+                  })()}
+                  {p.sortido && q > 0 && !p.bloco_unidades && (
                     <div style={{ marginTop: 8 }}>
                       <span className="mudo" style={{ fontSize: ".8rem" }}>Sabores (a quantidade é dividida igualmente):</span>
                       <div className="chips" style={{ marginTop: 4 }}>

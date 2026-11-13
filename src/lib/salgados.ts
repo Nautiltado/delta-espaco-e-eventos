@@ -28,6 +28,8 @@ export type Produto = {
   estoque_item_id: string | null;
   sortido: boolean;
   sortido_grupo: "fritura" | "forno" | null;
+  /** Misto: unidades por bloco (25). O cento misto tem 4 blocos e cada bloco é de um sabor (pode repetir). */
+  bloco_unidades: number | null;
   so_encomenda: boolean;
   ativo: boolean;
   ordem: number;
@@ -51,6 +53,19 @@ export function dividirSortido(unidades: number, sabores: string[]): { estoque_i
   const base = Math.floor(unidades / sabores.length);
   const resto = unidades - base * sabores.length;
   return sabores.map((id, i) => ({ estoque_item_id: id, unidades: base + (i < resto ? 1 : 0) }));
+}
+
+/** Misto: um sabor por bloco (com repetição) → unidades de cada sabor, na ordem em que apareceu (igual ao banco). */
+export function composicaoMisto(blocos: string[], unidadesPorBloco: number): { estoque_item_id: string; unidades: number }[] {
+  const m = new Map<string, number>();
+  for (const id of blocos) m.set(id, (m.get(id) ?? 0) + unidadesPorBloco);
+  return [...m.entries()].map(([estoque_item_id, unidades]) => ({ estoque_item_id, unidades }));
+}
+
+/** Composição de um item do cardápio com a escolha feita no pedido. */
+export function composicaoDoProduto(p: Pick<Produto, "estoque_item_id" | "unidades" | "bloco_unidades">, sabores: string[]) {
+  if (p.estoque_item_id) return [{ estoque_item_id: p.estoque_item_id, unidades: p.unidades }];
+  return p.bloco_unidades ? composicaoMisto(sabores, p.bloco_unidades) : dividirSortido(p.unidades, sabores);
 }
 
 /** "2026-11-12" + "15:30" → instante no fuso da Delta. */
