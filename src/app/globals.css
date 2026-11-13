@@ -588,7 +588,7 @@ details[open] > summary { margin-bottom: 8px; }
 /* ---------------------------------------------------------------- agenda: barra, visões, resumo */
 .agenda-barra { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 16px; }
 .agenda-nav { display: flex; align-items: center; gap: 6px; }
-.agenda-nav h2 { margin: 0 0 0 6px; font-size: 1.12rem; white-space: nowrap; }
+.agenda-nav h2 { margin: 0; font-size: 1.12rem; white-space: nowrap; }
 .agenda-filtros { display: flex; gap: 8px; flex-wrap: wrap; }
 .abas button.aba { border: 0; font: inherit; cursor: pointer; }
 .botao.icone { padding-left: 7px; padding-right: 7px; }
@@ -646,6 +646,26 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-sp
 .tempos-espaco { padding: 14px 0; border-top: 1px solid var(--borda); display: flex; flex-direction: column; gap: 10px; }
 .tempos-espaco .campo { margin: 0; }
 .tempos-espaco .aviso { margin: 0; padding: 6px 10px; }
+
+/* ---------------------------------------------------------------- agenda: deslize ao trocar de período */
+.agenda-vista { overflow: hidden; }
+.agenda-titulo-janela { overflow: hidden; margin-left: 6px; }
+.agenda-titulo-janela h2 { margin: 0; }
+.agenda-deslize { will-change: transform, opacity; }
+/* saída: anda um pouco para o lado oposto e esmaece enquanto a próxima tela carrega */
+.sai-dir { animation: agenda-sai-dir .18s ease-in forwards; }
+.sai-esq { animation: agenda-sai-esq .18s ease-in forwards; }
+/* entrada: vem do lado para onde se navegou */
+.entra-dir { animation: agenda-entra-dir .32s cubic-bezier(.2, .8, .2, 1); }
+.entra-esq { animation: agenda-entra-esq .32s cubic-bezier(.2, .8, .2, 1); }
+.agenda-deslize.carregando { opacity: .6; transition: opacity .15s; }
+@keyframes agenda-sai-dir { to { transform: translateX(-28px); opacity: .3; } }
+@keyframes agenda-sai-esq { to { transform: translateX(28px); opacity: .3; } }
+@keyframes agenda-entra-dir { from { transform: translateX(64px); opacity: .2; } to { transform: none; opacity: 1; } }
+@keyframes agenda-entra-esq { from { transform: translateX(-64px); opacity: .2; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .sai-dir, .sai-esq, .entra-dir, .entra-esq { animation-duration: .01ms; }
+}
 
 /* ---------------------------------------------------------------- painel lateral do dia (gaveta) */
 .gaveta-fundo { display: none; }

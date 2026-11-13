@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useTransition } from "react";
 import {
   CalendarCheck, CalendarPlus, ChevronLeft, ChevronRight, FileText, Lock, MapPin, Search, Truck, Users, X,
 } from "lucide-react";
@@ -37,6 +37,7 @@ type Modo = "resumo" | "evento" | "externo" | "bloqueio" | "consulta";
 
 const SEMANA = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
 const MAX_CHIPS = 3;
+const CHAVE_DIRECAO = "delta-agenda-direcao";
 const h = (n: number) => `${String(n).replace(".", ",")} h`;
 const curto = (nome: string) => nome.replace(/^Espaço /i, "");
 const maiuscula = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -89,6 +90,29 @@ export function CentralAgenda(p: Props) {
   const fechar = useCallback(() => { setDia(null); setModo("resumo"); atualizarUrl({ dia: null }); }, [atualizarUrl]);
   const filtrar = (f: Filtro) => { setFiltro(f); atualizarUrl({ espaco: f === "todos" ? null : f }); };
 
+  // Navegação entre períodos com deslize: a direção fica guardada para a próxima tela animar a entrada.
+  const [indo, iniciarIda] = useTransition();
+  const [saida, setSaida] = useState<"esq" | "dir" | null>(null);
+  const deslizeRef = useRef<HTMLDivElement>(null);
+  const tituloRef = useRef<HTMLHeadingElement>(null);
+  useLayoutEffect(() => {
+    let d: string | null = null;
+    try { d = sessionStorage.getItem(CHAVE_DIRECAO); sessionStorage.removeItem(CHAVE_DIRECAO); } catch {}
+    if (d === "esq" || d === "dir") {
+      deslizeRef.current?.classList.add(`entra-${d}`);
+      tituloRef.current?.classList.add(`entra-${d}`);
+    }
+  }, []);
+  const ir = (e: React.MouseEvent, destino: string, direcao: "esq" | "dir" | null) => {
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+    e.preventDefault();
+    if (direcao) {
+      try { sessionStorage.setItem(CHAVE_DIRECAO, direcao); } catch {}
+      setSaida(direcao);
+    }
+    iniciarIda(() => router.push(destino, { scroll: false }));
+  };
+
   const href = (vista: Vista, data: string) => {
     const s = new URLSearchParams({ vista, data });
     if (filtro !== "todos") s.set("espaco", filtro);
@@ -128,15 +152,19 @@ export function CentralAgenda(p: Props) {
 
       <section className="cartao agenda-barra">
         <div className="agenda-nav">
-          <Link className="botao secundario pequeno" href={href(p.vista, p.hoje)}>Hoje</Link>
-          <Link className="botao fantasma pequeno icone" href={href(p.vista, p.periodo.anterior)} aria-label="Anterior"><ChevronLeft aria-hidden /></Link>
-          <Link className="botao fantasma pequeno icone" href={href(p.vista, p.periodo.seguinte)} aria-label="Seguinte"><ChevronRight aria-hidden /></Link>
-          <h2>{rotuloPeriodo(p.vista, p.ancora, p.periodo.inicio, p.periodo.fim)}</h2>
+          <Link className="botao secundario pequeno" href={href(p.vista, p.hoje)}
+            onClick={(e) => ir(e, href(p.vista, p.hoje), p.hoje < p.periodo.inicio ? "esq" : p.hoje >= p.periodo.fim ? "dir" : null)}>Hoje</Link>
+          <Link className="botao fantasma pequeno icone" href={href(p.vista, p.periodo.anterior)} aria-label="Anterior"
+            onClick={(e) => ir(e, href(p.vista, p.periodo.anterior), "esq")}><ChevronLeft aria-hidden /></Link>
+          <Link className="botao fantasma pequeno icone" href={href(p.vista, p.periodo.seguinte)} aria-label="Seguinte"
+            onClick={(e) => ir(e, href(p.vista, p.periodo.seguinte), "dir")}><ChevronRight aria-hidden /></Link>
+          <div className="agenda-titulo-janela"><h2 ref={tituloRef} className={saida ? `sai-${saida}` : ""}>{rotuloPeriodo(p.vista, p.ancora, p.periodo.inicio, p.periodo.fim)}</h2></div>
         </div>
         <div className="agenda-filtros">
           <nav className="abas" aria-label="Visão">
             {(Object.keys(VISTAS) as Vista[]).map((v) => (
-              <Link key={v} className="aba" href={href(v, dia ?? p.ancora)} aria-current={v === p.vista ? "page" : undefined}>{VISTAS[v]}</Link>
+              <Link key={v} className="aba" href={href(v, dia ?? p.ancora)} aria-current={v === p.vista ? "page" : undefined}
+                onClick={(e) => ir(e, href(v, dia ?? p.ancora), null)}>{VISTAS[v]}</Link>
             ))}
           </nav>
           <div className="abas" role="group" aria-label="Filtrar por espaço">
@@ -150,11 +178,13 @@ export function CentralAgenda(p: Props) {
       </section>
 
       <div className="agenda-layout">
-        <section className="cartao sem-respiro agenda-vista">
+        <section className="cartao sem-respiro agenda-vista" aria-busy={indo}>
+          <div ref={deslizeRef} className={`agenda-deslize${saida ? ` sai-${saida}` : ""}${indo && !saida ? " carregando" : ""}`}>
           {p.vista === "mes" && <VistaMes p={p} porDia={porDia} dia={dia} abrir={abrir} />}
           {p.vista === "semana" && <VistaSemana p={p} porDia={porDia} dia={dia} abrir={abrir} />}
           {p.vista === "dia" && <VistaDia p={p} itens={visiveis} espacos={filtro === "todos" ? espacos : espacos.filter((e) => e.id === filtro)} mostrarExternos={filtro === "todos" || filtro === "externos"} abrir={abrir} />}
           {p.vista === "lista" && <VistaLista p={p} itens={visiveis} abrir={abrir} />}
+          </div>
           <div className="legenda agenda-legenda">
             <span>Reserva confirmada</span>
             <span className="temporario">Aguardando contrato e entrada</span>
