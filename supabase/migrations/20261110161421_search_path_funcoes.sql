@@ -1,0 +1,10 @@
+alter function trg_periodo_so_exclusivo()   set search_path = public;
+alter function trg_sincroniza_periodos()    set search_path = public;
+alter function trg_contrato_imutavel()      set search_path = public;
+alter function trg_bloquear_alteracao()     set search_path = public;
+alter function expirar_bloqueios()          set search_path = public;
+alter function criar_bloqueio_temporario(uuid,bigint,uuid[],tstzrange,integer,uuid) set search_path = public;
+alter function gerar_parcelas(uuid,date,integer,integer) set search_path = public;
+alter function confirmar_reserva(uuid,uuid) set search_path = public;
+alter function trg_sem_exclusao_usuario()   set search_path = public;
+alter function trg_manter_administrador()   set search_path = public;

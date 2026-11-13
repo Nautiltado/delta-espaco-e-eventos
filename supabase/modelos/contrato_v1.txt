@@ -1,0 +1,64 @@
+CONTRATO DE PRESTAÇÃO DE SERVIÇOS PARA EVENTO
+
+Contrato nº {{contrato.numero}}
+
+CONTRATADA: {{empresa.razao_social}}, nome fantasia {{empresa.nome_fantasia}}, inscrita no CNPJ sob o nº {{empresa.cnpj}}, com sede na {{empresa.endereco}}, neste ato representada por {{signatario}}.
+
+CONTRATANTE: {{cliente.qualificacao}}
+
+As partes acima identificadas celebram o presente contrato, que se rege pelas cláusulas a seguir.
+
+CLÁUSULA 1ª — DO OBJETO
+1.1. A CONTRATADA prestará ao CONTRATANTE os serviços descritos na proposta comercial {{orcamento.numero}}, versão {{orcamento.versao}}, aceita pelo CONTRATANTE, para o evento abaixo:
+Evento: {{evento.titulo}}
+Data e horário: {{evento.periodo}}
+Local: {{evento.local}}
+Número de convidados: {{evento.convidados}}
+1.2. Itens contratados:
+{{itens}}
+1.3. Qualquer serviço não listado acima será objeto de orçamento e aditivo próprios.
+
+CLÁUSULA 2ª — DO PREÇO E DO PAGAMENTO
+2.1. O valor total deste contrato é de {{valor.total}} ({{valor.extenso}}).
+2.2. O pagamento será feito da seguinte forma:
+{{pagamento.parcelas}}
+2.3. Os pagamentos serão feitos por Pix ou transferência para a conta da CONTRATADA, ou por outra forma aceita por escrito. O envio de comprovante pelo CONTRATANTE não substitui a confirmação do recebimento pela CONTRATADA.
+2.4. A data do evento somente fica reservada após a assinatura deste contrato e a confirmação do recebimento da primeira parcela, nos termos do Anexo I.
+
+CLÁUSULA 3ª — DA UTILIZAÇÃO DO ESPAÇO E DOS SERVIÇOS
+3.1. O espaço é entregue limpo e organizado no horário contratado e deve ser devolvido no horário de término. A permanência além do horário depende de concordância prévia da CONTRATADA e poderá ser cobrada.
+3.2. O CONTRATANTE responde pelos danos causados ao espaço, ao mobiliário e aos equipamentos por ele, por seus convidados ou por fornecedores por ele contratados.
+3.3. O CONTRATANTE deve respeitar a capacidade do espaço, as normas de segurança, o limite de som e o horário de silêncio previstos na legislação municipal.
+3.4. Fornecedores contratados diretamente pelo CONTRATANTE devem ser informados à CONTRATADA com antecedência e seguir as orientações da equipe da casa.
+3.5. A quantidade final de convidados e as especificações de alimentação seguem os prazos do Anexo I.
+
+CLÁUSULA 4ª — DAS OBRIGAÇÕES DA CONTRATADA
+4.1. Prestar os serviços contratados com qualidade, higiene e pontualidade.
+4.2. Disponibilizar o espaço e a estrutura descritos na proposta no horário contratado.
+4.3. Manter equipe compatível com os serviços contratados.
+
+CLÁUSULA 5ª — DO CANCELAMENTO, DA REMARCAÇÃO E DO INADIMPLEMENTO
+5.1. Cancelamento, desistência, remarcação, alteração de convidados e inadimplemento seguem a Política Contratual de Cancelamento, Desistência, Remarcação e Inadimplemento, que integra este contrato como Anexo I.
+5.2. O CONTRATANTE declara ter recebido e lido o Anexo I antes da assinatura.
+5.3. Este contrato foi celebrado {{contrato.canal}}. {{contrato.arrependimento}}
+
+CLÁUSULA 6ª — DOS DADOS PESSOAIS
+6.1. Os dados pessoais do CONTRATANTE são usados apenas para a execução deste contrato, para cobrança e para o cumprimento de obrigações legais, conforme a Lei nº 13.709/2018 (LGPD).
+
+CLÁUSULA 7ª — DO FORO
+7.1. Fica eleito o foro da Comarca de Bacabal-MA para dirimir questões oriundas deste contrato, ressalvado o direito do consumidor de propor ação no foro de seu domicílio.
+
+E, por estarem de acordo, as partes assinam este contrato.
+
+{{cidade}}, {{data.extenso}}.
+
+
+
+______________________________________
+{{empresa.razao_social}}
+{{signatario}}
+
+
+
+______________________________________
+{{cliente.assinatura}}
