@@ -1,8 +1,10 @@
--- Remove SOMENTE o que as contas teste.e2e.*@delta.test criaram (e as próprias contas). A auditoria não é tocada.
+-- Remove SOMENTE o que as contas de teste (*@delta.test: teste.e2e.*, fulana.*, convidada.*) criaram, e as próprias contas.
+-- A auditoria não é tocada. Contas reais (inclusive a do Visitante) ficam.
 -- As travas de exclusão são desligadas só dentro desta transação e religadas no fim.
 do $$
-declare testes uuid[] := array(select id from usuarios where email like 'teste.e2e.%@delta.test');
-        auths uuid[] := array(select auth_user_id from usuarios where email like 'teste.e2e.%@delta.test');
+declare testes uuid[] := array(select id from usuarios where email like '%@delta.test');
+        auths uuid[] := array(select auth_user_id from usuarios where email like '%@delta.test' and auth_user_id is not null);
+        fk record;
         clis uuid[]; orcs uuid[]; vers uuid[]; cat uuid[]; res uuid[];
 begin
   alter table orcamento_itens_custos disable trigger custo_so_em_rascunho;
@@ -23,6 +25,7 @@ begin
   alter table pedido_itens disable trigger pedido_itens_sem_delete;
   alter table pedido_pagamentos disable trigger pedido_pagamentos_imutavel;
   alter table estoque_movimentos disable trigger estoque_movimentos_imutavel;
+  alter table comprovantes disable trigger comprovantes_sem_delete;
 
   -- encomendas (Fase 5)
   delete from estoque_movimentos where criado_por = any(testes)
@@ -50,6 +53,7 @@ begin
   alter table evento_custos enable trigger evento_custos_sem_delete;
   alter table evento_notas enable trigger evento_notas_sem_delete;
 
+  delete from comprovantes where reserva_id = any(res) or enviado_por = any(testes);
   delete from pagamentos where parcela_id in (select id from parcelas where reserva_id = any(res));
   delete from parcelas where reserva_id = any(res);
   delete from contratos where reserva_id = any(res);
@@ -71,6 +75,16 @@ begin
   -- configurações mexidas pelo teste (chave Pix de teste): volta ao vazio e solta a referência à conta de teste
   update configuracoes set valor = '""' where chave = 'empresa.pix_chave' and atualizado_por = any(testes);
   update configuracoes set atualizado_por = null where atualizado_por = any(testes);
+  delete from convites where usuario_id = any(testes) or criado_por = any(testes) or revogado_por = any(testes);
+  delete from limites_tentativas;
+  -- sobrou alguma referência opcional a conta de teste em dado real: solta (fica sem autor)
+  for fk in
+    select c.conrelid::regclass as tabela, a.attname as coluna
+      from pg_constraint c join pg_attribute a on a.attrelid = c.conrelid and a.attnum = any(c.conkey)
+     where c.confrelid = 'public.usuarios'::regclass and c.contype = 'f' and not a.attnotnull
+  loop
+    execute format('update %s set %I = null where %I = any($1)', fk.tabela, fk.coluna, fk.coluna) using testes;
+  end loop;
   delete from usuarios_perfis where usuario = any(testes);
   delete from usuarios where id = any(testes);
   delete from auth.users where id = any(auths);
@@ -93,6 +107,7 @@ begin
   alter table pedido_itens enable trigger pedido_itens_sem_delete;
   alter table pedido_pagamentos enable trigger pedido_pagamentos_imutavel;
   alter table estoque_movimentos enable trigger estoque_movimentos_imutavel;
+  alter table comprovantes enable trigger comprovantes_sem_delete;
 end $$;
 select (select count(*) from usuarios) usuarios, (select count(*) from auth.users) contas, (select count(*) from clientes) clientes,
        (select count(*) from orcamentos) orcamentos, (select count(*) from reservas) reservas, (select count(*) from tarefas) tarefas,
