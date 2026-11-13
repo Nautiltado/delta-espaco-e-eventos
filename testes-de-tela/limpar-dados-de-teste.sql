@@ -24,17 +24,6 @@ begin
   alter table pedido_pagamentos disable trigger pedido_pagamentos_imutavel;
   alter table estoque_movimentos disable trigger estoque_movimentos_imutavel;
 
-  -- eventos (Fase 7): equipe, checklist, ficha, gastos e notas mexidos pelas contas de teste
-  alter table evento_custos disable trigger evento_custos_sem_delete;
-  alter table evento_notas disable trigger evento_notas_sem_delete;
-  delete from evento_notas where enviado_por = any(testes);
-  delete from evento_custos where criado_por = any(testes);
-  delete from evento_equipe where criado_por = any(testes);
-  update evento_checklist set feito_por = null, feito_em = null where feito_por = any(testes);
-  delete from evento_fichas where atualizado_por = any(testes);
-  alter table evento_custos enable trigger evento_custos_sem_delete;
-  alter table evento_notas enable trigger evento_notas_sem_delete;
-
   -- encomendas (Fase 5)
   delete from estoque_movimentos where criado_por = any(testes)
     or pedido_id in (select id from pedidos where criado_por = any(testes));
@@ -48,6 +37,18 @@ begin
   cat  := array(select id from catalogo_itens where nome like '%(teste)%');
   res  := array(select id from reservas where orcamento_id = any(orcs) or cliente_id = any(clis)
                  or (tipo = 'bloqueio_administrativo' and criado_por = any(testes)));
+
+  -- eventos (Fase 7): o que as contas de teste mexeram e tudo dos eventos de teste
+  alter table evento_custos disable trigger evento_custos_sem_delete;
+  alter table evento_notas disable trigger evento_notas_sem_delete;
+  delete from evento_notas where enviado_por = any(testes) or reserva_id = any(res);
+  delete from evento_custos where criado_por = any(testes) or reserva_id = any(res);
+  delete from evento_equipe where criado_por = any(testes) or reserva_id = any(res);
+  delete from evento_checklist where reserva_id = any(res);
+  update evento_checklist set feito_por = null, feito_em = null where feito_por = any(testes);
+  delete from evento_fichas where atualizado_por = any(testes) or reserva_id = any(res);
+  alter table evento_custos enable trigger evento_custos_sem_delete;
+  alter table evento_notas enable trigger evento_notas_sem_delete;
 
   delete from pagamentos where parcela_id in (select id from parcelas where reserva_id = any(res));
   delete from parcelas where reserva_id = any(res);
@@ -65,6 +66,7 @@ begin
   delete from catalogo_precos where item_id = any(cat);
   delete from catalogo_itens where id = any(cat);
   delete from contrato_modelos where criado_por = any(testes);
+  delete from orcamento_modelos where criado_por = any(testes);   -- modelos salvos pelo teste do orçamento rápido
   -- configurações mexidas pelo teste (chave Pix de teste): volta ao vazio e solta a referência à conta de teste
   update configuracoes set valor = '""' where chave = 'empresa.pix_chave' and atualizado_por = any(testes);
   update configuracoes set atualizado_por = null where atualizado_por = any(testes);
