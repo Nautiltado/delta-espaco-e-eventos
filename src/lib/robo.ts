@@ -10,7 +10,10 @@ export async function pareceRobo(): Promise<boolean> {
   if (!process.env.VERCEL) return false;
   try {
     const r = await checkBotId();
-    return r.isBot && !r.isVerifiedBot;
+    const robo = r.isBot && !r.isVerifiedBot;
+    // Por ora só registra (modo observação): bloquear só depois de confirmar que pessoas reais passam.
+    if (robo) console.warn("[botid] requisição marcada como robô", JSON.stringify(r).slice(0, 300));
+    return robo && process.env.BOTID_BLOQUEAR === "1";
   } catch (e) {
     console.error("[botid]", e);
     return false;
