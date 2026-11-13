@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import "@fontsource-variable/inter";
 import "./globals.css";
 import { RegistrarSW } from "@/componentes/registrar-sw";
 
@@ -12,7 +13,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#075638",
+  themeColor: "#164c3a",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",

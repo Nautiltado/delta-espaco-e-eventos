@@ -48,30 +48,59 @@ export function pode(acesso: Acesso | null, permissao: Permissao): boolean {
   return !!acesso && acesso.permissoes.includes(permissao);
 }
 
+export type GrupoMenu = "geral" | "comercial" | "operacao" | "administracao";
+
+export const GRUPOS_MENU: Record<GrupoMenu, string> = {
+  geral: "Geral",
+  comercial: "Comercial",
+  operacao: "Operação",
+  administracao: "Administração",
+};
+
 export type ItemMenu = {
   href: string;
   rotulo: string;
+  grupo: GrupoMenu;
   /** Sem permissão: qualquer usuário logado vê. Lista: basta ter uma. */
   permissao?: Permissao | Permissao[];
   /** Ainda não construído: aparece desabilitado com a fase prevista. */
   fase?: number;
 };
 
+// Só entram telas que existem: Atendimento (WhatsApp), Equipe e fornecedores e Relatórios
+// aparecem aqui quando as fases delas forem construídas.
 export const MENU: ItemMenu[] = [
-  { href: "/", rotulo: "Início" },
-  { href: "/tarefas", rotulo: "Tarefas" },
-  { href: "/orcamentos", rotulo: "Orçamentos", permissao: "orcamento.ver" },
-  { href: "/clientes", rotulo: "Clientes", permissao: "cliente.ver" },
-  { href: "/catalogo", rotulo: "Catálogo", permissao: "orcamento.ver" },
-  { href: "/agenda", rotulo: "Agenda", permissao: "orcamento.ver" },
-  { href: "/eventos", rotulo: "Eventos", permissao: ["orcamento.ver", "escala.gerir", "evento.fechar", "producao.status", "custo.ver"] },
-  { href: "/financeiro", rotulo: "Financeiro", permissao: "pagamento.confirmar" },
-  { href: "/salgados", rotulo: "Encomendas", permissao: "salgados.criar" },
-  { href: "/salgados/cozinha", rotulo: "Cozinha", permissao: "producao.status" },
-  { href: "/contratos", rotulo: "Modelo de contrato", permissao: "contrato.editar" },
-  { href: "/usuarios", rotulo: "Usuários", permissao: "config.critica" },
-  { href: "/configuracoes", rotulo: "Configurações" },
-  { href: "/auditoria", rotulo: "Auditoria", permissao: "auditoria.ver" },
+  { href: "/", rotulo: "Visão geral", grupo: "geral" },
+  { href: "/tarefas", rotulo: "Tarefas", grupo: "geral" },
+  { href: "/clientes", rotulo: "Clientes", grupo: "comercial", permissao: "cliente.ver" },
+  { href: "/orcamentos", rotulo: "Orçamentos", grupo: "comercial", permissao: "orcamento.ver" },
+  { href: "/catalogo", rotulo: "Catálogo", grupo: "comercial", permissao: "orcamento.ver" },
+  { href: "/agenda", rotulo: "Agenda", grupo: "operacao", permissao: "orcamento.ver" },
+  { href: "/eventos", rotulo: "Eventos", grupo: "operacao", permissao: ["orcamento.ver", "escala.gerir", "evento.fechar", "producao.status", "custo.ver"] },
+  { href: "/salgados", rotulo: "Encomendas", grupo: "operacao", permissao: "salgados.criar" },
+  { href: "/salgados/cozinha", rotulo: "Cozinha", grupo: "operacao", permissao: "producao.status" },
+  { href: "/salgados/estoque", rotulo: "Estoque", grupo: "operacao", permissao: ["estoque.movimentar", "catalogo.alterar"] },
+  { href: "/financeiro", rotulo: "Financeiro", grupo: "administracao", permissao: "pagamento.confirmar" },
+  { href: "/contratos", rotulo: "Contratos", grupo: "administracao", permissao: "contrato.editar" },
+  { href: "/usuarios", rotulo: "Usuários", grupo: "administracao", permissao: "config.critica" },
+  { href: "/configuracoes", rotulo: "Configurações", grupo: "administracao" },
+  { href: "/auditoria", rotulo: "Auditoria", grupo: "administracao", permissao: "auditoria.ver" },
+];
+
+/** Páginas internas que não estão no menu, para a trilha de navegação. */
+export const SUBPAGINAS: { prefixo: RegExp; rotulo: string; pai: string }[] = [
+  { prefixo: /^\/orcamentos\/novo$/, rotulo: "Novo orçamento", pai: "/orcamentos" },
+  { prefixo: /^\/orcamentos\/modelos/, rotulo: "Modelos", pai: "/orcamentos" },
+  { prefixo: /^\/orcamentos\/.+/, rotulo: "Orçamento", pai: "/orcamentos" },
+  { prefixo: /^\/clientes\/novo$/, rotulo: "Novo cliente", pai: "/clientes" },
+  { prefixo: /^\/clientes\/.+\/editar$/, rotulo: "Editar cliente", pai: "/clientes" },
+  { prefixo: /^\/clientes\/.+/, rotulo: "Cliente", pai: "/clientes" },
+  { prefixo: /^\/catalogo\/novo$/, rotulo: "Novo item", pai: "/catalogo" },
+  { prefixo: /^\/catalogo\/.+/, rotulo: "Item", pai: "/catalogo" },
+  { prefixo: /^\/reservas\/.+/, rotulo: "Reserva", pai: "/agenda" },
+  { prefixo: /^\/eventos\/.+/, rotulo: "Ficha do evento", pai: "/eventos" },
+  { prefixo: /^\/salgados\/novo$/, rotulo: "Novo pedido", pai: "/salgados" },
+  { prefixo: /^\/salgados\/(?!cozinha|estoque).+/, rotulo: "Pedido", pai: "/salgados" },
 ];
 
 export function menuDoUsuario(acesso: Acesso | null): ItemMenu[] {

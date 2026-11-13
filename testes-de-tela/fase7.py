@@ -26,9 +26,13 @@ with sync_playwright() as p:
 
     # cozinha: vê a lista e a ficha, sem gastos nem equipe
     check(coz.locator(".lateral a:has-text('Eventos')").count() == 1, "cozinha vê o menu Eventos")
-    coz.goto(f"{B}/eventos")
-    link = coz.locator(".pedidos-lista li a").first
-    expect(link).to_be_visible(); link.click(); coz.wait_for_url(re.compile(r"/eventos/[0-9a-f-]{36}$"))
+    if os.environ.get("EVENTO"):   # evento fora da janela da lista (ex.: criado pelo fase4 em 2028)
+        coz.goto(f"{B}/eventos/{os.environ['EVENTO']}")
+    else:
+        coz.goto(f"{B}/eventos")
+        link = coz.locator(".pedidos-lista li a").first
+        expect(link).to_be_visible(); link.click()
+    coz.wait_for_url(re.compile(r"/eventos/[0-9a-f-]{36}$"))
     url = coz.url
     ver(coz.get_by_role("heading", name="Ficha do dia"), "cozinha abre a ficha do evento")
     check(coz.locator(".cartao li").count() > 0, "ficha mostra o cardápio do orçamento")
@@ -59,7 +63,7 @@ with sync_playwright() as p:
         if not linhas.count(): break
         l = linhas.first
         if l.get_by_role("button", name="Desmarcar pago").count(): l.get_by_role("button", name="Desmarcar pago").click(); adm.wait_for_timeout(1500); continue
-        l.get_by_role("button", name="Remover").click(); adm.wait_for_timeout(1500)
+        l.get_by_role("button", name="Remover").click(); l.get_by_role("button", name=re.compile("^Sim, remover")).click(); adm.wait_for_timeout(1500)
     adm.goto(url); expect(adm.get_by_role("heading", name="Checklist")).to_be_visible()
     if not adm.locator("#e-qtd").is_visible(): adm.click("summary:has-text('Adicionar à equipe')")
     check(adm.locator("#e-forn").input_value() == "Kaká", "quem traz a equipe já vem como Kaká")

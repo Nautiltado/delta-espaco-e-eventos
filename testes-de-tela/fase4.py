@@ -56,6 +56,8 @@ def acao(pg, botao, escopo="main"):
     antes = pg.url
     ultimo = pg.locator(AVISOS).last.inner_text() if n else ""
     pg.locator(escopo).locator(f"button:has-text('{botao}')").first.click()
+    sim = pg.locator(escopo).locator(".confirmacao button:has-text('Sim, ')")
+    if sim.count(): sim.first.click()   # ações destrutivas pedem confirmação na tela
     pg.wait_for_function(
         f"""(() => {{ const a = document.querySelectorAll({AVISOS!r});
             return location.href !== {antes!r} || a.length > {n} || (a.length && a[a.length - 1].innerText !== {ultimo!r}); }})()""",
@@ -70,6 +72,8 @@ def criar_orcamento(pg, cliente, titulo, preco):
     pg.click("button:has-text('Criar orçamento')")
     pg.wait_for_url(re.compile(r".*/orcamentos/[0-9a-f-]+$"), timeout=15000)
     orc = pg.url.rsplit("/", 1)[1]
+    if not pg.locator("#descricao-novo").is_visible():
+        pg.click("summary:has-text('Incluir um item de cada vez')")
     pg.fill("#descricao-novo", "Locação do espaço com buffet (teste)"); pg.select_option("#unidade-novo", "evento")
     pg.fill("#quantidade-novo", "1"); pg.fill("#preco-novo", preco)
     pg.click("button:has-text('Incluir item')")
@@ -127,6 +131,7 @@ with sync_playwright() as p:
     # ------------------------------------------------ data segura (atravessa a madrugada)
     reserva, erro = reservar(pa, orc, DIA, "20:00", "03:00", ["Espaço maior"])
     ok("C1 data segura no Espaço maior", reserva is not None, erro or "")
+    pa.locator("main h1").first.wait_for(timeout=20000)   # espera sair do esqueleto de carregamento
     t = pa.inner_text("main")
     ok("C2 período virando a madrugada", f"das 20h00 às 03h00 do dia {DIA_SEG[8:10]}/{DIA_SEG[5:7]}/{DIA_SEG[:4]}" in t, "")
     ok("C3 aviso de data segura com prazo", "Data segura até" in t)

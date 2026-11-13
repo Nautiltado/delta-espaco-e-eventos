@@ -3,12 +3,16 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
-import type { ItemMenu } from "@/lib/permissoes";
+import { Menu as IconeMenu, MoreHorizontal } from "lucide-react";
+import { GRUPOS_MENU, SUBPAGINAS, type GrupoMenu, type ItemMenu } from "@/lib/permissoes";
+import { ICONES_MENU } from "./icones-menu";
 
 const ativoEm = (href: string, caminho: string) => (href === "/" ? caminho === "/" : caminho === href || caminho.startsWith(`${href}/`));
 
 /** Item ativo = o de endereço mais específico que bate (Cozinha ganha de Encomendas em /salgados/cozinha). */
 function ativoNoMenu(href: string, caminho: string, todos: ItemMenu[]): boolean {
+  const sub = SUBPAGINAS.find((s) => s.prefixo.test(caminho));
+  if (sub && !todos.some((o) => o.href === caminho)) return href === sub.pai;
   if (!ativoEm(href, caminho)) return false;
   return !todos.some((o) => o.href.length > href.length && ativoEm(o.href, caminho));
 }
@@ -24,28 +28,51 @@ function useFecharAoNavegar() {
 
 export function MenuLateral({ itens }: { itens: ItemMenu[] }) {
   const caminho = useFecharAoNavegar();
+  const grupos = (Object.keys(GRUPOS_MENU) as GrupoMenu[]).map((g) => ({ g, lista: itens.filter((i) => i.grupo === g) })).filter((x) => x.lista.length);
   return (
-    <ul className="menu">
-      {itens.map((item) => {
-        if (item.fase) {
-          return (
-            <li key={item.href}>
-              <span className="futuro" title={`Chega na Fase ${item.fase}`}>
-                {item.rotulo} <small>Fase {item.fase}</small>
-              </span>
-            </li>
-          );
-        }
-        const ativo = ativoNoMenu(item.href, caminho, itens);
-        return (
-          <li key={item.href}>
-            <Link href={item.href} aria-current={ativo ? "page" : undefined}>
-              {item.rotulo}
-            </Link>
-          </li>
-        );
-      })}
-    </ul>
+    <div className="menu-grupos">
+      {grupos.map(({ g, lista }) => (
+        <div key={g}>
+          <p className="menu-titulo" id={`menu-${g}`}>{GRUPOS_MENU[g]}</p>
+          <ul className="menu" aria-labelledby={`menu-${g}`}>
+            {lista.map((item) => {
+              const Icone = ICONES_MENU[item.href];
+              const ativo = ativoNoMenu(item.href, caminho, itens);
+              return (
+                <li key={item.href}>
+                  <Link href={item.href} aria-current={ativo ? "page" : undefined}>
+                    {Icone && <Icone aria-hidden strokeWidth={1.8} />}
+                    {item.rotulo}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** Trilha da página atual: grupo › tela › subpágina. */
+export function Migalhas({ itens }: { itens: ItemMenu[] }) {
+  const caminho = usePathname();
+  const sub = SUBPAGINAS.find((s) => s.prefixo.test(caminho)) && !itens.some((i) => i.href === caminho)
+    ? SUBPAGINAS.find((s) => s.prefixo.test(caminho)) : undefined;
+  const item = itens.find((i) => i.href === (sub?.pai ?? "")) ?? itens.find((i) => ativoNoMenu(i.href, caminho, itens));
+  if (!item) return <ol className="migalhas"><li aria-current="page">Delta Gestão</li></ol>;
+  return (
+    <ol className="migalhas" aria-label="Você está em">
+      <li>{GRUPOS_MENU[item.grupo]}</li>
+      {sub ? (
+        <>
+          <li><Link href={item.href}>{item.rotulo}</Link></li>
+          <li aria-current="page">{sub.rotulo}</li>
+        </>
+      ) : (
+        <li aria-current="page">{item.rotulo}</li>
+      )}
+    </ol>
   );
 }
 
@@ -59,33 +86,32 @@ function alternarMenu() {
 export function BotaoMenu() {
   return (
     <button type="button" className="botao-menu" onClick={alternarMenu} aria-label="Abrir ou fechar o menu">
-      <span aria-hidden>☰</span> Menu
+      <IconeMenu aria-hidden /> Menu
     </button>
   );
 }
-
-const ICONES: Record<string, string> = {
-  "/": "⌂", "/agenda": "▦", "/orcamentos": "✎", "/clientes": "☺", "/financeiro": "R$", "/tarefas": "✓", "/salgados": "◉", "/salgados/cozinha": "♨", "/eventos": "★",
-};
 
 /** Barra de baixo no celular: os atalhos do dia a dia, ao alcance do polegar. */
 export function BarraInferior({ itens }: { itens: ItemMenu[] }) {
   const caminho = usePathname();
   // Os 4 primeiros que a pessoa pode usar, na ordem do dia a dia (a cozinha vê Cozinha e Tarefas, por exemplo).
-  const principais = ["/", "/agenda", "/orcamentos", "/salgados", "/salgados/cozinha", "/clientes", "/tarefas"]
+  const principais = ["/", "/agenda", "/orcamentos", "/salgados", "/salgados/cozinha", "/eventos", "/clientes", "/tarefas"]
     .map((h) => itens.find((i) => i.href === h && !i.fase))
     .filter((i): i is ItemMenu => !!i)
     .slice(0, 4);
   return (
     <nav className="barra-inferior" aria-label="Atalhos">
-      {principais.map((i) => (
-        <Link key={i.href} href={i.href} aria-current={ativoNoMenu(i.href, caminho, itens) ? "page" : undefined}>
-          <span aria-hidden className="icone">{ICONES[i.href]}</span>
-          {i.href === "/" ? "Início" : i.rotulo}
-        </Link>
-      ))}
+      {principais.map((i) => {
+        const Icone = ICONES_MENU[i.href];
+        return (
+          <Link key={i.href} href={i.href} aria-current={ativoNoMenu(i.href, caminho, itens) ? "page" : undefined}>
+            {Icone && <Icone aria-hidden strokeWidth={1.8} />}
+            {i.href === "/" ? "Início" : i.rotulo}
+          </Link>
+        );
+      })}
       <button type="button" onClick={alternarMenu}>
-        <span aria-hidden className="icone">☰</span>
+        <MoreHorizontal aria-hidden strokeWidth={1.8} />
         Mais
       </button>
     </nav>

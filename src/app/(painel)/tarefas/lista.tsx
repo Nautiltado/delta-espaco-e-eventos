@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { formatarDataHora } from "@/lib/datas";
+import { Check, RotateCcw } from "lucide-react";
 import { concluirTarefa } from "./actions";
 
 export type Tarefa = {
@@ -14,7 +15,7 @@ export type Tarefa = {
 };
 
 export function ListaTarefas({ tarefas, agora }: { tarefas: Tarefa[]; agora: number }) {
-  if (tarefas.length === 0) return <p className="mudo">Nada pendente.</p>;
+  if (tarefas.length === 0) return <p className="mudo" style={{ margin: 0 }}>Nada pendente.</p>;
   return (
     <table>
       <tbody>
@@ -27,7 +28,7 @@ export function ListaTarefas({ tarefas, agora }: { tarefas: Tarefa[]; agora: num
                   <input type="hidden" name="id" value={t.id} />
                   {t.concluida_em && <input type="hidden" name="reabrir" value="1" />}
                   <button className="botao secundario pequeno" aria-label={t.concluida_em ? "Reabrir" : "Concluir"} title={t.concluida_em ? "Reabrir" : "Concluir"}>
-                    {t.concluida_em ? "↺" : "✓"}
+                    {t.concluida_em ? <RotateCcw aria-hidden /> : <Check aria-hidden />}
                   </button>
                 </form>
               </td>

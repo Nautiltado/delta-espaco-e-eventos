@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ShoppingBag } from "lucide-react";
+import { Vazio } from "@/componentes/ui";
 import { exigirAlguma } from "@/lib/acesso";
 import { pode } from "@/lib/permissoes";
 import { criarClienteServidor } from "@/lib/supabase/server";
@@ -11,7 +13,7 @@ import { SELECT_PEDIDO, type PedidoResumo } from "@/lib/salgados-dados";
 export const metadata: Metadata = { title: "Encomendas" };
 
 function Lista({ pedidos, mostrarDia = false }: { pedidos: PedidoResumo[]; mostrarDia?: boolean }) {
-  if (!pedidos.length) return <p className="mudo">Nenhum.</p>;
+  if (!pedidos.length) return <Vazio compacto icone={ShoppingBag} titulo="Nenhum pedido aqui" />;
   return (
     <ul className="pedidos-lista">
       {pedidos.map((p) => (

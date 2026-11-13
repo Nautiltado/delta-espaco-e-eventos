@@ -64,7 +64,7 @@ export default async function PaginaOrcamentos({ searchParams }: { searchParams:
                 <span className="mudo" style={{ fontFamily: "var(--sans)", fontSize: ".85rem" }}>{lista.length}</span>
               </h2>
               {soma > 0 && <p className="mudo" style={{ margin: "-6px 0 10px" }}>{formatarCentavos(soma)}</p>}
-              {lista.length === 0 && <p className="mudo">Nenhum.</p>}
+              {lista.length === 0 && <p className="mudo" style={{ margin: "4px 4px 8px", fontSize: ".8rem" }}>Nenhum orçamento aqui.</p>}
               {lista.map((o) => {
                 const u = ultimaVersao(o);
                 const vencido = status === "enviado" && u.validade && u.validade < hoje;

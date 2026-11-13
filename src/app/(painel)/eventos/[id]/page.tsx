@@ -162,7 +162,7 @@ export default async function PaginaEvento({ params }: { params: Promise<{ id: s
                       <div style={{ marginTop: 6 }}>
                         <BotaoAcao acao={pagarEquipe} campos={{ id: l.id, reserva_id: ficha.id, pago_em: l.pago_em ? "" : hoje }}
                           texto={l.pago_em ? "Desmarcar pago" : "Marcar pago hoje"} classe="botao secundario pequeno" />
-                        {montaEquipe && !l.pago_em && <BotaoAcao acao={removerEquipe} campos={{ id: l.id, reserva_id: ficha.id }} texto="Remover" classe="botao secundario pequeno" />}
+                        {montaEquipe && !l.pago_em && <BotaoAcao acao={removerEquipe} campos={{ id: l.id, reserva_id: ficha.id }} texto="Remover" classe="botao secundario pequeno" confirmar="Tirar esta linha da equipe?" />}
                       </div>
                     )}
                   </div>

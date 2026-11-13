@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ChefHat } from "lucide-react";
+import { Vazio } from "@/componentes/ui";
 import { exigirPermissao } from "@/lib/acesso";
 import { pode } from "@/lib/permissoes";
 import { criarClienteServidor } from "@/lib/supabase/server";
@@ -81,7 +83,7 @@ export default async function PaginaCozinha() {
         <div>
           <section className="cartao">
             <h2>Hoje ({deHoje.length})</h2>
-            {deHoje.length ? deHoje.map((p) => <Cartao key={p.id} p={p} />) : <p className="mudo">Nenhum pedido pago para hoje.</p>}
+            {deHoje.length ? deHoje.map((p) => <Cartao key={p.id} p={p} />) : <Vazio compacto icone={ChefHat} titulo="Nenhum pedido pago para hoje" />}
             {somaHoje.size > 0 && (
               <p className="mudo" style={{ fontSize: ".9rem" }}>
                 Ainda separar hoje: {[...somaHoje].map(([k, v]) => `${v} ${nomes.get(k)?.toLowerCase()}`).join(" · ")}

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { exigirPermissao } from "@/lib/acesso";
 import { pode } from "@/lib/permissoes";
 import { criarClienteServidor } from "@/lib/supabase/server";
@@ -103,16 +104,18 @@ export default async function PaginaAgenda({ searchParams }: { searchParams: Pro
           <section className="cartao">
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
               <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                <Link className="botao secundario pequeno" href={`/agenda?mes=${mesAnterior}${filtro}`} aria-label="Mês anterior">←</Link>
+                <Link className="botao secundario pequeno" href={`/agenda?mes=${mesAnterior}${filtro}`} aria-label="Mês anterior"><ChevronLeft aria-hidden /></Link>
                 <h2 style={{ margin: 0 }}>{nomeDoMes(m).charAt(0).toUpperCase() + nomeDoMes(m).slice(1)} de {ano}</h2>
-                <Link className="botao secundario pequeno" href={`/agenda?mes=${proximoMes.slice(0, 7)}${filtro}`} aria-label="Próximo mês">→</Link>
+                <Link className="botao secundario pequeno" href={`/agenda?mes=${proximoMes.slice(0, 7)}${filtro}`} aria-label="Próximo mês"><ChevronRight aria-hidden /></Link>
               </div>
-              <div className="opcoes">
-                <Link href={`/agenda?mes=${primeiro.slice(0, 7)}`} className={espaco ? "" : "selo"}>Todos</Link>
-                {(espacos ?? []).map((e) => (
-                  <Link key={e.id} href={`/agenda?mes=${primeiro.slice(0, 7)}&espaco=${e.id}`} className={espaco === e.id ? "selo" : ""}>{e.nome}</Link>
-                ))}
-                {hoje.slice(0, 7) !== primeiro.slice(0, 7) && <Link href={`/agenda${espaco ? `?espaco=${espaco}` : ""}`}>Hoje</Link>}
+              <div className="linha" style={{ alignItems: "center" }}>
+                {hoje.slice(0, 7) !== primeiro.slice(0, 7) && <Link className="botao secundario pequeno" href={`/agenda${espaco ? `?espaco=${espaco}` : ""}`}>Hoje</Link>}
+                <nav className="abas" aria-label="Espaço">
+                  <Link href={`/agenda?mes=${primeiro.slice(0, 7)}`} className="aba" aria-current={espaco ? undefined : "page"}>Todos</Link>
+                  {(espacos ?? []).map((e) => (
+                    <Link key={e.id} href={`/agenda?mes=${primeiro.slice(0, 7)}&espaco=${e.id}`} className="aba" aria-current={espaco === e.id ? "page" : undefined}>{e.nome}</Link>
+                  ))}
+                </nav>
               </div>
             </div>
 

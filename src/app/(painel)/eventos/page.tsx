@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { CalendarDays } from "lucide-react";
+import { Vazio } from "@/componentes/ui";
 import { exigirAlguma } from "@/lib/acesso";
 import { pode } from "@/lib/permissoes";
 import { criarClienteServidor } from "@/lib/supabase/server";
@@ -79,11 +81,11 @@ export default async function PaginaEventos() {
       </div>
       <section className="cartao">
         <h2>Próximos ({proximos.length})</h2>
-        {proximos.length ? <ul className="pedidos-lista">{proximos.map((e) => <Linha key={e.id} e={e} />)}</ul> : <p className="mudo">Nenhum evento marcado.</p>}
+        {proximos.length ? <ul className="pedidos-lista">{proximos.map((e) => <Linha key={e.id} e={e} />)}</ul> : <Vazio compacto icone={CalendarDays} titulo="Nenhum evento marcado" texto="Os eventos aparecem aqui quando uma data é reservada." />}
       </section>
       <section className="cartao">
         <h2>Últimos 30 dias</h2>
-        {passados.length ? <ul className="pedidos-lista">{passados.map((e) => <Linha key={e.id} e={e} />)}</ul> : <p className="mudo">Nenhum.</p>}
+        {passados.length ? <ul className="pedidos-lista">{passados.map((e) => <Linha key={e.id} e={e} />)}</ul> : <Vazio compacto icone={CalendarDays} titulo="Nenhum evento nos últimos 30 dias" />}
       </section>
     </>
   );

@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Wallet } from "lucide-react";
+import { Vazio } from "@/componentes/ui";
 import { exigirPermissao } from "@/lib/acesso";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { formatarCentavos } from "@/lib/dinheiro";
@@ -75,7 +77,7 @@ export default async function PaginaFinanceiro() {
         <div>
           <section className="cartao">
             <h2>A receber · {formatarCentavos(totalAberto)}</h2>
-            {ativas.length === 0 && <p className="mudo" style={{ margin: 0 }}>Nenhuma parcela em aberto.</p>}
+            {ativas.length === 0 && <Vazio compacto icone={Wallet} titulo="Nenhuma parcela em aberto" texto="Tudo recebido." />}
             {grupos.filter((g) => g.lista.length).map((g) => (
               <div key={g.titulo} style={{ marginBottom: 14 }}>
                 <h3 style={{ fontSize: ".95rem", margin: "6px 0" }} className={g.titulo === "Atrasadas" ? "atrasada" : undefined}>{g.titulo}</h3>

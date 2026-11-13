@@ -27,7 +27,7 @@ motivo, histórico ligado ao pedido, preço e telas no celular. Precisa de `test
 `fase7.py` percorre a ficha do evento (27 verificações) com cozinha, atendimento, administração e financeiro: cardápio na
 ficha, checklist marcado com nome e hora, ficha com chegada/traje/observações, equipe do Kaká com diária de R$ 180,
 mensagem de WhatsApp, pagamento da equipe, gasto com nota fiscal (foto), gasto a pagar, fechamento e celular.
-Precisa de `teste.e2e.fin` além das outras.
+Precisa de `teste.e2e.fin` além das outras. Se não houver evento nos próximos 180 dias, rode com `EVENTO=<id da reserva>` (por exemplo, uma criada pelo fase4.py).
 
 `concorrencia.mjs` dispara 30 pedidos simultâneos para o mesmo espaço e horário e exige exatamente um aceito.
 

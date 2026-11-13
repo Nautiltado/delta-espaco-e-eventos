@@ -30,19 +30,35 @@ export function BotaoAcao({
   texto,
   classe = "botao",
   ajuda,
+  confirmar,
 }: {
   acao: Acao;
   campos: Record<string, string>;
   texto: string;
   classe?: string;
   ajuda?: string;
+  /** Ação destrutiva: pede confirmação na própria tela antes de enviar (a pergunta aparece no lugar do botão). */
+  confirmar?: string;
 }) {
   const [estado, enviar, enviando] = useActionState<Estado, FormData>(acao, {});
+  const [perguntando, setPerguntando] = useState(false);
   return (
-    <form action={enviar} style={{ marginBottom: 8 }}>
+    <form action={(f) => { setPerguntando(false); return enviar(f); }} style={{ marginBottom: 8 }}>
       {Object.entries(campos).map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />)}
       <Retorno estado={estado} />
-      <button className={classe} disabled={enviando}>{enviando ? "Aguarde…" : texto}</button>
+      {confirmar && perguntando ? (
+        <div className="confirmacao" role="alertdialog" aria-label={confirmar}>
+          <span>{confirmar}</span>
+          <div className="linha">
+            <button className="botao perigo pequeno" disabled={enviando} autoFocus>{enviando ? "Aguarde…" : `Sim, ${texto.charAt(0).toLowerCase()}${texto.slice(1)}`}</button>
+            <button type="button" className="botao fantasma pequeno" onClick={() => setPerguntando(false)}>Cancelar</button>
+          </div>
+        </div>
+      ) : confirmar ? (
+        <button type="button" className={classe} disabled={enviando} onClick={() => setPerguntando(true)}>{enviando ? "Aguarde…" : texto}</button>
+      ) : (
+        <button className={classe} disabled={enviando}>{enviando ? "Aguarde…" : texto}</button>
+      )}
       {ajuda && <p className="mudo" style={{ margin: "4px 0 0", fontSize: ".85rem" }}>{ajuda}</p>}
     </form>
   );

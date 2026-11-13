@@ -98,7 +98,7 @@ export default async function PaginaEstoque() {
                 </li>
               ))}
             </ul>
-          ) : <p className="mudo">Nada registrado ainda.</p>}
+          ) : <p className="mudo" style={{ margin: 0 }}>Nada registrado ainda.</p>}
         </section>
       )}
     </>

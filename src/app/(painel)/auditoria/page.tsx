@@ -99,10 +99,10 @@ export default async function PaginaAuditoria({
       </div>
 
       <section className="cartao">
-        <div className="opcoes" style={{ marginBottom: 14 }}>
-          <Link className={`selo ${filtro ? "cinza" : ""}`} href={link({})}>Tudo</Link>
+        <div className="pilulas" style={{ marginBottom: 14 }}>
+          <Link className="pilula" aria-current={filtro ? undefined : "page"} href={link({})}>Tudo</Link>
           {Object.entries(TABELAS).map(([k, nome]) => (
-            <Link key={k} className={`selo ${filtro === k ? "" : "cinza"}`} href={link({ tabela: k })}>
+            <Link key={k} className="pilula" aria-current={filtro === k ? "page" : undefined} href={link({ tabela: k })}>
               {nome}
             </Link>
           ))}

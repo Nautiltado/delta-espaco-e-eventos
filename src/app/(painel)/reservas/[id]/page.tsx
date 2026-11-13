@@ -162,7 +162,7 @@ export default async function PaginaReserva({
         <section className="cartao">
           <p style={{ marginTop: 0 }}>Motivo: {reserva.motivo}</p>
           {reserva.status === "confirmada" && pode(acesso, "bloqueio.remover") && (
-            <BotaoAcao acao={removerBloqueio} campos={{ reserva_id: id }} texto="Remover bloqueio" classe="botao secundario" />
+            <BotaoAcao acao={removerBloqueio} campos={{ reserva_id: id }} texto="Remover bloqueio" classe="botao secundario" confirmar="Remover este bloqueio da agenda?" />
           )}
           {reserva.status === "cancelada" && <p className="selo erro">Removido</p>}
         </section>
@@ -463,7 +463,7 @@ export default async function PaginaReserva({
                   <BotaoAcao acao={prorrogarBloqueio} campos={{ reserva_id: id }} texto="Prorrogar mais 24 horas" classe="botao secundario pequeno" />
                 )}
                 {pode(acesso, "orcamento.criar") && !assinado && totalPago === 0 && (
-                  <BotaoAcao acao={liberarBloqueio} campos={{ reserva_id: id }} texto="Liberar a data" classe="botao secundario pequeno"
+                  <BotaoAcao acao={liberarBloqueio} campos={{ reserva_id: id }} texto="Liberar a data" classe="botao secundario pequeno" confirmar="Liberar a data para outros clientes?"
                     ajuda="Use quando o cliente desistir antes de assinar e pagar." />
                 )}
               </div>
